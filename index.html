@@ -68,6 +68,7 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
+            filter: grayscale(100%);
         }
 
         .play-area {
@@ -244,8 +245,26 @@
 
         .hand-card.ace-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            border: 2px solid rgba(255,255,255,0.5);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        .hand-card.joker-card {
+            background: linear-gradient(270deg, #FFD700, #FFA500, #FF6347, #FFA500, #FFD700);
+            background-size: 400% 400%;
+            animation: jokerGlow 3s ease infinite;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.6);
+        }
+
+        @keyframes jokerGlow {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .hand-card .card-rank {
@@ -470,6 +489,16 @@
             background: rgba(255,255,255,0.1);
         }
 
+        .suit-option.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .suit-option.disabled:hover {
+            transform: none;
+        }
+
         .game-over {
             position: fixed;
             top: 50%;
@@ -592,10 +621,10 @@
             <button class="close-selector-btn" onclick="closeSuitSelector()">✕</button>
         </div>
         <div class="suit-options">
-            <div class="suit-option" onclick="chooseSuit('♠️')">♠️</div>
-            <div class="suit-option" onclick="chooseSuit('♥️')">♥️</div>
-            <div class="suit-option" onclick="chooseSuit('♦️')">♦️</div>
-            <div class="suit-option" onclick="chooseSuit('♣️')">♣️</div>
+            <div class="suit-option" id="suit-spades" onclick="chooseSuit('♠️')">♠️</div>
+            <div class="suit-option" id="suit-hearts" onclick="chooseSuit('♥️')">♥️</div>
+            <div class="suit-option" id="suit-diamonds" onclick="chooseSuit('♦️')">♦️</div>
+            <div class="suit-option" id="suit-clubs" onclick="chooseSuit('♣️')">♣️</div>
         </div>
     </div>
 
@@ -656,6 +685,7 @@
         let isComputerTurn = false;
         let isFirstMove = true;
         let suitWasChanged = false;
+        let isDrawing = false; // Prevent multiple simultaneous draws
 
         function createDeck() {
             const newDeck = [];
@@ -780,6 +810,7 @@
             isComputerTurn = false;
             isFirstMove = true;
             suitWasChanged = false;
+            isDrawing = false;
 
             document.getElementById('gameOver').classList.remove('show');
             updateStatus('Match rank or suit. Aces change suit. Draw if you can\'t play.');
@@ -811,15 +842,13 @@
             topCardEl.className = 'card';
             topCardEl.style.backgroundImage = `url('${imageUrl}')`;
             
-            // If suit was changed (Ace/Joker played and suit selected), show nothing
+            // If suit was changed (Ace/Joker played and suit selected), show the NEW suit
             if (suitWasChanged && (card.isJoker || card.isAce)) {
-                topCardEl.innerHTML = '';
-                
-                // Add animation class
-                topCardEl.classList.add('wild-card-played');
-                setTimeout(() => {
-                    topCardEl.classList.remove('wild-card-played');
-                }, 1000);
+                topCardEl.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-suit">${currentSuit}</span>
+                    </div>
+                `;
             } else if (card.isJoker) {
                 // Show JOKER text below image (before suit is chosen)
                 topCardEl.innerHTML = `
@@ -873,16 +902,18 @@
             aces.forEach((card) => {
                 const actualIndex = playerHand.indexOf(card);
                 const cardEl = document.createElement('div');
-                cardEl.className = 'hand-card ace-card';
                 
+                // Use different class for Jokers vs Aces
                 if (card.isJoker) {
+                    cardEl.className = 'hand-card joker-card';
                     cardEl.innerHTML = `
                         <div class="card-rank joker-text">JOKER</div>
                     `;
                 } else {
+                    cardEl.className = 'hand-card ace-card';
+                    // Show only "A" for Aces, no suit symbol
                     cardEl.innerHTML = `
                         <div class="card-rank">${card.rank}</div>
-                        <div class="card-suit">${card.suit}</div>
                     `;
                 }
                 
@@ -936,6 +967,9 @@
                 return;
             }
             
+            // LOCK TURN IMMEDIATELY before any other operations
+            isComputerTurn = true;
+            
             // Clear rules message on first move
             if (isFirstMove) {
                 isFirstMove = false;
@@ -950,6 +984,7 @@
             if (card.isJoker) {
                 // Joker = wild + skip opponent
                 pendingEightCard = card;
+                isComputerTurn = false; // Unlock while waiting for suit selection
                 updateStatus('You played Joker - choose a suit');
                 document.getElementById('suitSelector').classList.add('show');
                 return;
@@ -958,7 +993,9 @@
             if (card.isAce) {
                 // Ace = change suit
                 pendingEightCard = card;
+                isComputerTurn = false; // Unlock while waiting for suit selection
                 updateStatus('You played Ace - choose a suit');
+                updateSuitSelector(); // Update which suits are available
                 document.getElementById('suitSelector').classList.add('show');
                 return;
             }
@@ -975,7 +1012,6 @@
             }
             
             updateDisplay();
-            isComputerTurn = true;
             setTimeout(() => {
                 computerTurn();
             }, 800);
@@ -985,9 +1021,20 @@
             document.getElementById('suitSelector').classList.remove('show');
             currentSuit = suit;
             currentRank = pendingEightCard.rank;
-            suitWasChanged = true;
             
             const wasJoker = pendingEightCard.isJoker;
+            
+            // Transform the Ace/Joker card in discard pile to show the chosen suit
+            if (pendingEightCard.isAce) {
+                // Find the last card in discard pile (should be the Ace just played)
+                const lastCard = discardPile[discardPile.length - 1];
+                lastCard.suit = suit; // Change suit to chosen suit
+                lastCard.isAce = false; // No longer wild - it's now a specific Ace
+                suitWasChanged = false; // Don't need special rendering
+            } else {
+                suitWasChanged = true; // Keep flag for Jokers
+            }
+            
             pendingEightCard = null;
             
             updateStatus(`You changed suit to ${suit}`);
@@ -1009,6 +1056,34 @@
             }
         }
 
+        function updateSuitSelector() {
+            // Check which Aces have been played in the discard pile
+            const playedAceSuits = new Set();
+            discardPile.forEach(card => {
+                if (card.rank === 'A' && !card.isAce) {
+                    // This is an Ace that has been transformed (suit was chosen)
+                    playedAceSuits.add(card.suit);
+                }
+            });
+            
+            // Enable/disable suit options based on played Aces
+            const suitMap = {
+                '♠️': 'suit-spades',
+                '♥️': 'suit-hearts',
+                '♦️': 'suit-diamonds',
+                '♣️': 'suit-clubs'
+            };
+            
+            Object.entries(suitMap).forEach(([suit, id]) => {
+                const element = document.getElementById(id);
+                if (playedAceSuits.has(suit)) {
+                    element.classList.add('disabled');
+                } else {
+                    element.classList.remove('disabled');
+                }
+            });
+        }
+
         function closeSuitSelector() {
             // Return the card to player's hand
             if (pendingEightCard) {
@@ -1024,7 +1099,12 @@
         }
 
         function drawCard() {
-            if (gameOver || isComputerTurn || pendingEightCard) return;
+            // Check all locks including the drawing lock
+            if (gameOver || isComputerTurn || pendingEightCard || isDrawing) return;
+            
+            // LOCK DRAWING IMMEDIATELY before any other operations
+            isDrawing = true;
+            isComputerTurn = true;
             
             // Clear rules message on first move
             if (isFirstMove) {
@@ -1033,9 +1113,9 @@
             
             if (deck.length === 0) {
                 updateStatus('Deck empty - pass turn');
-                isComputerTurn = true;
                 setTimeout(() => {
                     updateStatus('');
+                    isDrawing = false; // Unlock drawing
                     computerTurn();
                 }, 1500);
                 return;
@@ -1045,9 +1125,9 @@
             if (!card) {
                 // Safety check - deck was empty
                 updateStatus('Deck empty - pass turn');
-                isComputerTurn = true;
                 setTimeout(() => {
                     updateStatus('');
+                    isDrawing = false; // Unlock drawing
                     computerTurn();
                 }, 1500);
                 return;
@@ -1059,10 +1139,15 @@
             updateDisplay();
             
             if (!canPlayCard(card)) {
-                isComputerTurn = true;
+                // Card can't be played, computer's turn
                 setTimeout(() => {
+                    isDrawing = false; // Unlock drawing before computer turn
                     computerTurn();
                 }, 1000);
+            } else {
+                // Card can be played, unlock turn for player to play it
+                isComputerTurn = false;
+                isDrawing = false; // Unlock drawing
             }
         }
 
@@ -1163,7 +1248,12 @@
                 const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
                 currentSuit = bestSuit;
                 currentRank = card.rank;
-                suitWasChanged = true;
+                
+                // Transform the Ace card to show the chosen suit
+                card.suit = bestSuit;
+                card.isAce = false; // No longer wild
+                suitWasChanged = false;
+                
                 updateStatus(`Computer played Ace - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
             } else {
