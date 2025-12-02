@@ -58,7 +58,7 @@
         .card-back-small {
             width: 45px;
             height: 65px;
-            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/back-evgeny-kiselev.jpg?2');
+            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -122,7 +122,7 @@
         }
 
         .card-back {
-            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/back-evgeny-kiselev.jpg?2');
+            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -652,6 +652,7 @@
         let pendingEightCard = null;
         let isComputerTurn = false;
         let isFirstMove = true;
+        let suitWasChanged = false;
 
         function createDeck() {
             const newDeck = [];
@@ -775,6 +776,7 @@
             pendingEightCard = null;
             isComputerTurn = false;
             isFirstMove = true;
+            suitWasChanged = false;
 
             document.getElementById('gameOver').classList.remove('show');
             updateStatus('Match rank or suit. Aces change suit. Draw if you can\'t play.');
@@ -806,8 +808,17 @@
             topCardEl.className = 'card';
             topCardEl.style.backgroundImage = `url('${imageUrl}')`;
             
-            if (card.isJoker) {
-                // Show JOKER text below image
+            // If suit was changed (Ace/Joker played and suit selected), show nothing
+            if (suitWasChanged && (card.isJoker || card.isAce)) {
+                topCardEl.innerHTML = '';
+                
+                // Add animation class
+                topCardEl.classList.add('wild-card-played');
+                setTimeout(() => {
+                    topCardEl.classList.remove('wild-card-played');
+                }, 1000);
+            } else if (card.isJoker) {
+                // Show JOKER text below image (before suit is chosen)
                 topCardEl.innerHTML = `
                     <div class="card-info">
                         <span class="info-joker">JOKER</span>
@@ -821,7 +832,7 @@
                     topCardEl.classList.remove('wild-card-played');
                 }, 1000);
             } else if (card.isAce) {
-                // Show Ace rank and suit below image
+                // Show Ace rank and suit below image (before suit is chosen)
                 topCardEl.innerHTML = `
                     <div class="card-info">
                         <span class="info-rank">${card.rank}</span>
@@ -836,7 +847,7 @@
                     topCardEl.classList.remove('wild-card-played');
                 }, 1000);
             } else {
-                // Show rank and suit below image
+                // Show rank and suit below image for regular cards
                 topCardEl.innerHTML = `
                     <div class="card-info">
                         <span class="info-rank">${card.rank}</span>
@@ -930,6 +941,9 @@
             playerHand.splice(index, 1);
             discardPile.push(card);
             
+            // Reset suit change flag for new card
+            suitWasChanged = false;
+            
             if (card.isJoker) {
                 // Joker = wild + skip opponent
                 pendingEightCard = card;
@@ -968,6 +982,7 @@
             document.getElementById('suitSelector').classList.remove('show');
             currentSuit = suit;
             currentRank = pendingEightCard.rank;
+            suitWasChanged = true;
             
             const wasJoker = pendingEightCard.isJoker;
             pendingEightCard = null;
@@ -1131,6 +1146,7 @@
                 const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
                 currentSuit = bestSuit;
                 currentRank = card.rank;
+                suitWasChanged = true;
                 updateStatus(`Computer played Joker - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
             } else if (card.isAce) {
@@ -1144,11 +1160,13 @@
                 const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
                 currentSuit = bestSuit;
                 currentRank = card.rank;
+                suitWasChanged = true;
                 updateStatus(`Computer played Ace - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
             } else {
                 currentSuit = card.suit;
                 currentRank = card.rank;
+                suitWasChanged = false;
                 updateStatus(`Computer played ${card.rank}${card.suit}`);
                 setTimeout(() => updateStatus(''), 1500);
             }
