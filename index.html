@@ -1351,6 +1351,29 @@
                 suitWasChanged = true;
                 updateStatus(`Computer played Joker - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
+                
+                // Check if game is over
+                if (computerHand.length === 0) {
+                    endGame('computer');
+                    return;
+                }
+                
+                // Update display after Joker
+                updateDisplay();
+                
+                // Continue turn - play another card after delay
+                setTimeout(() => {
+                    const playableCards = computerHand.filter(canPlayCard);
+                    if (playableCards.length > 0) {
+                        const randomCard = playableCards[Math.floor(Math.random() * playableCards.length)];
+                        const cardIndex = computerHand.indexOf(randomCard);
+                        computerPlayCard(cardIndex);
+                    } else {
+                        // Can't play, end turn
+                        isComputerTurn = false;
+                    }
+                }, 1500);
+                return; // Exit early, turn continues
             } else if (card.isAce) {
                 // Choose most common suit in hand
                 const suitCounts = {};
