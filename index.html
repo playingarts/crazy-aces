@@ -548,6 +548,9 @@
         }
 
     </style>
+    
+    <!-- Preload card back for immediate availability -->
+    <link rel="preload" as="image" href="https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2">
 </head>
 <body>
     <div class="confetti-container" id="confettiContainer"></div>
@@ -1230,7 +1233,38 @@
             }
         }
 
+        // Preload all card images for instant display during gameplay
+        function preloadImages() {
+            const imagesToPreload = [
+                // Card back
+                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2',
+                // All card images from cardImages object
+                ...Object.values(cardImages)
+            ];
+            
+            let loadedCount = 0;
+            const totalImages = imagesToPreload.length;
+            
+            console.log(`Preloading ${totalImages} card images...`);
+            
+            imagesToPreload.forEach(url => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        console.log(`✓ All ${totalImages} card images preloaded and cached`);
+                    }
+                };
+                img.onerror = () => {
+                    loadedCount++;
+                    console.warn(`Failed to load: ${url}`);
+                };
+                img.src = url;
+            });
+        }
+
         // Initialize
+        preloadImages();
         initGame();
     </script>
 </body>
