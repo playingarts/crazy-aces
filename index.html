@@ -58,7 +58,7 @@
         .card-back-small {
             width: 45px;
             height: 65px;
-            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-hd/back-evgeny-kiselev.jpg?2');
+            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/back-evgeny-kiselev.jpg?2');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -75,7 +75,7 @@
             align-items: center;
             justify-content: center;
             gap: 30px;
-            padding: 40px;
+            padding: 0 40px;
             min-height: 350px;
             padding-bottom: 60px;
         }
@@ -122,7 +122,7 @@
         }
 
         .card-back {
-            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-hd/back-evgeny-kiselev.jpg?2');
+            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/back-evgeny-kiselev.jpg?2');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -287,8 +287,9 @@
             
             .play-area {
                 gap: 35px;
-                padding: 45px;
+                padding: 0 45px;
                 min-height: 420px;
+                padding-bottom: 60px;
             }
             
             .opponent-hand-preview {
@@ -318,8 +319,9 @@
             
             .play-area {
                 gap: 40px;
-                padding: 50px;
+                padding: 0 50px;
                 min-height: 480px;
+                padding-bottom: 60px;
             }
             
             .opponent-hand-preview {
@@ -349,7 +351,7 @@
             
             .play-area {
                 gap: 15px;
-                padding: 20px;
+                padding: 0 20px;
                 min-height: 280px;
             }
             
@@ -384,6 +386,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            opacity: 0.5;
         }
 
         .suit-selector {
@@ -685,60 +688,60 @@
 
         // Card image URLs from Playing Arts deck
         const cardImages = {
-            '2♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/2-of-clubs-tang-yau-hoong.jpg?2',
-            '2♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/2-of-diamonds-yemayema.jpg?2',
-            '2♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/2-of-hearts-peter-tarka.jpg?2',
-            '2♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/2-of-spades-mattias-adolfsson.jpg?2',
-            '3♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/3-of-clubs-fernando-chamarelli.jpg?2',
-            '3♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/3-of-diamonds-carne-griffiths.jpg?2',
-            '3♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/3-of-hearts-mercedes-debellard.jpg?2',
-            '3♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/3-of-spades-teagan-white.jpg?2',
-            '4♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/4-of-clubs-muti.jpg?2',
-            '4♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/4-of-diamonds-peter-olschinsky.jpg?2',
-            '4♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/4-of-hearts-ruben-ireland.jpg?2',
-            '4♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/4-of-spades-serial-cut.jpg?2',
-            '5♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/5-of-clubs-valerie-ann-chua.jpg?2',
-            '5♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/5-of-diamonds-fab-ciraolo.jpg?2',
-            '5♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/5-of-hearts-aitch.jpg?2',
-            '5♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/5-of-spades-musketon.jpg?2',
-            '6♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/6-of-clubs-tobias-van-schneider.jpg?2',
-            '6♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/6-of-diamonds-vasava.jpg?2',
-            '6♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/6-of-hearts-javier-medellin-puyou.jpg?2',
-            '6♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/6-of-spades-fernando-volken-togni.jpg?2',
-            '7♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/7-of-clubs-krzysztof-nowak.jpg?2',
-            '7♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/7-of-diamonds-matt-w-moore.jpg?2',
-            '7♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/7-of-hearts-felix-laflamme.jpg?2',
-            '7♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/7-of-spades-muxxi.jpg?2',
-            '8♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/8-of-clubs-el-grand-chamaco.jpg?2',
-            '8♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/8-of-diamonds-jthree-concepts.jpg?2',
-            '8♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/8-of-hearts-raul-urias.jpg?2',
-            '8♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/8-of-spades-gary-fernandez.jpg?2',
-            '9♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/9-of-clubs-chuck-anderson.jpg?2',
-            '9♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/9-of-diamonds-pirecco.jpg?2',
-            '9♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/9-of-hearts-carlos-lerma.jpg?2',
-            '9♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/9-of-spades-anton-repponen.jpg?2',
-            '10♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/10-of-clubs-hey.jpg?2',
-            '10♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/10-of-diamonds-lei-melendres.jpg?2',
-            '10♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/10-of-hearts-caramelaw.jpg?2',
-            '10♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/10-of-spades-bicicleta-sem-freio.jpg?2',
-            'J♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/jack-of-clubs-bakea.jpg?2',
-            'J♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/jack-of-diamonds-newfren.jpg?2',
-            'J♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/jack-of-hearts-steve-simpson.jpg?2',
-            'J♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/jack-of-spades-seb-niark1.jpg?2',
-            'Q♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/queen-of-clubs-ise-ananphada.jpg?2',
-            'Q♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/queen-of-diamonds-agnes-cecile.jpg?2',
-            'Q♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/queen-of-hearts-conrad-roset.jpg?2',
-            'Q♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/queen-of-spades-david-mack.jpg?2',
-            'K♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/king-of-clubs-james-white.jpg?2',
-            'K♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/king-of-diamonds-saturno-the-creatter.jpg?2',
-            'K♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/king-of-hearts-sara-blake.jpg?2',
-            'K♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/king-of-spades-yulia-brodskaya.jpg?2',
-            'A♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/ace-of-clubs-andreas-preis.jpg?2',
-            'A♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/ace-of-diamonds-jordan-debney.jpg?2',
-            'A♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/ace-of-hearts-mr-kone.jpg?2',
-            'A♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/ace-of-spades-iain-macarthur.jpg?2',
-            'JOKER': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/joker-mike-friedrich.jpg?2',
-            'JOKER_2': 'https://s3.amazonaws.com/img.playingarts.com/one-hd/joker-joshua-davis.jpg?2'
+            '2♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-clubs-tang-yau-hoong.jpg?2',
+            '2♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-diamonds-yemayema.jpg?2',
+            '2♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-hearts-peter-tarka.jpg?2',
+            '2♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-spades-mattias-adolfsson.jpg?2',
+            '3♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-clubs-fernando-chamarelli.jpg?2',
+            '3♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-diamonds-carne-griffiths.jpg?2',
+            '3♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-hearts-mercedes-debellard.jpg?2',
+            '3♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-spades-teagan-white.jpg?2',
+            '4♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-clubs-muti.jpg?2',
+            '4♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-diamonds-peter-olschinsky.jpg?2',
+            '4♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-hearts-ruben-ireland.jpg?2',
+            '4♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-spades-serial-cut.jpg?2',
+            '5♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-clubs-valerie-ann-chua.jpg?2',
+            '5♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-diamonds-fab-ciraolo.jpg?2',
+            '5♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-hearts-aitch.jpg?2',
+            '5♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-spades-musketon.jpg?2',
+            '6♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-clubs-tobias-van-schneider.jpg?2',
+            '6♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-diamonds-vasava.jpg?2',
+            '6♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-hearts-javier-medellin-puyou.jpg?2',
+            '6♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-spades-fernando-volken-togni.jpg?2',
+            '7♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-clubs-krzysztof-nowak.jpg?2',
+            '7♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-diamonds-matt-w-moore.jpg?2',
+            '7♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-hearts-felix-laflamme.jpg?2',
+            '7♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-spades-muxxi.jpg?2',
+            '8♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-clubs-el-grand-chamaco.jpg?2',
+            '8♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-diamonds-jthree-concepts.jpg?2',
+            '8♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-hearts-raul-urias.jpg?2',
+            '8♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-spades-gary-fernandez.jpg?2',
+            '9♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-clubs-chuck-anderson.jpg?2',
+            '9♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-diamonds-pirecco.jpg?2',
+            '9♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-hearts-carlos-lerma.jpg?2',
+            '9♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-spades-anton-repponen.jpg?2',
+            '10♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-clubs-hey.jpg?2',
+            '10♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-diamonds-lei-melendres.jpg?2',
+            '10♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-hearts-caramelaw.jpg?2',
+            '10♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-spades-bicicleta-sem-freio.jpg?2',
+            'J♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-clubs-bakea.jpg?2',
+            'J♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-diamonds-newfren.jpg?2',
+            'J♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-hearts-steve-simpson.jpg?2',
+            'J♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-spades-seb-niark1.jpg?2',
+            'Q♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-clubs-ise-ananphada.jpg?2',
+            'Q♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-diamonds-agnes-cecile.jpg?2',
+            'Q♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-hearts-conrad-roset.jpg?2',
+            'Q♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-spades-david-mack.jpg?2',
+            'K♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-clubs-james-white.jpg?2',
+            'K♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-diamonds-saturno-the-creatter.jpg?2',
+            'K♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-hearts-sara-blake.jpg?2',
+            'K♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-spades-yulia-brodskaya.jpg?2',
+            'A♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-clubs-andreas-preis.jpg?2',
+            'A♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-diamonds-jordan-debney.jpg?2',
+            'A♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-hearts-mr-kone.jpg?2',
+            'A♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-spades-iain-macarthur.jpg?2',
+            'JOKER': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/joker-mike-friedrich.jpg?2',
+            'JOKER_2': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/joker-joshua-davis.jpg?2'
         };
 
         function getCardImageUrl(card) {
