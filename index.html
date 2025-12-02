@@ -575,6 +575,12 @@
             color: #f5576c;
         }
 
+        .stats-text {
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 10px;
+        }
+
         .play-again-btn {
             background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3);
@@ -591,6 +597,23 @@
         .play-again-btn:hover {
             background: rgba(255,255,255,0.2);
             transform: scale(1.05);
+        }
+
+        .reset-stats-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+            padding: 8px 20px;
+            font-size: 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .reset-stats-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
         }
 
         .confetti-container {
@@ -676,7 +699,9 @@
 
     <div class="game-over" id="gameOver">
         <div class="result-text" id="resultText"></div>
+        <div class="stats-text" id="statsText"></div>
         <button class="play-again-btn" onclick="initGame()">Rejouer</button>
+        <button class="reset-stats-btn" onclick="resetStats()">Réinitialiser les statistiques</button>
     </div>
 
     <script>
@@ -732,6 +757,10 @@
         let isFirstMove = true;
         let suitWasChanged = false;
         let isDrawing = false; // Prevent multiple simultaneous draws
+        
+        // Win rate tracking
+        let playerWins = parseInt(localStorage.getItem('crazyAcesPlayerWins')) || 0;
+        let computerWins = parseInt(localStorage.getItem('crazyAcesComputerWins')) || 0;
 
         function createDeck() {
             const newDeck = [];
@@ -1370,8 +1399,21 @@
         function endGame(winner) {
             gameOver = true;
             
+            // Update win counts
+            if (winner === 'player') {
+                playerWins++;
+                localStorage.setItem('crazyAcesPlayerWins', playerWins);
+            } else {
+                computerWins++;
+                localStorage.setItem('crazyAcesComputerWins', computerWins);
+            }
+            
+            const totalGames = playerWins + computerWins;
+            const winRate = totalGames > 0 ? ((playerWins / totalGames) * 100).toFixed(1) : 0;
+            
             const gameOverEl = document.getElementById('gameOver');
             const resultText = document.getElementById('resultText');
+            const statsText = document.getElementById('statsText');
             
             if (winner === 'player') {
                 resultText.textContent = '🎉 Vous avez gagné !';
@@ -1382,7 +1424,17 @@
                 resultText.className = 'result-text lose';
             }
             
+            statsText.textContent = `Victoires: ${playerWins} | Défaites: ${computerWins} | Taux de victoire: ${winRate}%`;
+            
             gameOverEl.classList.add('show');
+        }
+
+        function resetStats() {
+            playerWins = 0;
+            computerWins = 0;
+            localStorage.removeItem('crazyAcesPlayerWins');
+            localStorage.removeItem('crazyAcesComputerWins');
+            document.getElementById('statsText').textContent = 'Victoires: 0 | Défaites: 0 | Taux de victoire: 0%';
         }
 
         function launchConfetti() {
