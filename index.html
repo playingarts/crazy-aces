@@ -136,6 +136,31 @@
             position: relative;
         }
 
+        .card-stack {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        @keyframes cardDrop {
+            0% {
+                transform: translateY(-100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0) translateX(0) rotate(var(--rotation));
+                opacity: 1;
+            }
+        }
+
+        .card.card-animating {
+            animation: cardDrop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         .card .card-rank {
             display: none;
         }
@@ -604,6 +629,9 @@
                 <div class="card" id="topCard">
                     <!-- Top discard card -->
                 </div>
+                <div class="card-stack" id="cardStack">
+                    <!-- Previous cards stack here -->
+                </div>
             </div>
         </div>
 
@@ -840,8 +868,41 @@
             const card = discardPile[discardPile.length - 1];
             const imageUrl = getCardImageUrl(card);
             
-            topCardEl.className = 'card';
+            // First card is straight (0°), subsequent cards have slight rotation (-3 to 3 degrees)
+            const isFirstCard = discardPile.length === 1;
+            const rotation = isFirstCard ? 0 : (Math.random() - 0.5) * 6;
+            
+            topCardEl.className = 'card card-animating';
             topCardEl.style.backgroundImage = `url('${imageUrl}')`;
+            topCardEl.style.setProperty('--rotation', `${rotation}deg`);
+            topCardEl.style.transform = `rotate(${rotation}deg)`;
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                topCardEl.classList.remove('card-animating');
+            }, 400);
+            
+            // Render previous cards stack (last 3 cards before current)
+            const stackEl = document.getElementById('cardStack');
+            stackEl.innerHTML = '';
+            
+            const stackCount = Math.min(3, discardPile.length - 1);
+            for (let i = 1; i <= stackCount; i++) {
+                const prevCard = discardPile[discardPile.length - 1 - i];
+                const prevImageUrl = getCardImageUrl(prevCard);
+                const stackCard = document.createElement('div');
+                stackCard.className = 'card';
+                stackCard.style.backgroundImage = `url('${prevImageUrl}')`;
+                stackCard.style.position = 'absolute';
+                stackCard.style.zIndex = -i;
+                
+                // Slight offset and rotation for stacked cards (-3 to 3 degrees)
+                const stackRotation = (Math.random() - 0.5) * 6;
+                stackCard.style.transform = `translate(${i * -3}px, ${i * 2}px) rotate(${stackRotation}deg)`;
+                stackCard.style.opacity = 0.3;
+                
+                stackEl.appendChild(stackCard);
+            }
             
             // If suit was changed (Ace/Joker played and suit selected), show the NEW suit
             if (suitWasChanged && (card.isJoker || card.isAce)) {
