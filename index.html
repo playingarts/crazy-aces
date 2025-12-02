@@ -162,6 +162,35 @@
             display: none;
         }
 
+        .card-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            color: rgba(255,255,255,0.8);
+            white-space: nowrap;
+            z-index: -1;
+        }
+
+        .card-info .info-rank {
+            font-weight: bold;
+            font-size: 48px;
+        }
+
+        .card-info .info-suit {
+            font-size: 52px;
+        }
+
+        .card-info .info-joker {
+            font-weight: bold;
+            font-size: 20px;
+            color: #FFD700;
+        }
+
         .card.spades { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 3px solid #667eea; }
         .card.hearts { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: 3px solid #f093fb; }
         .card.diamonds { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: 3px solid #4facfe; }
@@ -639,6 +668,7 @@
         let gameOver = false;
         let pendingEightCard = null;
         let isComputerTurn = false;
+        let isFirstMove = true;
 
         function createDeck() {
             const newDeck = [];
@@ -761,9 +791,10 @@
             gameOver = false;
             pendingEightCard = null;
             isComputerTurn = false;
+            isFirstMove = true;
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('');
+            updateStatus('Match rank or suit. Aces change suit. Draw if you can\'t play.');
             updateDisplay();
         }
 
@@ -792,9 +823,27 @@
             topCardEl.className = 'card';
             topCardEl.style.backgroundImage = `url('${imageUrl}')`;
             
-            if (card.isJoker || card.isAce) {
-                // Just show artist name for wild cards (image shows everything)
+            if (card.isJoker) {
+                // Show JOKER text below image
                 topCardEl.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-joker">JOKER</span>
+                    </div>
+                    <div class="card-artist">${card.artist}</div>
+                `;
+                
+                // Add animation class
+                topCardEl.classList.add('wild-card-played');
+                setTimeout(() => {
+                    topCardEl.classList.remove('wild-card-played');
+                }, 1000);
+            } else if (card.isAce) {
+                // Show Ace rank and suit below image
+                topCardEl.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-rank">${card.rank}</span>
+                        <span class="info-suit">${card.suit}</span>
+                    </div>
                     <div class="card-artist">${card.artist}</div>
                 `;
                 
@@ -804,8 +853,12 @@
                     topCardEl.classList.remove('wild-card-played');
                 }, 1000);
             } else {
-                // Show artist name for regular cards
+                // Show rank and suit below image
                 topCardEl.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-rank">${card.rank}</span>
+                        <span class="info-suit">${card.suit}</span>
+                    </div>
                     <div class="card-artist">${card.artist}</div>
                 `;
             }
@@ -884,6 +937,11 @@
                 updateStatus('Cannot play that card');
                 setTimeout(() => updateStatus(''), 1500);
                 return;
+            }
+            
+            // Clear rules message on first move
+            if (isFirstMove) {
+                isFirstMove = false;
             }
             
             playerHand.splice(index, 1);
@@ -966,6 +1024,12 @@
 
         function drawCard() {
             if (gameOver || isComputerTurn || pendingEightCard) return;
+            
+            // Clear rules message on first move
+            if (isFirstMove) {
+                isFirstMove = false;
+            }
+            
             if (deck.length === 0) {
                 updateStatus('Deck empty - pass turn');
                 isComputerTurn = true;
