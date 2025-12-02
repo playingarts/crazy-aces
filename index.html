@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Fous - Playing Arts</title>
+    <title>Crazy Aces - Playing Arts</title>
     <style>
         * {
             margin: 0;
@@ -686,7 +686,7 @@
 
     <div class="suit-selector" id="suitSelector">
         <div class="suit-selector-header">
-            <div class="suit-selector-title">Choisissez une enseigne</div>
+            <div class="suit-selector-title">Choose a suit</div>
             <button class="close-selector-btn" onclick="closeSuitSelector()">✕</button>
         </div>
         <div class="suit-options">
@@ -700,8 +700,8 @@
     <div class="game-over" id="gameOver">
         <div class="result-text" id="resultText"></div>
         <div class="stats-text" id="statsText"></div>
-        <button class="play-again-btn" onclick="initGame()">Rejouer</button>
-        <button class="reset-stats-btn" onclick="resetStats()">Réinitialiser les statistiques</button>
+        <button class="play-again-btn" onclick="initGame()">Play Again</button>
+        <button class="reset-stats-btn" onclick="resetStats()">Reset Statistics</button>
     </div>
 
     <script>
@@ -890,7 +890,7 @@
             isDrawing = false;
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Jouez rang ou enseigne. Les As changent la enseigne. Piochez si vous ne pouvez pas jouer.');
+            updateStatus('Match rank or suit. Aces change suit. Draw if you can\'t play.');
             updateDisplay();
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
         }
@@ -1076,7 +1076,7 @@
             
             // Check if card can be played
             if (!canPlayCard(card)) {
-                updateStatus('Impossible de jouer cette carte');
+                updateStatus('Cannot play that card');
                 setTimeout(() => updateStatus(''), 1500);
                 return;
             }
@@ -1099,7 +1099,7 @@
                 // Joker = wild + skip opponent
                 pendingEightCard = card;
                 isComputerTurn = false; // Unlock while waiting for suit selection
-                updateStatus('Vous avez joué un Joker - choisissez une enseigne');
+                updateStatus('You played Joker - choose a suit');
                 document.getElementById('suitSelector').classList.add('show');
                 return;
             }
@@ -1108,7 +1108,7 @@
                 // Ace = change suit
                 pendingEightCard = card;
                 isComputerTurn = false; // Unlock while waiting for suit selection
-                updateStatus('Vous avez joué un As - choisissez une enseigne');
+                updateStatus('You played Ace - choose a suit');
                 updateSuitSelector(); // Update which suits are available
                 document.getElementById('suitSelector').classList.add('show');
                 return;
@@ -1117,7 +1117,7 @@
             currentSuit = card.suit;
             currentRank = card.rank;
             
-            updateStatus(`Vous avez joué ${card.rank}${card.suit}`);
+            updateStatus(`You played ${card.rank}${card.suit}`);
             setTimeout(() => updateStatus(''), 1500);
             
             if (playerHand.length === 0) {
@@ -1151,7 +1151,7 @@
             
             pendingEightCard = null;
             
-            updateStatus(`Vous avez changé la enseigne en ${suit}`);
+            updateStatus(`You changed suit to ${suit}`);
             setTimeout(() => updateStatus(''), 2000);
             
             if (playerHand.length === 0) {
@@ -1208,7 +1208,7 @@
             
             document.getElementById('suitSelector').classList.remove('show');
             updateDisplay();
-            updateStatus('Carte retournée en main');
+            updateStatus('Card returned to hand');
             setTimeout(() => updateStatus(''), 1500);
         }
 
@@ -1226,7 +1226,7 @@
             }
             
             if (deck.length === 0) {
-                updateStatus('Pioche vide - tour passé');
+                updateStatus('Deck empty - pass turn');
                 setTimeout(() => {
                     updateStatus('');
                     isDrawing = false; // Unlock drawing
@@ -1238,7 +1238,7 @@
             const card = deck.shift();
             if (!card) {
                 // Safety check - deck was empty
-                updateStatus('Pioche vide - tour passé');
+                updateStatus('Deck empty - pass turn');
                 setTimeout(() => {
                     updateStatus('');
                     isDrawing = false; // Unlock drawing
@@ -1248,7 +1248,7 @@
             }
             
             playerHand.push(card);
-            updateStatus('Vous avez pioché une carte');
+            updateStatus('You drew a card');
             setTimeout(() => updateStatus(''), 1200);
             updateDisplay(false); // No animation when drawing
             
@@ -1349,7 +1349,7 @@
                 currentSuit = bestSuit;
                 currentRank = card.rank;
                 suitWasChanged = true;
-                updateStatus(`L'ordinateur a joué un Joker - changé en ${currentSuit}`);
+                updateStatus(`Computer played Joker - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
             } else if (card.isAce) {
                 // Choose most common suit in hand
@@ -1368,13 +1368,13 @@
                 card.isAce = false; // No longer wild
                 suitWasChanged = false;
                 
-                updateStatus(`L'ordinateur a joué un As - changé en ${currentSuit}`);
+                updateStatus(`Computer played Ace - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
             } else {
                 currentSuit = card.suit;
                 currentRank = card.rank;
                 suitWasChanged = false;
-                updateStatus(`L'ordinateur a joué ${card.rank}${card.suit}`);
+                updateStatus(`Computer played ${card.rank}${card.suit}`);
                 setTimeout(() => updateStatus(''), 1500);
             }
             
@@ -1416,7 +1416,7 @@
             const statsText = document.getElementById('statsText');
             
             if (winner === 'player') {
-                resultText.textContent = '🎉 Vous avez gagné !';
+                resultText.textContent = '🎉 You Win!';
                 resultText.className = 'result-text win';
                 launchConfetti();
             } else {
@@ -1424,7 +1424,7 @@
                 resultText.className = 'result-text lose';
             }
             
-            statsText.textContent = `Victoires: ${playerWins} | Défaites: ${computerWins} | Taux de victoire: ${winRate}%`;
+            statsText.textContent = `Wins: ${playerWins} | Losses: ${computerWins} | Win Rate: ${winRate}%`;
             
             gameOverEl.classList.add('show');
         }
@@ -1434,7 +1434,7 @@
             computerWins = 0;
             localStorage.removeItem('crazyAcesPlayerWins');
             localStorage.removeItem('crazyAcesComputerWins');
-            document.getElementById('statsText').textContent = 'Victoires: 0 | Défaites: 0 | Taux de victoire: 0%';
+            document.getElementById('statsText').textContent = 'Wins: 0 | Losses: 0 | Win Rate: 0%';
         }
 
         function launchConfetti() {
