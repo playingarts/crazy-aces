@@ -1282,7 +1282,7 @@
                         return;
                     }
                     computerHand.push(card);
-                    updateStatus('L\'ordinateur a pioché une carte');
+                    updateStatus('Computer drew a card');
                     setTimeout(() => updateStatus(''), 1200);
                     
                     if (canPlayCard(card)) {
@@ -1302,7 +1302,7 @@
                     }
                 } else {
                     // Deck empty, computer must pass
-                    updateStatus('L\'ordinateur passe');
+                    updateStatus('Computer passes');
                     setTimeout(() => updateStatus(''), 1500);
                     updateDisplay(false); // No animation
                     isComputerTurn = false;
@@ -1420,7 +1420,7 @@
                 resultText.className = 'result-text win';
                 launchConfetti();
             } else {
-                resultText.textContent = '😔 L\'ordinateur a gagné';
+                resultText.textContent = '😔 Computer Wins';
                 resultText.className = 'result-text lose';
             }
             
