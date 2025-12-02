@@ -866,9 +866,9 @@
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
         }
 
-        function updateDisplay() {
+        function updateDisplay(animate = true) {
             renderOpponentHand();
-            renderTopCard();
+            renderTopCard(animate);
             renderPlayerHand();
         }
 
@@ -883,7 +883,7 @@
             }
         }
 
-        function renderTopCard() {
+        function renderTopCard(animate = true) {
             const topCardEl = document.getElementById('topCard');
             const card = discardPile[discardPile.length - 1];
             const imageUrl = getCardImageUrl(card);
@@ -892,15 +892,18 @@
             const isFirstCard = discardPile.length === 1;
             const rotation = isFirstCard ? 0 : (Math.random() - 0.5) * 6;
             
-            topCardEl.className = 'card card-animating';
+            // Only add animation class if animate is true
+            topCardEl.className = animate ? 'card card-animating' : 'card';
             topCardEl.style.backgroundImage = `url('${imageUrl}')`;
             topCardEl.style.setProperty('--rotation', `${rotation}deg`);
             topCardEl.style.transform = `rotate(${rotation}deg)`;
             
             // Remove animation class after animation completes
-            setTimeout(() => {
-                topCardEl.classList.remove('card-animating');
-            }, 400);
+            if (animate) {
+                setTimeout(() => {
+                    topCardEl.classList.remove('card-animating');
+                }, 400);
+            }
             
             // Render previous cards stack (last 3 cards before current)
             const stackEl = document.getElementById('cardStack');
@@ -1218,7 +1221,7 @@
             playerHand.push(card);
             updateStatus('You drew a card');
             setTimeout(() => updateStatus(''), 1200);
-            updateDisplay();
+            updateDisplay(false); // No animation when drawing
             
             if (!canPlayCard(card)) {
                 // Card can't be played, computer's turn
