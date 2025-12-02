@@ -663,7 +663,7 @@
 
     <div class="suit-selector" id="suitSelector">
         <div class="suit-selector-header">
-            <div class="suit-selector-title">Choisissez une couleur</div>
+            <div class="suit-selector-title">Choisissez une enseigne</div>
             <button class="close-selector-btn" onclick="closeSuitSelector()">✕</button>
         </div>
         <div class="suit-options">
@@ -861,7 +861,7 @@
             isDrawing = false;
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Jouez rang ou couleur. Les As changent la couleur. Piochez si vous ne pouvez pas jouer.');
+            updateStatus('Jouez rang ou enseigne. Les As changent la enseigne. Piochez si vous ne pouvez pas jouer.');
             updateDisplay();
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
         }
@@ -1070,7 +1070,7 @@
                 // Joker = wild + skip opponent
                 pendingEightCard = card;
                 isComputerTurn = false; // Unlock while waiting for suit selection
-                updateStatus('Vous avez joué un Joker - choisissez une couleur');
+                updateStatus('Vous avez joué un Joker - choisissez une enseigne');
                 document.getElementById('suitSelector').classList.add('show');
                 return;
             }
@@ -1079,7 +1079,7 @@
                 // Ace = change suit
                 pendingEightCard = card;
                 isComputerTurn = false; // Unlock while waiting for suit selection
-                updateStatus('Vous avez joué un As - choisissez une couleur');
+                updateStatus('Vous avez joué un As - choisissez une enseigne');
                 updateSuitSelector(); // Update which suits are available
                 document.getElementById('suitSelector').classList.add('show');
                 return;
@@ -1122,7 +1122,7 @@
             
             pendingEightCard = null;
             
-            updateStatus(`Vous avez changé la couleur en ${suit}`);
+            updateStatus(`Vous avez changé la enseigne en ${suit}`);
             setTimeout(() => updateStatus(''), 2000);
             
             if (playerHand.length === 0) {
