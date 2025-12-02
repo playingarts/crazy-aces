@@ -578,25 +578,30 @@
         .stats-text {
             font-size: 16px;
             color: rgba(255,255,255,0.7);
+            margin-top: 20px;
             margin-bottom: 10px;
         }
 
         .play-again-btn {
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
             color: white;
-            padding: 15px 40px;
-            font-size: 16px;
-            border-radius: 30px;
+            padding: 20px 60px;
+            font-size: 20px;
+            border-radius: 50px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             transition: all 0.3s ease;
-            margin-top: 20px;
+            margin-top: 30px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .play-again-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.05);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: scale(1.08);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
         }
 
         .reset-stats-btn {
@@ -699,8 +704,8 @@
 
     <div class="game-over" id="gameOver">
         <div class="result-text" id="resultText"></div>
-        <div class="stats-text" id="statsText"></div>
         <button class="play-again-btn" onclick="initGame()">Play Again</button>
+        <div class="stats-text" id="statsText"></div>
         <button class="reset-stats-btn" onclick="resetStats()">Reset Statistics</button>
     </div>
 
@@ -890,7 +895,7 @@
             isDrawing = false;
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Match rank or suit. Aces change suit. Draw if you can\'t play.');
+            updateStatus('Click a card to play it, or draw from the deck. Match the rank or suit!');
             updateDisplay();
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
         }
