@@ -1248,7 +1248,7 @@
                     const card = deck.shift();
                     if (!card) {
                         // Deck empty after shift
-                        updateDisplay();
+                        updateDisplay(false); // No animation
                         isComputerTurn = false;
                         return;
                     }
@@ -1267,7 +1267,7 @@
                         }, 1200);
                     } else {
                         setTimeout(() => {
-                            updateDisplay();
+                            updateDisplay(false); // No animation when drawing
                             isComputerTurn = false;
                         }, 1200);
                     }
@@ -1275,7 +1275,7 @@
                     // Deck empty, computer must pass
                     updateStatus('L\'ordinateur passe');
                     setTimeout(() => updateStatus(''), 1500);
-                    updateDisplay();
+                    updateDisplay(false); // No animation
                     isComputerTurn = false;
                 }
                 return;
