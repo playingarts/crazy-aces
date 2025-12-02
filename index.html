@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crazy Aces - Playing Arts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+
+        .player-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .opponent-hand-preview {
+            display: inline-flex;
+            gap: 8px;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            min-height: 80px;
+        }
+
+        .card-back-small {
+            width: 45px;
+            height: 65px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-back-small::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.03) 5px, rgba(255,255,255,0.03) 10px),
+                repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(255,255,255,0.03) 5px, rgba(255,255,255,0.03) 10px);
+        }
+
+        .play-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 40px;
+            min-height: 350px;
+            padding-bottom: 60px;
+        }
+
+        .deck-pile {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .deck-pile:hover {
+            transform: translateY(-5px);
+        }
+
+        .card {
+            width: 210px;
+            height: 300px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .card.wild-card-played {
+            animation: wildCardGlow 1s ease-out;
+        }
+
+        @keyframes wildCardGlow {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 40px rgba(255,215,0,0.8), 0 0 80px rgba(255,215,0,0.5);
+            }
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 3px solid rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-back::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 20px);
+        }
+
+        .discard-pile {
+            position: relative;
+        }
+
+        .card .card-rank {
+            display: none;
+        }
+
+        .card .card-suit {
+            display: none;
+        }
+
+        .card.spades { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 3px solid #667eea; }
+        .card.hearts { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: 3px solid #f093fb; }
+        .card.diamonds { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: 3px solid #4facfe; }
+        .card.clubs { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border: 3px solid #43e97b; }
+        .card.joker { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border: 3px solid #FFD700; }
+
+        .card-rank {
+            font-size: 72px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: absolute;
+            top: 15px;
+            left: 15px;
+        }
+
+        .card-suit {
+            font-size: 84px;
+            filter: brightness(0) invert(1);
+        }
+
+        .card-artist {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 15px;
+            color: rgba(255,255,255,0.9);
+            padding: 0;
+            background: none;
+            border-radius: 0;
+            white-space: nowrap;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-artist:hover {
+            opacity: 1;
+        }
+
+        .player-hand {
+            background: #f5f5f5;
+            border-radius: 20px;
+            padding: 13px;
+            display: inline-block;
+            margin: 0 auto;
+        }
+
+        .hand-cards {
+            display: flex;
+            gap: 7px;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+
+        .hand-card {
+            width: 60px;
+            height: 87px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .hand-card.ace-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        .hand-card .card-rank {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            text-shadow: none;
+            position: static;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .hand-card .card-suit {
+            font-size: 25px;
+            filter: brightness(0) invert(1);
+            margin-top: 5px;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .joker-text {
+            font-size: 12px !important;
+            font-weight: 700;
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                width: 225px;
+                height: 322px;
+            }
+            
+            .card .card-rank {
+                font-size: 78px;
+            }
+            
+            .card .card-suit {
+                font-size: 90px;
+            }
+            
+            .play-area {
+                gap: 35px;
+                padding: 45px;
+                min-height: 420px;
+            }
+            
+            .opponent-hand-preview {
+                padding: 18px;
+                min-height: 90px;
+            }
+            
+            .card-back-small {
+                width: 50px;
+                height: 72px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .card {
+                width: 255px;
+                height: 365px;
+            }
+            
+            .card .card-rank {
+                font-size: 87px;
+            }
+            
+            .card .card-suit {
+                font-size: 102px;
+            }
+            
+            .play-area {
+                gap: 40px;
+                padding: 50px;
+                min-height: 480px;
+            }
+            
+            .opponent-hand-preview {
+                padding: 20px;
+                min-height: 95px;
+            }
+            
+            .card-back-small {
+                width: 54px;
+                height: 78px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                width: 140px;
+                height: 200px;
+            }
+            
+            .card .card-rank {
+                font-size: 48px;
+            }
+            
+            .card .card-suit {
+                font-size: 56px;
+            }
+            
+            .play-area {
+                gap: 15px;
+                padding: 20px;
+                min-height: 280px;
+            }
+            
+            .opponent-hand-preview {
+                padding: 10px;
+                min-height: 60px;
+            }
+            
+            .card-back-small {
+                width: 38px;
+                height: 55px;
+            }
+            
+            .status-message {
+                font-size: 13px;
+                padding: 10px;
+                min-height: 40px;
+            }
+        }
+
+        .hand-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 15px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .suit-selector {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20,20,20,0.98);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: none;
+        }
+
+        .suit-selector.show {
+            display: block;
+        }
+
+        .suit-selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .suit-selector-title {
+            font-size: 18px;
+            color: rgba(255,255,255,0.9);
+            flex: 1;
+            text-align: center;
+        }
+
+        .close-selector-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-selector-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,1);
+            transform: scale(1.1);
+        }
+
+        .suit-options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .suit-option {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suit-option:hover {
+            transform: scale(1.1);
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20,20,20,0.98);
+            padding: 50px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .game-over.show {
+            display: block;
+        }
+
+        .result-text {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .result-text.win {
+            color: #43e97b;
+        }
+
+        .result-text.lose {
+            color: #f5576c;
+        }
+
+        .play-again-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .play-again-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="confetti-container" id="confettiContainer"></div>
+    <div class="game-container">
+        <div style="display: flex; justify-content: center;">
+            <div class="opponent-hand-preview" id="opponentHandPreview">
+                <!-- Card backs will be generated here -->
+            </div>
+        </div>
+
+        <div class="status-message" id="statusMessage">
+            Match the rank or suit of the center card
+        </div>
+
+        <div class="play-area">
+            <div class="deck-pile" onclick="drawCard()">
+                <div class="card card-back" id="deckCard"></div>
+            </div>
+
+            <div class="discard-pile" id="discardPile">
+                <div class="card" id="topCard">
+                    <!-- Top discard card -->
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+            <div class="player-hand">
+                <div class="hand-cards" id="playerHand">
+                    <!-- Player cards will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="suit-selector" id="suitSelector">
+        <div class="suit-selector-header">
+            <div class="suit-selector-title">Choose a suit</div>
+            <button class="close-selector-btn" onclick="closeSuitSelector()">✕</button>
+        </div>
+        <div class="suit-options">
+            <div class="suit-option" onclick="chooseSuit('♠️')">♠️</div>
+            <div class="suit-option" onclick="chooseSuit('♥️')">♥️</div>
+            <div class="suit-option" onclick="chooseSuit('♦️')">♦️</div>
+            <div class="suit-option" onclick="chooseSuit('♣️')">♣️</div>
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <div class="result-text" id="resultText"></div>
+        <button class="play-again-btn" onclick="initGame()">Play Again</button>
+    </div>
+
+    <script>
+        const cardData = {
+            '2♠️': { artist: 'Mattias Adolfsson' }, '3♠️': { artist: 'Teagan White' },
+            '4♠️': { artist: 'Serial Cut' }, '5♠️': { artist: 'Musketon' },
+            '6♠️': { artist: 'Fernando Volken Togni' }, '7♠️': { artist: 'Muxxi' },
+            '8♠️': { artist: 'Gary Fernández' }, '9♠️': { artist: 'Anton Repponen' },
+            '10♠️': { artist: 'Bicicleta Sem Freio' }, 'J♠️': { artist: 'Seb Niark1' },
+            'Q♠️': { artist: 'David Mack' }, 'K♠️': { artist: 'Yulia Brodskaya' },
+            'A♠️': { artist: 'Iain Macarthur' },
+            
+            '2♥️': { artist: 'Peter Tarka' }, '3♥️': { artist: 'Mercedes deBellard' },
+            '4♥️': { artist: 'Ruben Ireland' }, '5♥️': { artist: 'Aitch' },
+            '6♥️': { artist: 'Javier Medellin Puyou' }, '7♥️': { artist: 'Felix LaFlamme' },
+            '8♥️': { artist: 'Raul Urias' }, '9♥️': { artist: 'Carlos Lerma' },
+            '10♥️': { artist: 'Caramelaw' }, 'J♥️': { artist: 'Steve Simpson' },
+            'Q♥️': { artist: 'Conrad Roset' }, 'K♥️': { artist: 'Sara Blake' },
+            'A♥️': { artist: 'Mr. Kone' },
+            
+            '2♦️': { artist: 'YemaYema' }, '3♦️': { artist: 'Carne Griffiths' },
+            '4♦️': { artist: 'Peter Olschinsky' }, '5♦️': { artist: 'Fab Ciraolo' },
+            '6♦️': { artist: 'VASAVA' }, '7♦️': { artist: 'Matt W. Moore' },
+            '8♦️': { artist: 'Jthree Concepts' }, '9♦️': { artist: 'Pirecco' },
+            '10♦️': { artist: 'Lei Melendres' }, 'J♦️': { artist: 'Newfren' },
+            'Q♦️': { artist: 'agnes-cecile' }, 'K♦️': { artist: 'Saturno' },
+            'A♦️': { artist: 'Jordan Debney' },
+            
+            '2♣️': { artist: 'Tang Yau Hoong' }, '3♣️': { artist: 'Fernando Chamarelli' },
+            '4♣️': { artist: 'MUTI' }, '5♣️': { artist: 'Valerie Ann Chua' },
+            '6♣️': { artist: 'Tobias van Schneider' }, '7♣️': { artist: 'Krzysztof CHKN Nowak' },
+            '8♣️': { artist: 'El Grand Chamaco' }, '9♣️': { artist: 'Chuck Anderson' },
+            '10♣️': { artist: 'Hey' }, 'J♣️': { artist: 'Bakea' },
+            'Q♣️': { artist: 'Ise Ananphada' }, 'K♣️': { artist: 'James White' },
+            'A♣️': { artist: 'Andreas Preis' },
+            
+            'JOKER_1': { artist: 'Mike Friedrich' },
+            'JOKER_2': { artist: 'Joshua Davis' }
+        };
+
+        const suits = ['♠️', '♥️', '♦️', '♣️'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+        let deck = [];
+        let playerHand = [];
+        let computerHand = [];
+        let discardPile = [];
+        let currentSuit = null;
+        let currentRank = null;
+        let gameOver = false;
+        let pendingEightCard = null;
+        let isComputerTurn = false;
+
+        function createDeck() {
+            const newDeck = [];
+            for (let suit of suits) {
+                for (let rank of ranks) {
+                    newDeck.push(createCard(rank, suit));
+                }
+            }
+            // Add 2 jokers
+            newDeck.push({ rank: 'JOKER', suit: 'joker', artist: 'Mike Friedrich', isJoker: true });
+            newDeck.push({ rank: 'JOKER', suit: 'joker', artist: 'Joshua Davis', isJoker: true });
+            return shuffleDeck(newDeck);
+        }
+
+        function createCard(rank, suit) {
+            const cardKey = `${rank}${suit}`;
+            const data = cardData[cardKey];
+            return {
+                rank,
+                suit,
+                artist: data ? data.artist : 'Unknown',
+                isAce: rank === 'A',
+                isJoker: false
+            };
+        }
+
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        // Card image URLs from Playing Arts deck
+        const cardImages = {
+            '2♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/2-of-clubs-tang-yau-hoong.jpg?2',
+            '2♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/2-of-diamonds-yemayema.jpg?2',
+            '2♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/2-of-hearts-peter-tarka.jpg?2',
+            '2♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/2-of-spades-mattias-adolfsson.jpg?2',
+            '3♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/3-of-clubs-fernando-chamarelli.jpg?2',
+            '3♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/3-of-diamonds-carne-griffiths.jpg?2',
+            '3♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/3-of-hearts-mercedes-debellard.jpg?2',
+            '3♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/3-of-spades-teagan-white.jpg?2',
+            '4♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/4-of-clubs-muti.jpg?2',
+            '4♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/4-of-diamonds-peter-olschinsky.jpg?2',
+            '4♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/4-of-hearts-ruben-ireland.jpg?2',
+            '4♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/4-of-spades-serial-cut.jpg?2',
+            '5♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/5-of-clubs-valerie-ann-chua.jpg?2',
+            '5♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/5-of-diamonds-fab-ciraolo.jpg?2',
+            '5♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/5-of-hearts-aitch.jpg?2',
+            '5♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/5-of-spades-musketon.jpg?2',
+            '6♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/6-of-clubs-tobias-van-schneider.jpg?2',
+            '6♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/6-of-diamonds-vasava.jpg?2',
+            '6♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/6-of-hearts-javier-medellin-puyou.jpg?2',
+            '6♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/6-of-spades-fernando-volken-togni.jpg?2',
+            '7♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/7-of-clubs-krzysztof-nowak.jpg?2',
+            '7♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/7-of-diamonds-matt-w-moore.jpg?2',
+            '7♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/7-of-hearts-felix-laflamme.jpg?2',
+            '7♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/7-of-spades-muxxi.jpg?2',
+            '8♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/8-of-clubs-el-grand-chamaco.jpg?2',
+            '8♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/8-of-diamonds-jthree-concepts.jpg?2',
+            '8♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/8-of-hearts-raul-urias.jpg?2',
+            '8♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/8-of-spades-gary-fernandez.jpg?2',
+            '9♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/9-of-clubs-chuck-anderson.jpg?2',
+            '9♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/9-of-diamonds-pirecco.jpg?2',
+            '9♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/9-of-hearts-carlos-lerma.jpg?2',
+            '9♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/9-of-spades-anton-repponen.jpg?2',
+            '10♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/10-of-clubs-hey.jpg?2',
+            '10♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/10-of-diamonds-lei-melendres.jpg?2',
+            '10♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/10-of-hearts-caramelaw.jpg?2',
+            '10♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/10-of-spades-bicicleta-sem-freio.jpg?2',
+            'J♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/jack-of-clubs-bakea.jpg?2',
+            'J♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/jack-of-diamonds-newfren.jpg?2',
+            'J♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/jack-of-hearts-steve-simpson.jpg?2',
+            'J♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/jack-of-spades-seb-niark1.jpg?2',
+            'Q♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/queen-of-clubs-ise-ananphada.jpg?2',
+            'Q♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/queen-of-diamonds-agnes-cecile.jpg?2',
+            'Q♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/queen-of-hearts-conrad-roset.jpg?2',
+            'Q♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/queen-of-spades-david-mack.jpg?2',
+            'K♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/king-of-clubs-james-white.jpg?2',
+            'K♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/king-of-diamonds-saturno-the-creatter.jpg?2',
+            'K♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/king-of-hearts-sara-blake.jpg?2',
+            'K♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/king-of-spades-yulia-brodskaya.jpg?2',
+            'A♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/ace-of-clubs-andreas-preis.jpg?2',
+            'A♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/ace-of-diamonds-jordan-debney.jpg?2',
+            'A♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/ace-of-hearts-mr-kone.jpg?2',
+            'A♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/ace-of-spades-iain-macarthur.jpg?2',
+            'JOKER': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/joker-mike-friedrich.jpg?2',
+            'JOKER_2': 'https://s3.amazonaws.com/img.playingarts.com/one-big-hd/joker-joshua-davis.jpg?2'
+        };
+
+        function getCardImageUrl(card) {
+            if (card.isJoker) {
+                return card.artist === 'Mike Friedrich' ? cardImages['JOKER'] : cardImages['JOKER_2'];
+            }
+            const key = card.rank + card.suit;
+            return cardImages[key] || '';
+        }
+
+        function getSuitClass(suit) {
+            const suitMap = { '♠️': 'spades', '♥️': 'hearts', '♦️': 'diamonds', '♣️': 'clubs', 'joker': 'joker' };
+            return suitMap[suit] || '';
+        }
+
+        function initGame() {
+            deck = createDeck();
+            playerHand = deck.splice(0, 7);
+            computerHand = deck.splice(0, 7);
+            
+            // First discard card (not Ace or joker)
+            let firstCard;
+            do {
+                firstCard = deck.shift();
+            } while (firstCard.isAce || firstCard.isJoker);
+            
+            discardPile = [firstCard];
+            currentSuit = firstCard.suit;
+            currentRank = firstCard.rank;
+            gameOver = false;
+            pendingEightCard = null;
+            isComputerTurn = false;
+
+            document.getElementById('gameOver').classList.remove('show');
+            updateStatus('');
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            renderOpponentHand();
+            renderTopCard();
+            renderPlayerHand();
+        }
+
+        function renderOpponentHand() {
+            const container = document.getElementById('opponentHandPreview');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < computerHand.length; i++) {
+                const cardBack = document.createElement('div');
+                cardBack.className = 'card-back-small';
+                container.appendChild(cardBack);
+            }
+        }
+
+        function renderTopCard() {
+            const topCardEl = document.getElementById('topCard');
+            const card = discardPile[discardPile.length - 1];
+            const imageUrl = getCardImageUrl(card);
+            
+            topCardEl.className = 'card';
+            topCardEl.style.backgroundImage = `url('${imageUrl}')`;
+            
+            if (card.isJoker || card.isAce) {
+                // Just show artist name for wild cards (image shows everything)
+                topCardEl.innerHTML = `
+                    <div class="card-artist">${card.artist}</div>
+                `;
+                
+                // Add animation class
+                topCardEl.classList.add('wild-card-played');
+                setTimeout(() => {
+                    topCardEl.classList.remove('wild-card-played');
+                }, 1000);
+            } else {
+                // Show artist name for regular cards
+                topCardEl.innerHTML = `
+                    <div class="card-artist">${card.artist}</div>
+                `;
+            }
+        }
+
+        function renderPlayerHand() {
+            const handEl = document.getElementById('playerHand');
+            handEl.innerHTML = '';
+            
+            // Separate Aces/Jokers and other cards
+            const aces = playerHand.filter(card => card.isAce || card.isJoker);
+            const regularCards = playerHand.filter(card => !card.isAce && !card.isJoker);
+            
+            // Render Aces first (on the left)
+            aces.forEach((card) => {
+                const actualIndex = playerHand.indexOf(card);
+                const cardEl = document.createElement('div');
+                cardEl.className = 'hand-card ace-card';
+                
+                if (card.isJoker) {
+                    cardEl.innerHTML = `
+                        <div class="card-rank joker-text">JOKER</div>
+                    `;
+                } else {
+                    cardEl.innerHTML = `
+                        <div class="card-rank">${card.rank}</div>
+                        <div class="card-suit">${card.suit}</div>
+                    `;
+                }
+                
+                if (!gameOver) {
+                    cardEl.onclick = () => playCard(actualIndex);
+                }
+                
+                handEl.appendChild(cardEl);
+            });
+            
+            // Render regular cards
+            regularCards.forEach((card) => {
+                const actualIndex = playerHand.indexOf(card);
+                const cardEl = document.createElement('div');
+                cardEl.className = 'hand-card';
+                
+                cardEl.innerHTML = `
+                    <div class="card-rank">${card.rank}</div>
+                    <div class="card-suit">${card.suit}</div>
+                `;
+                
+                if (!gameOver) {
+                    cardEl.onclick = () => playCard(actualIndex);
+                }
+                
+                handEl.appendChild(cardEl);
+            });
+        }
+
+        function canPlayCard(card) {
+            if (!card) return false;
+            if (card.isJoker) return true;
+            if (card.isAce) return true;
+            if (card.suit === currentSuit) return true;
+            if (card.rank === currentRank) return true;
+            return false;
+        }
+
+        function playCard(index) {
+            if (gameOver || isComputerTurn || pendingEightCard) return;
+            
+            const card = playerHand[index];
+            
+            // Safety check
+            if (!card) return;
+            
+            // Check if card can be played
+            if (!canPlayCard(card)) {
+                updateStatus('Cannot play that card');
+                setTimeout(() => updateStatus(''), 1500);
+                return;
+            }
+            
+            playerHand.splice(index, 1);
+            discardPile.push(card);
+            
+            if (card.isJoker) {
+                // Joker = wild + skip opponent
+                pendingEightCard = card;
+                updateStatus('You played Joker - choose a suit');
+                document.getElementById('suitSelector').classList.add('show');
+                return;
+            }
+            
+            if (card.isAce) {
+                // Ace = change suit
+                pendingEightCard = card;
+                updateStatus('You played Ace - choose a suit');
+                document.getElementById('suitSelector').classList.add('show');
+                return;
+            }
+            
+            currentSuit = card.suit;
+            currentRank = card.rank;
+            
+            updateStatus(`You played ${card.rank}${card.suit}`);
+            setTimeout(() => updateStatus(''), 1500);
+            
+            if (playerHand.length === 0) {
+                endGame('player');
+                return;
+            }
+            
+            updateDisplay();
+            isComputerTurn = true;
+            setTimeout(() => {
+                computerTurn();
+            }, 800);
+        }
+
+        function chooseSuit(suit) {
+            document.getElementById('suitSelector').classList.remove('show');
+            currentSuit = suit;
+            currentRank = pendingEightCard.rank;
+            
+            const wasJoker = pendingEightCard.isJoker;
+            pendingEightCard = null;
+            
+            updateStatus(`You changed suit to ${suit}`);
+            setTimeout(() => updateStatus(''), 2000);
+            
+            if (playerHand.length === 0) {
+                endGame('player');
+                return;
+            }
+            
+            updateDisplay();
+            
+            // If joker was played, skip computer's turn
+            if (!wasJoker) {
+                isComputerTurn = true;
+                setTimeout(() => {
+                    computerTurn();
+                }, 800);
+            }
+        }
+
+        function closeSuitSelector() {
+            // Return the card to player's hand
+            if (pendingEightCard) {
+                discardPile.pop(); // Remove from discard pile
+                playerHand.push(pendingEightCard); // Add back to hand
+                pendingEightCard = null;
+            }
+            
+            document.getElementById('suitSelector').classList.remove('show');
+            updateDisplay();
+            updateStatus('Card returned to hand');
+            setTimeout(() => updateStatus(''), 1500);
+        }
+
+        function drawCard() {
+            if (gameOver || isComputerTurn || pendingEightCard) return;
+            if (deck.length === 0) {
+                updateStatus('Deck empty - pass turn');
+                isComputerTurn = true;
+                setTimeout(() => {
+                    updateStatus('');
+                    computerTurn();
+                }, 1500);
+                return;
+            }
+            
+            const card = deck.shift();
+            if (!card) {
+                // Safety check - deck was empty
+                updateStatus('Deck empty - pass turn');
+                isComputerTurn = true;
+                setTimeout(() => {
+                    updateStatus('');
+                    computerTurn();
+                }, 1500);
+                return;
+            }
+            
+            playerHand.push(card);
+            updateStatus('You drew a card');
+            setTimeout(() => updateStatus(''), 1200);
+            updateDisplay();
+            
+            if (!canPlayCard(card)) {
+                isComputerTurn = true;
+                setTimeout(() => {
+                    computerTurn();
+                }, 1000);
+            }
+        }
+
+        function computerTurn() {
+            if (gameOver) return;
+            
+            // Find playable cards
+            const playableCards = computerHand.filter(canPlayCard);
+            
+            if (playableCards.length === 0) {
+                // Must draw
+                if (deck.length > 0) {
+                    const card = deck.shift();
+                    if (!card) {
+                        // Deck empty after shift
+                        updateDisplay();
+                        isComputerTurn = false;
+                        return;
+                    }
+                    computerHand.push(card);
+                    updateStatus('Computer drew a card');
+                    setTimeout(() => updateStatus(''), 1200);
+                    
+                    if (canPlayCard(card)) {
+                        setTimeout(() => {
+                            const index = computerHand.indexOf(card);
+                            if (index !== -1) {
+                                computerPlayCard(index);
+                            } else {
+                                isComputerTurn = false;
+                            }
+                        }, 1200);
+                    } else {
+                        setTimeout(() => {
+                            updateDisplay();
+                            isComputerTurn = false;
+                        }, 1200);
+                    }
+                } else {
+                    // Deck empty, computer must pass
+                    updateStatus('Computer passes');
+                    setTimeout(() => updateStatus(''), 1500);
+                    updateDisplay();
+                    isComputerTurn = false;
+                }
+                return;
+            }
+            
+            // Play lowest non-special card, or special if needed
+            playableCards.sort((a, b) => {
+                if (a.isJoker) return 1;
+                if (b.isJoker) return -1;
+                if (a.isAce) return 1;
+                if (b.isAce) return -1;
+                const rankOrder = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+                return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
+            });
+            
+            const cardToPlay = playableCards[0];
+            const index = computerHand.indexOf(cardToPlay);
+            
+            if (index !== -1) {
+                setTimeout(() => {
+                    computerPlayCard(index);
+                }, 800);
+            } else {
+                isComputerTurn = false;
+            }
+        }
+
+        function computerPlayCard(index) {
+            const card = computerHand[index];
+            computerHand.splice(index, 1);
+            discardPile.push(card);
+            
+            if (card.isJoker) {
+                // Choose most common suit in hand
+                const suitCounts = {};
+                computerHand.forEach(c => {
+                    if (!c.isJoker && !c.isAce) {
+                        suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
+                    }
+                });
+                const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
+                currentSuit = bestSuit;
+                currentRank = card.rank;
+                updateStatus(`Computer played Joker - changed to ${currentSuit}`);
+                setTimeout(() => updateStatus(''), 2500);
+            } else if (card.isAce) {
+                // Choose most common suit in hand
+                const suitCounts = {};
+                computerHand.forEach(c => {
+                    if (!c.isJoker && !c.isAce) {
+                        suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
+                    }
+                });
+                const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
+                currentSuit = bestSuit;
+                currentRank = card.rank;
+                updateStatus(`Computer played Ace - changed to ${currentSuit}`);
+                setTimeout(() => updateStatus(''), 2500);
+            } else {
+                currentSuit = card.suit;
+                currentRank = card.rank;
+                updateStatus(`Computer played ${card.rank}${card.suit}`);
+                setTimeout(() => updateStatus(''), 1500);
+            }
+            
+            if (computerHand.length === 0) {
+                endGame('computer');
+                return;
+            }
+            
+            updateDisplay();
+            isComputerTurn = false; // Unlock turn for player
+        }
+
+        function updateStatus(message) {
+            const statusEl = document.getElementById('statusMessage');
+            if (message) {
+                statusEl.textContent = message;
+            } else {
+                statusEl.textContent = '';
+            }
+        }
+
+        function endGame(winner) {
+            gameOver = true;
+            
+            const gameOverEl = document.getElementById('gameOver');
+            const resultText = document.getElementById('resultText');
+            
+            if (winner === 'player') {
+                resultText.textContent = '🎉 You Win!';
+                resultText.className = 'result-text win';
+                launchConfetti();
+            } else {
+                resultText.textContent = '😔 Computer Wins';
+                resultText.className = 'result-text lose';
+            }
+            
+            gameOverEl.classList.add('show');
+        }
+
+        function launchConfetti() {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+            const confettiCount = 150;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    confetti.style.animationDelay = '0s';
+                    
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 30);
+            }
+        }
+
+        // Initialize
+        initGame();
+    </script>
+</body>
+</html>
