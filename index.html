@@ -839,8 +839,10 @@
 
         function initGame() {
             deck = createDeck();
+            console.log(`Deck created with ${deck.length} cards`);
             playerHand = deck.splice(0, 7);
             computerHand = deck.splice(0, 7);
+            console.log(`After dealing: ${deck.length} cards remaining in deck`);
             
             // First discard card (not Ace or joker)
             let firstCard;
@@ -861,6 +863,7 @@
             document.getElementById('gameOver').classList.remove('show');
             updateStatus('Match rank or suit. Aces change suit. Draw if you can\'t play.');
             updateDisplay();
+            console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
         }
 
         function updateDisplay() {
