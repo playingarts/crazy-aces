@@ -1483,6 +1483,7 @@
             }
 
             playerHand.push(card);
+            preloadCardOnDraw(card); // Preload the drawn card
             animateDeckDraw(); // Animate the deck pile
             updateStatus('You drew a card');
             setTimeout(() => updateStatus(''), 1200);
@@ -1518,6 +1519,7 @@
                         return;
                     }
                     computerHand.push(card);
+                    preloadCardOnDraw(card); // Preload the drawn card
                     animateDeckDraw(); // Animate the deck pile
                     updateStatus('Computer drew a card');
                     setTimeout(() => updateStatus(''), 1200);
@@ -1742,78 +1744,111 @@
             }
         }
 
-        // Preload all card images for instant display during gameplay
-        function preloadImages() {
-            const imagesToPreload = [
-                // Card back
-                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2',
-                // All card images from cardImages object
-                ...Object.values(cardImages)
-            ];
+        // Progressive image preloading system
+        window.preloadedImages = window.preloadedImages || new Set();
 
-            let loadedCount = 0;
-            const totalImages = imagesToPreload.length;
+        // Preload a single image
+        function preloadImage(url) {
+            if (!url || window.preloadedImages.has(url)) {
+                return Promise.resolve(); // Already loaded or invalid
+            }
 
-            console.log(`Preloading ${totalImages} card images...`);
-
-            // Create a cache-friendly preload with proper attributes
-            imagesToPreload.forEach(url => {
+            return new Promise((resolve) => {
                 const img = new Image();
-                // Enable CORS for better caching
                 img.crossOrigin = "anonymous";
-                // Add loading priority
                 img.loading = "eager";
-                // Add decoding hint
                 img.decoding = "async";
 
                 img.onload = () => {
-                    loadedCount++;
-                    const progress = Math.round((loadedCount / totalImages) * 100);
-                    const statusEl = document.getElementById('statusMessage');
-                    if (statusEl) {
-                        statusEl.textContent = `Loading cards... ${progress}%`;
-                    }
-                    if (loadedCount === totalImages) {
-                        console.log(`✓ All ${totalImages} card images preloaded and cached`);
-                    }
+                    window.preloadedImages.add(url);
+                    resolve();
                 };
                 img.onerror = () => {
-                    loadedCount++;
                     console.warn(`Failed to load: ${url}`);
-                    const progress = Math.round((loadedCount / totalImages) * 100);
-                    const statusEl = document.getElementById('statusMessage');
-                    if (statusEl) {
-                        statusEl.textContent = `Loading cards... ${progress}%`;
-                    }
+                    resolve(); // Resolve anyway to not block
                 };
                 img.src = url;
-
-                // Keep reference to prevent garbage collection
-                window.preloadedImages = window.preloadedImages || [];
-                window.preloadedImages.push(img);
-            });
-
-            return new Promise((resolve) => {
-                const checkComplete = setInterval(() => {
-                    if (loadedCount >= totalImages) {
-                        clearInterval(checkComplete);
-                        resolve();
-                    }
-                }, 100);
-
-                // Timeout after 30 seconds
-                setTimeout(() => {
-                    clearInterval(checkComplete);
-                    console.log(`Preload timeout - ${loadedCount}/${totalImages} loaded`);
-                    resolve();
-                }, 30000);
             });
         }
 
-        // Initialize - wait for critical images to load
+        // Get card image URL from card object
+        function getCardImageUrl(card) {
+            if (!card) return null;
+            if (card.isJoker) return null; // Jokers don't have images
+            const key = `${card.rank}_${card.suit}`;
+            return cardImages[key];
+        }
+
+        // Preload critical images (table card and backside)
+        async function preloadCriticalImages() {
+            const backsideUrl = 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2';
+
+            // Get first table card URL
+            const firstCard = discardPile[0];
+            const firstCardUrl = getCardImageUrl(firstCard);
+
+            const promises = [preloadImage(backsideUrl)];
+            if (firstCardUrl) {
+                promises.push(preloadImage(firstCardUrl));
+            }
+
+            await Promise.all(promises);
+            console.log('✓ Critical images loaded');
+        }
+
+        // Preload hand cards for both players
+        async function preloadHandImages() {
+            const urls = [];
+
+            // Player hand
+            playerHand.forEach(card => {
+                const url = getCardImageUrl(card);
+                if (url) urls.push(url);
+            });
+
+            // Computer hand
+            computerHand.forEach(card => {
+                const url = getCardImageUrl(card);
+                if (url) urls.push(url);
+            });
+
+            await Promise.all(urls.map(url => preloadImage(url)));
+            console.log(`✓ Hand images loaded (${urls.length} cards)`);
+        }
+
+        // Preload remaining deck cards in background (low priority)
+        function preloadRemainingDeck() {
+            deck.forEach(card => {
+                const url = getCardImageUrl(card);
+                if (url) {
+                    setTimeout(() => preloadImage(url), 0); // Non-blocking
+                }
+            });
+        }
+
+        // Preload card when drawn from deck
+        function preloadCardOnDraw(card) {
+            const url = getCardImageUrl(card);
+            if (url) {
+                preloadImage(url);
+            }
+        }
+
+        // Initialize - progressive loading
         async function initialize() {
-            await preloadImages();
+            // Start the game immediately
             initGame();
+
+            // Load critical images first
+            await preloadCriticalImages();
+            updateDisplay(); // Update to show loaded images
+
+            // Load hand cards
+            await preloadHandImages();
+            updateDisplay(); // Update again to show hand cards
+
+            // Preload remaining deck in background (non-blocking)
+            preloadRemainingDeck();
         }
 
         initialize();
