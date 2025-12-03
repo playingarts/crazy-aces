@@ -27,6 +27,11 @@
                 padding: 8px 8px 8px 8px;
                 align-items: flex-start;
                 min-height: 100vh;
+                overflow: visible;
+            }
+
+            body > * {
+                overflow: visible;
             }
         }
 
@@ -486,13 +491,13 @@
 
             .hand-cards {
                 gap: 5px;
-                padding: 0 8px;
+                padding: 15px;
                 overflow-x: auto;
-                overflow-y: visible;
+                overflow-y: visible !important;
                 -webkit-overflow-scrolling: touch;
-                padding-top: 20px;
-                padding-bottom: 8px;
-                margin-top: -20px;
+                margin-top: -15px;
+                margin-bottom: -15px;
+                clip-path: none !important;
             }
 
             .hand-cards::-webkit-scrollbar {
@@ -512,11 +517,16 @@
             .player-hand {
                 padding: 15px;
                 max-width: 100%;
-                overflow: visible;
+                overflow: visible !important;
             }
 
             .game-container {
                 gap: 23px;
+                overflow: visible !important;
+            }
+
+            .game-container > div {
+                overflow: visible !important;
             }
 
             .top-bar {
