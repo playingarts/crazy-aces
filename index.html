@@ -36,6 +36,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            overflow: visible;
         }
 
         .top-bar {
@@ -288,6 +289,7 @@
             padding: 13px;
             display: inline-block;
             margin: 0 auto;
+            overflow: visible;
         }
 
         .hand-cards {
@@ -295,7 +297,7 @@
             gap: 7px;
             justify-content: center;
             flex-wrap: nowrap;
-            overflow-x: visible;
+            overflow: visible;
         }
 
         .hand-card {
@@ -484,10 +486,13 @@
 
             .hand-cards {
                 gap: 5px;
-                padding: 12px 8px 0 8px;
+                padding: 0 8px;
                 overflow-x: auto;
                 overflow-y: visible;
                 -webkit-overflow-scrolling: touch;
+                padding-top: 20px;
+                padding-bottom: 8px;
+                margin-top: -20px;
             }
 
             .hand-cards::-webkit-scrollbar {
@@ -525,19 +530,17 @@
             .hand-card {
                 flex-shrink: 0;
                 min-width: 45px;
-                transform: translateY(0) scale(1);
-                transition: transform 0.2s ease;
+                transform: translateY(0) scale(1) !important;
+                transition: transform 0.15s ease-in-out;
                 position: relative;
                 z-index: 1;
-            }
-
-            .hand-card:hover {
-                transform: translateY(0) scale(1);
+                -webkit-tap-highlight-color: transparent;
             }
 
             .hand-card:active {
-                transform: translateY(-8px) scale(1.05);
+                transform: translateY(-12px) scale(1.08) !important;
                 z-index: 10;
+                transition: transform 0.1s ease-out;
             }
 
             .suit-selector {
@@ -824,7 +827,7 @@
             </div>
         </div>
 
-        <div style="display: flex; justify-content: center;">
+        <div style="display: flex; justify-content: center; overflow: visible;">
             <div class="player-hand">
                 <div class="hand-cards" id="playerHand">
                     <!-- Player cards will be generated here -->
