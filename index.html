@@ -22,6 +22,12 @@
             padding: 20px;
         }
 
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+        }
+
         .game-container {
             max-width: 1200px;
             width: 100%;
@@ -402,35 +408,112 @@
                 width: 140px;
                 height: 200px;
             }
-            
+
             .card .card-rank {
                 font-size: 48px;
             }
-            
+
             .card .card-suit {
                 font-size: 56px;
             }
-            
+
             .play-area {
-                gap: 15px;
-                padding: 0 20px;
-                min-height: 280px;
+                gap: 10px;
+                padding: 0 8px;
+                min-height: 240px;
+                padding-bottom: 40px;
             }
-            
+
             .opponent-hand-preview {
-                padding: 10px;
-                min-height: 60px;
+                padding: 8px;
+                min-height: 50px;
+                gap: 5px;
             }
-            
+
             .card-back-small {
-                width: 38px;
-                height: 55px;
+                width: 32px;
+                height: 46px;
             }
-            
+
             .status-message {
-                font-size: 13px;
+                font-size: 12px;
+                padding: 8px;
+                min-height: 36px;
+            }
+
+            .hand-card {
+                width: 45px;
+                height: 65px;
+            }
+
+            .hand-card .card-rank {
+                font-size: 22px;
+            }
+
+            .hand-card .card-suit {
+                font-size: 20px;
+                margin-top: 3px;
+            }
+
+            .joker-text {
+                font-size: 9px !important;
+            }
+
+            .hand-cards {
+                gap: 5px;
+            }
+
+            .player-hand {
                 padding: 10px;
-                min-height: 40px;
+            }
+
+            .game-container {
+                gap: 12px;
+            }
+
+            .top-bar {
+                padding: 10px 12px;
+            }
+
+            .hand-card:hover {
+                transform: translateY(-6px) scale(1.02);
+            }
+
+            .suit-selector {
+                padding: 25px;
+                max-width: 90%;
+            }
+
+            .suit-selector-title {
+                font-size: 16px;
+            }
+
+            .suit-options {
+                gap: 12px;
+            }
+
+            .suit-option {
+                width: 60px;
+                height: 60px;
+                font-size: 36px;
+            }
+
+            .game-over {
+                padding: 30px;
+                max-width: 90%;
+            }
+
+            .result-text {
+                font-size: 32px;
+            }
+
+            .play-again-btn {
+                padding: 16px 40px;
+                font-size: 16px;
+            }
+
+            .stats-text {
+                font-size: 14px;
             }
         }
 
