@@ -1816,16 +1816,6 @@
             console.log(`✓ Hand images loaded (${urls.length} cards)`);
         }
 
-        // Preload remaining deck cards in background (low priority)
-        function preloadRemainingDeck() {
-            deck.forEach(card => {
-                const url = getCardImageUrl(card);
-                if (url) {
-                    setTimeout(() => preloadImage(url), 0); // Non-blocking
-                }
-            });
-        }
-
         // Preload card when drawn from deck
         function preloadCardOnDraw(card) {
             const url = getCardImageUrl(card);
@@ -1839,16 +1829,15 @@
             // Start the game immediately
             initGame();
 
-            // Load critical images first
+            // Load critical images first (table card + backside)
             await preloadCriticalImages();
-            updateDisplay(); // Update to show loaded images
+            updateDisplay();
 
-            // Load hand cards
+            // Load hand cards for both players
             await preloadHandImages();
-            updateDisplay(); // Update again to show hand cards
+            updateDisplay();
 
-            // Preload remaining deck in background (non-blocking)
-            preloadRemainingDeck();
+            // Remaining cards load on-demand when drawn
         }
 
         initialize();
