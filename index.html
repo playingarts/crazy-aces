@@ -651,6 +651,7 @@
             .game-container {
                 gap: 23px;
                 overflow: visible;
+                padding-bottom: 140px;
             }
 
             .game-container > div {
@@ -680,6 +681,8 @@
                 font-size: 13px;
                 padding: 12px;
                 min-height: 54px;
+                white-space: pre-line;
+                line-height: 1.6;
             }
 
             .card-artist {
@@ -1073,7 +1076,7 @@
             jokerWasPlayed = false;
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Click a card to play it, or draw from the deck. Match the rank or suit!');
+            updateStatus('Click a card to play it, or draw from the deck.\nMatch the rank or suit!');
             updateDisplay();
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
         }
@@ -1315,13 +1318,16 @@
                 updateStatus(`You played ${card.rank}${card.suit}`);
                 setTimeout(() => updateStatus(''), 1500);
             }
-            
+
+            updateDisplay();
+
             if (playerHand.length === 0) {
-                endGame('player');
+                setTimeout(() => {
+                    endGame('player');
+                }, 500);
                 return;
             }
-            
-            updateDisplay();
+
             setTimeout(() => {
                 computerTurn();
             }, 800);
@@ -1346,17 +1352,19 @@
             }
             
             pendingEightCard = null;
-            
+
             updateStatus(`You changed suit to ${suit}`);
             setTimeout(() => updateStatus(''), 2000);
-            
+
+            updateDisplay();
+
             if (playerHand.length === 0) {
-                endGame('player');
+                setTimeout(() => {
+                    endGame('player');
+                }, 500);
                 return;
             }
-            
-            updateDisplay();
-            
+
             // If joker was played, skip computer's turn
             if (!wasJoker) {
                 isComputerTurn = true;
@@ -1401,7 +1409,9 @@
                 playerHand.push(pendingEightCard); // Add back to hand
                 pendingEightCard = null;
             }
-            
+
+            isComputerTurn = false; // Unlock turn for player
+
             document.getElementById('suitSelector').classList.remove('show');
             updateDisplay();
             updateStatus('Card returned to hand');
@@ -1545,14 +1555,16 @@
                 updateStatus('Computer played Joker');
                 setTimeout(() => updateStatus(''), 1500);
 
-                // Check if game is over
-                if (computerHand.length === 0) {
-                    endGame('computer');
-                    return;
-                }
-
                 // Update display after Joker
                 updateDisplay();
+
+                // Check if game is over
+                if (computerHand.length === 0) {
+                    setTimeout(() => {
+                        endGame('computer');
+                    }, 500);
+                    return;
+                }
 
                 // Continue turn - play another card after delay
                 setTimeout(() => {
@@ -1612,13 +1624,16 @@
                 currentSuit = card.suit;
                 currentRank = card.rank;
             }
-            
+
+            updateDisplay();
+
             if (computerHand.length === 0) {
-                endGame('computer');
+                setTimeout(() => {
+                    endGame('computer');
+                }, 500);
                 return;
             }
-            
-            updateDisplay();
+
             isComputerTurn = false; // Unlock turn for player
         }
 
