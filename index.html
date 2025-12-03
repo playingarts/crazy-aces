@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
     <title>Crazy Aces - Playing Arts</title>
     <style>
         * {
@@ -59,18 +60,21 @@
         .card-back-small {
             width: 45px;
             height: 65px;
-            background-image: url('https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: #4c4c4c;
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
-            filter: grayscale(100%);
             opacity: 0.5;
+        }
+
+        .card-back-small::after {
+            content: '?';
+            font-size: 32px;
+            font-weight: bold;
+            color: #666;
         }
 
         .play-area {
@@ -386,6 +390,10 @@
                 width: 50px;
                 height: 72px;
             }
+
+            .card-back-small::after {
+                font-size: 36px;
+            }
         }
 
         @media (min-width: 1200px) {
@@ -417,6 +425,10 @@
             .card-back-small {
                 width: 54px;
                 height: 78px;
+            }
+
+            .card-back-small::after {
+                font-size: 38px;
             }
         }
 
@@ -677,6 +689,10 @@
                 height: 46px;
             }
 
+            .card-back-small::after {
+                font-size: 24px;
+            }
+
             .status-message {
                 font-size: 13px;
                 padding: 12px;
@@ -829,7 +845,7 @@
     </style>
     
     <!-- Preload card back for immediate availability -->
-    <link rel="preload" as="image" href="https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2">
+    <link rel="preload" as="image" href="https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2" crossorigin="anonymous" fetchpriority="high">
 </head>
 <body>
     <div class="confetti-container" id="confettiContainer"></div>
@@ -841,7 +857,7 @@
         </div>
 
         <div class="status-message" id="statusMessage">
-            Match the rank or suit of the center card
+            Loading game...
         </div>
 
         <div class="play-area">
@@ -1726,16 +1742,29 @@
                 // All card images from cardImages object
                 ...Object.values(cardImages)
             ];
-            
+
             let loadedCount = 0;
             const totalImages = imagesToPreload.length;
-            
+
             console.log(`Preloading ${totalImages} card images...`);
-            
+
+            // Create a cache-friendly preload with proper attributes
             imagesToPreload.forEach(url => {
                 const img = new Image();
+                // Enable CORS for better caching
+                img.crossOrigin = "anonymous";
+                // Add loading priority
+                img.loading = "eager";
+                // Add decoding hint
+                img.decoding = "async";
+
                 img.onload = () => {
                     loadedCount++;
+                    const progress = Math.round((loadedCount / totalImages) * 100);
+                    const statusEl = document.getElementById('statusMessage');
+                    if (statusEl) {
+                        statusEl.textContent = `Loading cards... ${progress}%`;
+                    }
                     if (loadedCount === totalImages) {
                         console.log(`✓ All ${totalImages} card images preloaded and cached`);
                     }
@@ -1743,14 +1772,43 @@
                 img.onerror = () => {
                     loadedCount++;
                     console.warn(`Failed to load: ${url}`);
+                    const progress = Math.round((loadedCount / totalImages) * 100);
+                    const statusEl = document.getElementById('statusMessage');
+                    if (statusEl) {
+                        statusEl.textContent = `Loading cards... ${progress}%`;
+                    }
                 };
                 img.src = url;
+
+                // Keep reference to prevent garbage collection
+                window.preloadedImages = window.preloadedImages || [];
+                window.preloadedImages.push(img);
+            });
+
+            return new Promise((resolve) => {
+                const checkComplete = setInterval(() => {
+                    if (loadedCount >= totalImages) {
+                        clearInterval(checkComplete);
+                        resolve();
+                    }
+                }, 100);
+
+                // Timeout after 30 seconds
+                setTimeout(() => {
+                    clearInterval(checkComplete);
+                    console.log(`Preload timeout - ${loadedCount}/${totalImages} loaded`);
+                    resolve();
+                }, 30000);
             });
         }
 
-        // Initialize
-        preloadImages();
-        initGame();
+        // Initialize - wait for critical images to load
+        async function initialize() {
+            await preloadImages();
+            initGame();
+        }
+
+        initialize();
     </script>
 </body>
 </html>
