@@ -35,7 +35,7 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
         }
 
         .top-bar {
@@ -84,10 +84,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 30px;
+            gap: 40px;
             padding: 0 40px;
             min-height: 350px;
-            padding-bottom: 60px;
+            padding-bottom: 29px;
         }
 
         .deck-pile {
@@ -98,6 +98,25 @@
 
         .deck-pile:hover {
             transform: translateY(-5px);
+        }
+
+        @keyframes deckDraw {
+            0%, 100% {
+                transform: scale(1);
+            }
+            25% {
+                transform: scale(0.95);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+            75% {
+                transform: scale(0.98);
+            }
+        }
+
+        .deck-pile.deck-drawing {
+            animation: deckDraw 0.4s ease;
         }
 
         .card {
@@ -276,6 +295,7 @@
             gap: 7px;
             justify-content: center;
             flex-wrap: nowrap;
+            overflow-x: visible;
         }
 
         .hand-card {
@@ -292,6 +312,7 @@
             background: #1a1a1a;
             border: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
 
         .hand-card.ace-card {
@@ -420,10 +441,10 @@
             }
 
             .play-area {
-                gap: 10px;
+                gap: 20px;
                 padding: 0 8px;
                 min-height: 240px;
-                padding-bottom: 20px;
+                padding-bottom: 30px;
             }
 
             .opponent-hand-preview {
@@ -463,6 +484,23 @@
 
             .hand-cards {
                 gap: 5px;
+                padding: 0 5px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .hand-cards::-webkit-scrollbar {
+                height: 3px;
+            }
+
+            .hand-cards::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.05);
+                border-radius: 2px;
+            }
+
+            .hand-cards::-webkit-scrollbar-thumb {
+                background: rgba(255,255,255,0.2);
+                border-radius: 2px;
             }
 
             .player-hand {
@@ -470,7 +508,7 @@
             }
 
             .game-container {
-                gap: 8px;
+                gap: 15px;
             }
 
             .top-bar {
@@ -478,7 +516,16 @@
             }
 
             .hand-card:hover {
-                transform: translateY(-6px) scale(1.02);
+                transform: none;
+            }
+
+            .hand-card:active {
+                transform: scale(0.95);
+                transition: transform 0.1s ease;
+            }
+
+            .hand-card {
+                flex-shrink: 0;
             }
 
             .suit-selector {
@@ -847,6 +894,7 @@
         let isFirstMove = true;
         let suitWasChanged = false;
         let isDrawing = false; // Prevent multiple simultaneous draws
+        let jokerWasPlayed = false; // Track if joker was just played
         
         // Win rate tracking
         let playerWins = parseInt(localStorage.getItem('crazyAcesPlayerWins')) || 0;
@@ -978,6 +1026,7 @@
             isFirstMove = true;
             suitWasChanged = false;
             isDrawing = false;
+            jokerWasPlayed = false;
 
             document.getElementById('gameOver').classList.remove('show');
             updateStatus('Click a card to play it, or draw from the deck. Match the rank or suit!');
@@ -1151,6 +1200,7 @@
             if (!card) return false;
             if (card.isJoker) return true;
             if (card.isAce) return true;
+            if (jokerWasPlayed) return true; // Any card can be played after joker
             if (card.suit === currentSuit) return true;
             if (card.rank === currentRank) return true;
             return false;
@@ -1181,19 +1231,26 @@
             
             playerHand.splice(index, 1);
             discardPile.push(card);
-            
+
             // Reset suit change flag for new card
             suitWasChanged = false;
-            
+
             if (card.isJoker) {
-                // Joker = wild + skip opponent
-                pendingEightCard = card;
-                isComputerTurn = false; // Unlock while waiting for suit selection
-                updateStatus('You played Joker - choose a suit');
-                document.getElementById('suitSelector').classList.add('show');
+                // Joker = wild - play any card next to define suit
+                jokerWasPlayed = true;
+                isComputerTurn = false; // Keep turn unlocked
+                updateStatus('You played Joker - play another card to define the suit');
+                updateDisplay();
                 return;
             }
-            
+
+            // Check if this card was played after a Joker
+            const wasAfterJoker = jokerWasPlayed;
+            if (jokerWasPlayed) {
+                jokerWasPlayed = false;
+                suitWasChanged = true; // Show that suit was changed by joker
+            }
+
             if (card.isAce) {
                 // Ace = change suit
                 pendingEightCard = card;
@@ -1203,12 +1260,17 @@
                 document.getElementById('suitSelector').classList.add('show');
                 return;
             }
-            
+
             currentSuit = card.suit;
             currentRank = card.rank;
-            
-            updateStatus(`You played ${card.rank}${card.suit}`);
-            setTimeout(() => updateStatus(''), 1500);
+
+            if (wasAfterJoker) {
+                updateStatus(`You played ${card.rank}${card.suit} - suit is now ${card.suit}`);
+                setTimeout(() => updateStatus(''), 2000);
+            } else {
+                updateStatus(`You played ${card.rank}${card.suit}`);
+                setTimeout(() => updateStatus(''), 1500);
+            }
             
             if (playerHand.length === 0) {
                 endGame('player');
@@ -1305,16 +1367,21 @@
         function drawCard() {
             // Check all locks including the drawing lock
             if (gameOver || isComputerTurn || pendingEightCard || isDrawing) return;
-            
+
             // LOCK DRAWING IMMEDIATELY before any other operations
             isDrawing = true;
             isComputerTurn = true;
-            
+
             // Clear rules message on first move
             if (isFirstMove) {
                 isFirstMove = false;
             }
-            
+
+            // Clear joker flag if drawing after joker
+            if (jokerWasPlayed) {
+                jokerWasPlayed = false;
+            }
+
             if (deck.length === 0) {
                 updateStatus('Deck empty - pass turn');
                 setTimeout(() => {
@@ -1336,8 +1403,9 @@
                 }, 1500);
                 return;
             }
-            
+
             playerHand.push(card);
+            animateDeckDraw(); // Animate the deck pile
             updateStatus('You drew a card');
             setTimeout(() => updateStatus(''), 1200);
             updateDisplay(false); // No animation when drawing
@@ -1372,8 +1440,10 @@
                         return;
                     }
                     computerHand.push(card);
+                    animateDeckDraw(); // Animate the deck pile
                     updateStatus('Computer drew a card');
                     setTimeout(() => updateStatus(''), 1200);
+                    updateDisplay(false); // Update display without animating the face-up card
                     
                     if (canPlayCard(card)) {
                         setTimeout(() => {
@@ -1386,7 +1456,6 @@
                         }, 1200);
                     } else {
                         setTimeout(() => {
-                            updateDisplay(false); // No animation when drawing
                             isComputerTurn = false;
                         }, 1200);
                     }
@@ -1394,7 +1463,6 @@
                     // Deck empty, computer must pass
                     updateStatus('Computer passes');
                     setTimeout(() => updateStatus(''), 1500);
-                    updateDisplay(false); // No animation
                     isComputerTurn = false;
                 }
                 return;
@@ -1426,40 +1494,42 @@
             const card = computerHand[index];
             computerHand.splice(index, 1);
             discardPile.push(card);
-            
+
             if (card.isJoker) {
-                // Choose most common suit in hand
-                const suitCounts = {};
-                computerHand.forEach(c => {
-                    if (!c.isJoker && !c.isAce) {
-                        suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
-                    }
-                });
-                const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
-                currentSuit = bestSuit;
-                currentRank = card.rank;
-                suitWasChanged = true;
-                updateStatus(`Computer played Joker - changed to ${currentSuit}`);
-                setTimeout(() => updateStatus(''), 2500);
-                
+                // Set flag that joker was played
+                jokerWasPlayed = true;
+                updateStatus('Computer played Joker');
+                setTimeout(() => updateStatus(''), 1500);
+
                 // Check if game is over
                 if (computerHand.length === 0) {
                     endGame('computer');
                     return;
                 }
-                
+
                 // Update display after Joker
                 updateDisplay();
-                
+
                 // Continue turn - play another card after delay
                 setTimeout(() => {
                     const playableCards = computerHand.filter(canPlayCard);
                     if (playableCards.length > 0) {
-                        const randomCard = playableCards[Math.floor(Math.random() * playableCards.length)];
-                        const cardIndex = computerHand.indexOf(randomCard);
+                        // Choose best card (prefer cards matching most common suit)
+                        const suitCounts = {};
+                        computerHand.forEach(c => {
+                            if (!c.isJoker && !c.isAce) {
+                                suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
+                            }
+                        });
+                        const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0];
+
+                        // Prefer card with best suit
+                        let cardToPlay = playableCards.find(c => c.suit === bestSuit) || playableCards[0];
+                        const cardIndex = computerHand.indexOf(cardToPlay);
                         computerPlayCard(cardIndex);
                     } else {
                         // Can't play, end turn
+                        jokerWasPlayed = false;
                         isComputerTurn = false;
                     }
                 }, 1500);
@@ -1475,20 +1545,28 @@
                 const bestSuit = Object.keys(suitCounts).sort((a,b) => suitCounts[b] - suitCounts[a])[0] || suits[0];
                 currentSuit = bestSuit;
                 currentRank = card.rank;
-                
+
                 // Transform the Ace card to show the chosen suit
                 card.suit = bestSuit;
                 card.isAce = false; // No longer wild
                 suitWasChanged = false;
-                
+
                 updateStatus(`Computer played Ace - changed to ${currentSuit}`);
                 setTimeout(() => updateStatus(''), 2500);
             } else {
+                // If this card was played after a Joker, clear the flag
+                if (jokerWasPlayed) {
+                    jokerWasPlayed = false;
+                    suitWasChanged = true;
+                    updateStatus(`Computer played ${card.rank}${card.suit} after Joker`);
+                    setTimeout(() => updateStatus(''), 2000);
+                } else {
+                    suitWasChanged = false;
+                    updateStatus(`Computer played ${card.rank}${card.suit}`);
+                    setTimeout(() => updateStatus(''), 1500);
+                }
                 currentSuit = card.suit;
                 currentRank = card.rank;
-                suitWasChanged = false;
-                updateStatus(`Computer played ${card.rank}${card.suit}`);
-                setTimeout(() => updateStatus(''), 1500);
             }
             
             if (computerHand.length === 0) {
@@ -1507,6 +1585,14 @@
             } else {
                 statusEl.textContent = '';
             }
+        }
+
+        function animateDeckDraw() {
+            const deckPile = document.querySelector('.deck-pile');
+            deckPile.classList.add('deck-drawing');
+            setTimeout(() => {
+                deckPile.classList.remove('deck-drawing');
+            }, 400);
         }
 
         function endGame(winner) {
