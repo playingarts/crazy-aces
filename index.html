@@ -1073,13 +1073,13 @@
             playerHand = deck.splice(0, 7);
             computerHand = deck.splice(0, 7);
             console.log(`After dealing: ${deck.length} cards remaining in deck`);
-            
+
             // First discard card (not Ace or joker)
             let firstCard;
             do {
                 firstCard = deck.shift();
             } while (firstCard.isAce || firstCard.isJoker);
-            
+
             discardPile = [firstCard];
             currentSuit = firstCard.suit;
             currentRank = firstCard.rank;
@@ -1090,6 +1090,12 @@
             suitWasChanged = false;
             isDrawing = false;
             jokerWasPlayed = false;
+
+            // Show both player and computer hands
+            const opponentHand = document.getElementById('opponentHandPreview');
+            const playerHandContainer = document.querySelector('.player-hand');
+            if (opponentHand) opponentHand.style.display = 'flex';
+            if (playerHandContainer) playerHandContainer.style.display = 'block';
 
             document.getElementById('gameOver').classList.remove('show');
             updateStatus('Click a card to play it, or draw from the deck.\nMatch the rank or suit!');
@@ -1682,7 +1688,16 @@
 
         function endGame(winner) {
             gameOver = true;
-            
+
+            // Hide winner's hand block
+            if (winner === 'player') {
+                const playerHandContainer = document.querySelector('.player-hand');
+                if (playerHandContainer) playerHandContainer.style.display = 'none';
+            } else {
+                const opponentHand = document.getElementById('opponentHandPreview');
+                if (opponentHand) opponentHand.style.display = 'none';
+            }
+
             // Update win counts
             if (winner === 'player') {
                 playerWins++;
@@ -1691,14 +1706,14 @@
                 computerWins++;
                 localStorage.setItem('crazyAcesComputerWins', computerWins);
             }
-            
+
             const totalGames = playerWins + computerWins;
             const winRate = totalGames > 0 ? ((playerWins / totalGames) * 100).toFixed(1) : 0;
-            
+
             const gameOverEl = document.getElementById('gameOver');
             const resultText = document.getElementById('resultText');
             const statsText = document.getElementById('statsText');
-            
+
             if (winner === 'player') {
                 resultText.textContent = 'You Win!';
                 resultText.className = 'result-text win';
@@ -1707,9 +1722,9 @@
                 resultText.textContent = 'Computer Wins';
                 resultText.className = 'result-text lose';
             }
-            
+
             statsText.textContent = `Wins: ${playerWins} | Losses: ${computerWins} | Win Rate: ${winRate}%`;
-            
+
             gameOverEl.classList.add('show');
         }
 
@@ -1769,14 +1784,6 @@
                 };
                 img.src = url;
             });
-        }
-
-        // Get card image URL from card object
-        function getCardImageUrl(card) {
-            if (!card) return null;
-            if (card.isJoker) return null; // Jokers don't have images
-            const key = `${card.rank}_${card.suit}`;
-            return cardImages[key];
         }
 
         // Preload critical images (table card and backside)
