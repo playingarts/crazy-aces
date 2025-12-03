@@ -1209,52 +1209,60 @@
         function renderPlayerHand() {
             const handEl = document.getElementById('playerHand');
             handEl.innerHTML = '';
-            
-            // Separate Aces/Jokers and other cards
-            const aces = playerHand.filter(card => card.isAce || card.isJoker);
+
+            // Separate cards: Jokers first, then Aces, then other cards
+            const jokers = playerHand.filter(card => card.isJoker);
+            const aces = playerHand.filter(card => card.isAce && !card.isJoker);
             const regularCards = playerHand.filter(card => !card.isAce && !card.isJoker);
-            
-            // Render Aces first (on the left)
-            aces.forEach((card) => {
+
+            // Render Jokers first (most left)
+            jokers.forEach((card) => {
                 const actualIndex = playerHand.indexOf(card);
                 const cardEl = document.createElement('div');
-                
-                // Use different class for Jokers vs Aces
-                if (card.isJoker) {
-                    cardEl.className = 'hand-card joker-card';
-                    cardEl.innerHTML = `
-                        <div class="card-rank joker-text">JOKER</div>
-                    `;
-                } else {
-                    cardEl.className = 'hand-card ace-card';
-                    // Show only "A" for Aces, no suit symbol
-                    cardEl.innerHTML = `
-                        <div class="card-rank">${card.rank}</div>
-                    `;
-                }
-                
+                cardEl.className = 'hand-card joker-card';
+                cardEl.innerHTML = `
+                    <div class="card-rank joker-text">JOKER</div>
+                `;
+
                 if (!gameOver) {
                     cardEl.onclick = () => playCard(actualIndex);
                 }
-                
+
                 handEl.appendChild(cardEl);
             });
-            
-            // Render regular cards
+
+            // Render Aces second
+            aces.forEach((card) => {
+                const actualIndex = playerHand.indexOf(card);
+                const cardEl = document.createElement('div');
+                cardEl.className = 'hand-card ace-card';
+                // Show only "A" for Aces, no suit symbol
+                cardEl.innerHTML = `
+                    <div class="card-rank">${card.rank}</div>
+                `;
+
+                if (!gameOver) {
+                    cardEl.onclick = () => playCard(actualIndex);
+                }
+
+                handEl.appendChild(cardEl);
+            });
+
+            // Render regular cards last
             regularCards.forEach((card) => {
                 const actualIndex = playerHand.indexOf(card);
                 const cardEl = document.createElement('div');
                 cardEl.className = 'hand-card';
-                
+
                 cardEl.innerHTML = `
                     <div class="card-rank">${card.rank}</div>
                     <div class="card-suit">${card.suit}</div>
                 `;
-                
+
                 if (!gameOver) {
                     cardEl.onclick = () => playCard(actualIndex);
                 }
-                
+
                 handEl.appendChild(cardEl);
             });
         }
