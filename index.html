@@ -639,7 +639,9 @@
                 padding: 8px;
                 align-items: flex-start;
                 min-height: 100vh;
-                overflow: visible;
+                max-height: 100vh;
+                overflow-x: visible;
+                overflow-y: hidden;
             }
 
             body > * {
@@ -773,7 +775,7 @@
             }
 
             .player-hand {
-                padding: 15px;
+                padding: 15px 9px;
                 max-width: 100%;
                 overflow: visible;
             }
