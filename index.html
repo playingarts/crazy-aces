@@ -22,19 +22,6 @@
             padding: 20px;
         }
 
-        @media (max-width: 480px) {
-            body {
-                padding: 8px 8px 8px 8px;
-                align-items: flex-start;
-                min-height: 100vh;
-                overflow: visible;
-            }
-
-            body > * {
-                overflow: visible;
-            }
-        }
-
         .game-container {
             max-width: 1200px;
             width: 100%;
@@ -433,165 +420,6 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .card {
-                width: 140px;
-                height: 200px;
-            }
-
-            .card .card-rank {
-                font-size: 38px;
-            }
-
-            .card .card-suit {
-                font-size: 45px;
-            }
-
-            .play-area {
-                gap: 30px;
-                padding: 0 8px;
-                min-height: 240px;
-                padding-bottom: 75px;
-            }
-
-            .opponent-hand-preview {
-                padding: 12px;
-                min-height: 75px;
-                gap: 8px;
-            }
-
-            .card-back-small {
-                width: 32px;
-                height: 46px;
-            }
-
-            .status-message {
-                font-size: 10px;
-                padding: 12px;
-                min-height: 54px;
-            }
-
-            .hand-card {
-                width: 45px;
-                height: 65px;
-            }
-
-            .hand-card .card-rank {
-                font-size: 18px;
-            }
-
-            .hand-card .card-suit {
-                font-size: 16px;
-                margin-top: 3px;
-            }
-
-            .joker-text {
-                font-size: 7px !important;
-            }
-
-            .hand-cards {
-                gap: 5px;
-                padding: 15px;
-                overflow-x: auto;
-                overflow-y: visible !important;
-                -webkit-overflow-scrolling: touch;
-                margin-top: -15px;
-                margin-bottom: -15px;
-                clip-path: none !important;
-            }
-
-            .hand-cards::-webkit-scrollbar {
-                height: 3px;
-            }
-
-            .hand-cards::-webkit-scrollbar-track {
-                background: rgba(255,255,255,0.05);
-                border-radius: 2px;
-            }
-
-            .hand-cards::-webkit-scrollbar-thumb {
-                background: rgba(255,255,255,0.2);
-                border-radius: 2px;
-            }
-
-            .player-hand {
-                padding: 15px;
-                max-width: 100%;
-                overflow: visible !important;
-            }
-
-            .game-container {
-                gap: 23px;
-                overflow: visible !important;
-            }
-
-            .game-container > div {
-                overflow: visible !important;
-            }
-
-            .top-bar {
-                padding: 15px 18px;
-            }
-
-            .player-name {
-                font-size: 11px;
-            }
-
-            .hand-card {
-                flex-shrink: 0;
-                min-width: 45px;
-                transform: translateY(0) scale(1) !important;
-                transition: transform 0.15s ease-in-out;
-                position: relative;
-                z-index: 1;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            .hand-card:active {
-                transform: translateY(-12px) scale(1.08) !important;
-                z-index: 10;
-                transition: transform 0.1s ease-out;
-            }
-
-            .suit-selector {
-                padding: 25px;
-                max-width: 90%;
-            }
-
-            .suit-selector-title {
-                font-size: 13px;
-            }
-
-            .suit-options {
-                gap: 12px;
-            }
-
-            .suit-option {
-                width: 60px;
-                height: 60px;
-                font-size: 29px;
-            }
-
-            .game-over {
-                padding: 20px;
-                max-width: 95%;
-                width: 95%;
-            }
-
-            .result-text {
-                font-size: 21px;
-            }
-
-            .play-again-btn {
-                padding: 10px 30px;
-                font-size: 10px;
-            }
-
-            .stats-text {
-                font-size: 11px;
-            }
-        }
-
         .hand-card:hover {
             transform: translateY(-10px) scale(1.05);
             box-shadow: 0 8px 20px rgba(0,0,0,0.5);
@@ -802,6 +630,186 @@
             to {
                 transform: translateY(100vh) rotate(360deg);
                 opacity: 0;
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+                align-items: flex-start;
+                min-height: 100vh;
+                overflow: visible;
+            }
+
+            body > * {
+                overflow: visible;
+            }
+
+            .game-container {
+                gap: 23px;
+                overflow: visible;
+            }
+
+            .game-container > div {
+                overflow: visible;
+            }
+
+            .top-bar {
+                padding: 15px 18px;
+            }
+
+            .player-name {
+                font-size: 11px;
+            }
+
+            .opponent-hand-preview {
+                padding: 12px;
+                min-height: 75px;
+                gap: 8px;
+            }
+
+            .card-back-small {
+                width: 32px;
+                height: 46px;
+            }
+
+            .status-message {
+                font-size: 13px;
+                padding: 12px;
+                min-height: 54px;
+            }
+
+            .card-artist {
+                font-size: 13px;
+            }
+
+            .card {
+                width: 140px;
+                height: 200px;
+            }
+
+            .card .card-rank {
+                font-size: 38px;
+            }
+
+            .card .card-suit {
+                font-size: 45px;
+            }
+
+            .play-area {
+                gap: 30px;
+                padding: 0 8px;
+                min-height: 240px;
+                padding-bottom: 75px;
+            }
+
+            .hand-card {
+                width: 45px;
+                height: 65px;
+                flex-shrink: 0;
+                min-width: 45px;
+                transform: translateY(0) scale(1);
+                transition: transform 0.15s ease-in-out;
+                position: relative;
+                z-index: 1;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .hand-card:active {
+                transform: translateY(-12px) scale(1.08);
+                z-index: 10;
+                transition: transform 0.1s ease-out;
+            }
+
+            .hand-card .card-rank {
+                font-size: 18px;
+            }
+
+            .hand-card .card-suit {
+                font-size: 16px;
+                margin-top: 3px;
+            }
+
+            .joker-text {
+                font-size: 7px;
+            }
+
+            .hand-cards {
+                gap: 5px;
+                padding: 15px 8px;
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                margin-top: -15px;
+                margin-bottom: -15px;
+                clip-path: none;
+            }
+
+            .hand-cards::-webkit-scrollbar {
+                height: 3px;
+            }
+
+            .hand-cards::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.05);
+                border-radius: 2px;
+            }
+
+            .hand-cards::-webkit-scrollbar-thumb {
+                background: rgba(255,255,255,0.2);
+                border-radius: 2px;
+            }
+
+            .game-container > div:last-child {
+                position: fixed;
+                bottom: 20px;
+                left: 0;
+                right: 0;
+                z-index: 100;
+            }
+
+            .player-hand {
+                padding: 15px;
+                max-width: 100%;
+                overflow: visible;
+            }
+
+            .suit-selector {
+                padding: 25px;
+                max-width: 90%;
+            }
+
+            .suit-selector-title {
+                font-size: 13px;
+            }
+
+            .suit-options {
+                gap: 12px;
+            }
+
+            .suit-option {
+                width: 60px;
+                height: 60px;
+                font-size: 29px;
+            }
+
+            .game-over {
+                padding: 20px;
+                max-width: 95%;
+                width: 95%;
+            }
+
+            .result-text {
+                font-size: 21px;
+            }
+
+            .play-again-btn {
+                padding: 10px 30px;
+                font-size: 10px;
+            }
+
+            .stats-text {
+                font-size: 11px;
             }
         }
 
