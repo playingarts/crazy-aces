@@ -1171,13 +1171,13 @@
     <!-- Rules Box -->
     <div class="rules-box" id="rulesBox">
         <div class="rules-content">
-            <h3>How to Play</h3>
+            <h3>Crazy Aces - How to Play:</h3>
             <ul>
-                <li>Match the rank or suit of the top card</li>
-                <li>Aces can be played anytime and let you choose a new suit</li>
-                <li>Jokers can be played anytime and act as wild cards</li>
-                <li>If you can't play, draw from the deck</li>
-                <li>First to empty their hand wins!</li>
+                <li>Match table card's suit or rank</li>
+                <li>Play Ace and pick next suit</li>
+                <li>Play Joker then any card on top</li>
+                <li>Can't play? Draw a card</li>
+                <li>Empty your hand first to win</li>
             </ul>
         </div>
 
@@ -1199,6 +1199,7 @@
         <div class="play-area">
             <div class="deck-pile" onclick="handleDrawCard()">
                 <div class="card card-back" id="deckCard"></div>
+                <div class="card-artist" id="deckHint" style="margin-top: 8px;">Draw a card</div>
             </div>
 
             <div class="discard-pile" id="discardPile">
@@ -1665,7 +1666,7 @@
                 }
 
                 document.getElementById('gameOver').classList.remove('show');
-                updateStatus('Play a card with the same rank or suit');
+                updateStatus('Play a card from your hand that matches the table card\'s suit or rank');
                 updateDisplay();
                 console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
 
@@ -1963,6 +1964,11 @@
                     clearTimeout(hintTimeout);
                     hintTimeout = null;
                 }
+                // Hide deck hint after first action
+                const deckHint = document.getElementById('deckHint');
+                if (deckHint) {
+                    deckHint.style.display = 'none';
+                }
                 // Disable hints for future games
                 isFirstGame = false;
             }
@@ -2165,6 +2171,11 @@
                 if (hintTimeout) {
                     clearTimeout(hintTimeout);
                     hintTimeout = null;
+                }
+                // Hide deck hint after first draw
+                const deckHint = document.getElementById('deckHint');
+                if (deckHint) {
+                    deckHint.style.display = 'none';
                 }
                 // Disable hints for future games
                 isFirstGame = false;
@@ -2688,7 +2699,7 @@
                 }
 
                 document.getElementById('gameOver').classList.remove('show');
-                updateStatus('Play a card with the same rank or suit');
+                updateStatus('Play a card from your hand that matches the table card\'s suit or rank');
                 updateDisplay();
 
                 // Start hint timer only on first game after page load
