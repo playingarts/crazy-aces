@@ -545,7 +545,7 @@
             width: 60px;
             height: 87px;
             border-radius: 8px;
-            cursor: pointer;
+            cursor: grab;
             margin-right: 7px;
             transition: width 0.3s ease, margin 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
             position: relative;
@@ -581,6 +581,23 @@
             100% {
                 background-position: 0% 50%;
             }
+        }
+
+        .hand-card:active {
+            cursor: grabbing;
+        }
+
+        .hand-card[draggable="true"]:hover {
+            transform: translateY(-5px);
+        }
+
+        .discard-pile {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .discard-pile.drag-over {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
         }
 
         .hand-card .card-rank {
@@ -1853,6 +1870,129 @@
         }
 
         /**
+         * Drag and drop handlers
+         */
+        let draggedCardIndex = null;
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let isDragging = false;
+
+        function handleDragStart(e, index) {
+            draggedCardIndex = index;
+            e.target.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedCardIndex = null;
+        }
+
+        function handleTouchStart(e, index) {
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            draggedCardIndex = index;
+            isDragging = false;
+        }
+
+        function handleTouchMove(e) {
+            if (draggedCardIndex === null) return;
+
+            const touch = e.touches[0];
+            const deltaX = Math.abs(touch.clientX - touchStartX);
+            const deltaY = Math.abs(touch.clientY - touchStartY);
+
+            // Start dragging if moved more than 10px
+            if (deltaX > 10 || deltaY > 10) {
+                isDragging = true;
+                e.preventDefault(); // Prevent scrolling while dragging
+
+                // Check if over discard pile
+                const discardPileEl = document.getElementById('discardPile');
+                if (discardPileEl) {
+                    const rect = discardPileEl.getBoundingClientRect();
+                    const isOver = touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                                   touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+
+                    if (isOver && !discardPileEl.classList.contains('drag-over')) {
+                        discardPileEl.classList.add('drag-over');
+                    } else if (!isOver && discardPileEl.classList.contains('drag-over')) {
+                        discardPileEl.classList.remove('drag-over');
+                    }
+                }
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (draggedCardIndex === null) return;
+
+            const discardPileEl = document.getElementById('discardPile');
+            if (discardPileEl) {
+                discardPileEl.classList.remove('drag-over');
+            }
+
+            // Only play card if dragged (not just a tap)
+            if (isDragging) {
+                const touch = e.changedTouches[0];
+                if (discardPileEl) {
+                    const rect = discardPileEl.getBoundingClientRect();
+                    const isOver = touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                                   touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+
+                    if (isOver) {
+                        playCard(draggedCardIndex);
+                    }
+                }
+            }
+
+            draggedCardIndex = null;
+            isDragging = false;
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            // Add visual feedback
+            const discardPileEl = document.getElementById('discardPile');
+            if (discardPileEl && !discardPileEl.classList.contains('drag-over')) {
+                discardPileEl.classList.add('drag-over');
+            }
+
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            const discardPileEl = document.getElementById('discardPile');
+            if (discardPileEl) {
+                discardPileEl.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            e.preventDefault();
+
+            // Remove visual feedback
+            const discardPileEl = document.getElementById('discardPile');
+            if (discardPileEl) {
+                discardPileEl.classList.remove('drag-over');
+            }
+
+            if (draggedCardIndex !== null) {
+                playCard(draggedCardIndex);
+            }
+
+            return false;
+        }
+
+        /**
          * Render the player's hand to the DOM
          */
         function renderPlayerHand() {
@@ -1876,6 +2016,12 @@
 
                 if (!gameOver) {
                     cardEl.onclick = () => playCard(actualIndex);
+                    cardEl.draggable = true;
+                    cardEl.ondragstart = (e) => handleDragStart(e, actualIndex);
+                    cardEl.ondragend = handleDragEnd;
+                    cardEl.ontouchstart = (e) => handleTouchStart(e, actualIndex);
+                    cardEl.ontouchmove = handleTouchMove;
+                    cardEl.ontouchend = handleTouchEnd;
                 }
 
                 handEl.appendChild(cardEl);
@@ -1894,6 +2040,12 @@
 
                 if (!gameOver) {
                     cardEl.onclick = () => playCard(actualIndex);
+                    cardEl.draggable = true;
+                    cardEl.ondragstart = (e) => handleDragStart(e, actualIndex);
+                    cardEl.ondragend = handleDragEnd;
+                    cardEl.ontouchstart = (e) => handleTouchStart(e, actualIndex);
+                    cardEl.ontouchmove = handleTouchMove;
+                    cardEl.ontouchend = handleTouchEnd;
                 }
 
                 handEl.appendChild(cardEl);
@@ -1913,6 +2065,12 @@
 
                 if (!gameOver) {
                     cardEl.onclick = () => playCard(actualIndex);
+                    cardEl.draggable = true;
+                    cardEl.ondragstart = (e) => handleDragStart(e, actualIndex);
+                    cardEl.ondragend = handleDragEnd;
+                    cardEl.ontouchstart = (e) => handleTouchStart(e, actualIndex);
+                    cardEl.ontouchmove = handleTouchMove;
+                    cardEl.ontouchend = handleTouchEnd;
                 }
 
                 handEl.appendChild(cardEl);
@@ -2697,6 +2855,14 @@
                 document.getElementById('gameOver').classList.remove('show');
                 updateStatus('Play a card matching the table card\'s suit or rank');
                 updateDisplay();
+
+                // Initialize drag and drop zone
+                const discardPileEl = document.getElementById('discardPile');
+                if (discardPileEl) {
+                    discardPileEl.ondragover = handleDragOver;
+                    discardPileEl.ondragleave = handleDragLeave;
+                    discardPileEl.ondrop = handleDrop;
+                }
 
                 // Start hint timer only on first game after page load
                 if (isFirstGame) {
