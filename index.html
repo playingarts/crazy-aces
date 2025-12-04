@@ -186,7 +186,7 @@
         }
 
         .hint-shake {
-            animation: hintShake 0.6s ease-in-out;
+            animation: hintShake 0.6s ease-in-out !important;
         }
 
         .top-bar {
@@ -561,6 +561,27 @@
             .rules-logo,
             .rules-box {
                 display: none;
+            }
+
+            .opponent-hand-section {
+                min-height: auto;
+                align-items: center;
+                padding: 8px 0;
+            }
+
+            .opponent-hand-preview {
+                padding: 8px;
+                min-height: auto;
+            }
+
+            .player-hand-section {
+                min-height: 110px;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .player-hand {
+                margin-bottom: 0;
             }
         }
 
@@ -986,7 +1007,7 @@
 
             .game-container > div:last-child {
                 position: fixed;
-                bottom: 20px;
+                bottom: 0;
                 left: 0;
                 right: 0;
                 z-index: 100;
@@ -1373,35 +1394,25 @@
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
 
             // Start hint timer only on first game after page load
-            console.log('isFirstGame:', isFirstGame);
             if (isFirstGame) {
-                console.log('Starting hint timer for 3 seconds...');
-                hintTimeout = setTimeout(showPlayableCardHint, 3000);
-            } else {
-                console.log('Not first game, skipping hint timer');
+                hintTimeout = setTimeout(showPlayableCardHint, 5000);
             }
         }
 
         function showPlayableCardHint() {
-            console.log('Hint function called. gameOver:', gameOver, 'isComputerTurn:', isComputerTurn, 'playerHasActed:', playerHasActed);
             if (gameOver || isComputerTurn || playerHasActed) {
-                console.log('Hint cancelled due to conditions');
                 return;
             }
 
             // Find all playable cards
             const handEl = document.getElementById('playerHand');
             const cardElements = handEl.querySelectorAll('.hand-card');
-            console.log('Found card elements:', cardElements.length);
 
-            let shakingCards = 0;
             cardElements.forEach((cardEl, visualIndex) => {
                 const cardIndex = parseInt(cardEl.dataset.cardIndex);
                 const card = playerHand[cardIndex];
 
                 if (card && canPlayCard(card)) {
-                    console.log('Shaking card:', card.rank, card.suit);
-                    shakingCards++;
                     // Add shake animation
                     cardEl.classList.add('hint-shake');
 
@@ -1411,7 +1422,6 @@
                     }, 600);
                 }
             });
-            console.log('Total cards shaking:', shakingCards);
 
             // Schedule next hint in 5 seconds
             hintTimeout = setTimeout(showPlayableCardHint, 5000);
@@ -2287,12 +2297,8 @@
             updateDisplay();
 
             // Start hint timer only on first game after page load
-            console.log('isFirstGame:', isFirstGame);
             if (isFirstGame) {
-                console.log('Starting hint timer for 3 seconds...');
-                hintTimeout = setTimeout(showPlayableCardHint, 3000);
-            } else {
-                console.log('Not first game, skipping hint timer');
+                hintTimeout = setTimeout(showPlayableCardHint, 5000);
             }
 
             // Fade in the game and hide loading screen after everything is loaded
