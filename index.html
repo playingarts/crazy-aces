@@ -1873,9 +1873,12 @@
          * Drag and drop handlers
          */
         let draggedCardIndex = null;
+        let draggedCardElement = null;
         let touchStartY = 0;
         let touchStartX = 0;
         let isDragging = false;
+        let cardOffsetX = 0;
+        let cardOffsetY = 0;
 
         function handleDragStart(e, index) {
             draggedCardIndex = index;
@@ -1891,14 +1894,22 @@
 
         function handleTouchStart(e, index) {
             const touch = e.touches[0];
+            const target = e.currentTarget;
+            const rect = target.getBoundingClientRect();
+
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
             draggedCardIndex = index;
+            draggedCardElement = target;
             isDragging = false;
+
+            // Calculate offset from touch point to card center
+            cardOffsetX = touch.clientX - (rect.left + rect.width / 2);
+            cardOffsetY = touch.clientY - (rect.top + rect.height / 2);
         }
 
         function handleTouchMove(e) {
-            if (draggedCardIndex === null) return;
+            if (draggedCardIndex === null || !draggedCardElement) return;
 
             const touch = e.touches[0];
             const deltaX = Math.abs(touch.clientX - touchStartX);
@@ -1906,8 +1917,21 @@
 
             // Start dragging if moved more than 10px
             if (deltaX > 10 || deltaY > 10) {
-                isDragging = true;
+                if (!isDragging) {
+                    isDragging = true;
+                    // Make card follow finger
+                    draggedCardElement.style.position = 'fixed';
+                    draggedCardElement.style.zIndex = '1000';
+                    draggedCardElement.style.opacity = '0.8';
+                    draggedCardElement.style.pointerEvents = 'none';
+                    draggedCardElement.style.transition = 'none';
+                }
+
                 e.preventDefault(); // Prevent scrolling while dragging
+
+                // Move card to follow finger
+                draggedCardElement.style.left = (touch.clientX - cardOffsetX - draggedCardElement.offsetWidth / 2) + 'px';
+                draggedCardElement.style.top = (touch.clientY - cardOffsetY - draggedCardElement.offsetHeight / 2) + 'px';
 
                 // Check if over discard pile
                 const discardPileEl = document.getElementById('discardPile');
@@ -1933,6 +1957,17 @@
                 discardPileEl.classList.remove('drag-over');
             }
 
+            // Reset card styling
+            if (draggedCardElement && isDragging) {
+                draggedCardElement.style.position = '';
+                draggedCardElement.style.left = '';
+                draggedCardElement.style.top = '';
+                draggedCardElement.style.zIndex = '';
+                draggedCardElement.style.opacity = '';
+                draggedCardElement.style.pointerEvents = '';
+                draggedCardElement.style.transition = '';
+            }
+
             // Only play card if dragged (not just a tap)
             if (isDragging) {
                 const touch = e.changedTouches[0];
@@ -1948,6 +1983,7 @@
             }
 
             draggedCardIndex = null;
+            draggedCardElement = null;
             isDragging = false;
         }
 
