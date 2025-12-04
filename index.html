@@ -1964,11 +1964,6 @@
                     clearTimeout(hintTimeout);
                     hintTimeout = null;
                 }
-                // Hide deck hint after first action
-                const deckHint = document.getElementById('deckHint');
-                if (deckHint) {
-                    deckHint.style.display = 'none';
-                }
                 // Disable hints for future games
                 isFirstGame = false;
             }
