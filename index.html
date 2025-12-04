@@ -374,7 +374,7 @@
             pointer-events: none;
         }
 
-        @keyframes cardDrop {
+        @keyframes cardDropFromTop {
             0% {
                 transform: translateY(-100px) translateX(0) rotate(0deg);
                 opacity: 0;
@@ -388,8 +388,26 @@
             }
         }
 
-        .card.card-animating {
-            animation: cardDrop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        @keyframes cardDropFromBottom {
+            0% {
+                transform: translateY(100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0) translateX(0) rotate(var(--rotation));
+                opacity: 1;
+            }
+        }
+
+        .card.card-animating-from-top {
+            animation: cardDropFromTop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .card.card-animating-from-bottom {
+            animation: cardDropFromBottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .card .card-rank {
@@ -456,7 +474,6 @@
             left: 50%;
             transform: translateX(-50%);
             font-size: 15px;
-            color: rgba(255,255,255,0.9);
             padding: 0;
             background: none;
             border-radius: 0;
@@ -466,8 +483,18 @@
             z-index: 2;
         }
 
+        .card-artist a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
         .card-artist:hover {
             opacity: 1;
+        }
+
+        .card-artist a:hover {
+            color: rgba(255,255,255,1);
         }
 
         .player-hand-section {
@@ -1090,7 +1117,7 @@
 
     <!-- Playing Arts Logo - Always Visible -->
     <svg class="rules-logo" width="128" height="26" viewBox="0 0 128 26" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M114.633 21.0497L106.583 13L114.633 4.95038L122.682 13L114.633 21.0497ZM113.345 1.08811L102.721 11.7126C102.01 12.4236 102.01 13.5764 102.721 14.2874L113.345 24.9119C114.056 25.6229 115.209 25.6229 115.92 24.9119L126.545 14.2874C127.256 13.5764 127.256 12.4236 126.545 11.7126L115.92 1.08811C115.209 0.377085 114.056 0.377083 113.345 1.08811ZM80.6667 12.0667C83.7595 12.0667 86.2667 9.55947 86.2667 6.46668C86.2667 3.37388 83.7595 0.866679 80.6667 0.866679C77.5739 0.866679 75.0667 3.37388 75.0667 6.46668C75.0667 9.55947 77.5739 12.0667 80.6667 12.0667ZM88.1333 25.1333C91.2261 25.1333 93.7333 22.6261 93.7333 19.5333C93.7333 16.4406 91.2261 13.9333 88.1333 13.9333C85.0405 13.9333 82.5333 16.4406 82.5333 19.5333C82.5333 22.6261 85.0405 25.1333 88.1333 25.1333ZM78.8 19.5333C78.8 22.6261 76.2928 25.1333 73.2 25.1333C70.1072 25.1333 67.6 22.6261 67.6 19.5333C67.6 16.4406 70.1072 13.9333 73.2 13.9333C76.2928 13.9333 78.8 16.4406 78.8 19.5333ZM53.8945 5.65178L46.8334 18.4031L39.7724 5.65178L53.8945 5.65178ZM48.4464 23.2323C47.7319 24.5226 45.9349 24.5226 45.2204 23.2323L34.9493 4.68404C34.2383 3.40013 35.1333 1.80001 36.5623 1.80001L57.1045 1.80001C58.5336 1.80001 59.4285 3.40013 58.7175 4.68405L48.4464 23.2323ZM5.93897 20.3483L13 7.59693L20.0611 20.3483H5.93897ZM11.387 2.76775C12.1015 1.47744 13.8985 1.47744 14.613 2.76775L24.8841 21.316C25.5951 22.5999 24.7002 24.2 23.2711 24.2H2.72892C1.29988 24.2 0.404947 22.5999 1.11592 21.316L11.387 2.76775Z" style="opacity:0.3"></path>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M114.633 21.0497L106.583 13L114.633 4.95038L122.682 13L114.633 21.0497ZM113.345 1.08811L102.721 11.7126C102.01 12.4236 102.01 13.5764 102.721 14.2874L113.345 24.9119C114.056 25.6229 115.209 25.6229 115.92 24.9119L126.545 14.2874C127.256 13.5764 127.256 12.4236 126.545 11.7126L115.92 1.08811C115.209 0.377085 114.056 0.377083 113.345 1.08811ZM80.6667 12.0667C83.7595 12.0667 86.2667 9.55947 86.2667 6.46668C86.2667 3.37388 83.7595 0.866679 80.6667 0.866679C77.5739 0.866679 75.0667 3.37388 75.0667 6.46668C75.0667 9.55947 77.5739 12.0667 80.6667 12.0667ZM88.1333 25.1333C91.2261 25.1333 93.7333 22.6261 93.7333 19.5333C93.7333 16.4406 91.2261 13.9333 88.1333 13.9333C85.0405 13.9333 82.5333 16.4406 82.5333 19.5333C82.5333 22.6261 85.0405 25.1333 88.1333 25.1333ZM78.8 19.5333C78.8 22.6261 76.2928 25.1333 73.2 25.1333C70.1072 25.1333 67.6 22.6261 67.6 19.5333C67.6 16.4406 70.1072 13.9333 73.2 13.9333C76.2928 13.9333 78.8 16.4406 78.8 19.5333ZM53.8945 5.65178L46.8334 18.4031L39.7724 5.65178L53.8945 5.65178ZM48.4464 23.2323C47.7319 24.5226 45.9349 24.5226 45.2204 23.2323L34.9493 4.68404C34.2383 3.40013 35.1333 1.80001 36.5623 1.80001L57.1045 1.80001C58.5336 1.80001 59.4285 3.40013 58.7175 4.68405L48.4464 23.2323ZM5.93897 20.3483L13 7.59693L20.0611 20.3483H5.93897ZM11.387 2.76775C12.1015 1.47744 13.8985 1.47744 14.613 2.76775L24.8841 21.316C25.5951 22.5999 24.7002 24.2 23.2711 24.2H2.72892C1.29988 24.2 0.404947 22.5999 1.11592 21.316L11.387 2.76775Z"></path>
         <path fill-rule="evenodd" clip-rule="evenodd" fill="url(#color2)" d="M114.633 21.0497L106.583 13L114.633 4.95038L122.682 13L114.633 21.0497ZM113.345 1.08811L102.721 11.7126C102.01 12.4236 102.01 13.5764 102.721 14.2874L113.345 24.9119C114.056 25.6229 115.209 25.6229 115.92 24.9119L126.545 14.2874C127.256 13.5764 127.256 12.4236 126.545 11.7126L115.92 1.08811C115.209 0.377085 114.056 0.377083 113.345 1.08811ZM80.6667 12.0667C83.7595 12.0667 86.2667 9.55947 86.2667 6.46668C86.2667 3.37388 83.7595 0.866679 80.6667 0.866679C77.5739 0.866679 75.0667 3.37388 75.0667 6.46668C75.0667 9.55947 77.5739 12.0667 80.6667 12.0667ZM88.1333 25.1333C91.2261 25.1333 93.7333 22.6261 93.7333 19.5333C93.7333 16.4406 91.2261 13.9333 88.1333 13.9333C85.0405 13.9333 82.5333 16.4406 82.5333 19.5333C82.5333 22.6261 85.0405 25.1333 88.1333 25.1333ZM78.8 19.5333C78.8 22.6261 76.2928 25.1333 73.2 25.1333C70.1072 25.1333 67.6 22.6261 67.6 19.5333C67.6 16.4406 70.1072 13.9333 73.2 13.9333C76.2928 13.9333 78.8 16.4406 78.8 19.5333ZM53.8945 5.65178L46.8334 18.4031L39.7724 5.65178L53.8945 5.65178ZM48.4464 23.2323C47.7319 24.5226 45.9349 24.5226 45.2204 23.2323L34.9493 4.68404C34.2383 3.40013 35.1333 1.80001 36.5623 1.80001L57.1045 1.80001C58.5336 1.80001 59.4285 3.40013 58.7175 4.68405L48.4464 23.2323ZM5.93897 20.3483L13 7.59693L20.0611 20.3483H5.93897ZM11.387 2.76775C12.1015 1.47744 13.8985 1.47744 14.613 2.76775L24.8841 21.316C25.5951 22.5999 24.7002 24.2 23.2711 24.2H2.72892C1.29988 24.2 0.404947 22.5999 1.11592 21.316L11.387 2.76775Z" style="opacity:0"></path>
         <defs>
             <linearGradient id="color2" x1="18.5985" y1="0.554879" x2="109.834" y2="2.1169" gradientUnits="userSpaceOnUse">
@@ -1130,7 +1157,7 @@
         </div>
 
         <div class="play-area">
-            <div class="deck-pile" onclick="drawCard()">
+            <div class="deck-pile" onclick="handleDrawCard()">
                 <div class="card card-back" id="deckCard"></div>
             </div>
 
@@ -1168,10 +1195,45 @@
 
     <div class="game-over" id="gameOver">
         <div class="result-text" id="resultText"></div>
-        <button class="play-again-btn" onclick="initGame()">Play Again</button>
+        <button class="play-again-btn" onclick="handlePlayAgain()">Play Again</button>
     </div>
 
     <script>
+        // ============================================================================
+        // CONFIGURATION CONSTANTS
+        // ============================================================================
+        const CONFIG = {
+            GAME: {
+                INITIAL_HAND_SIZE: 7,
+                NUM_JOKERS: 2
+            },
+            ANIMATION: {
+                CARD_DROP_DURATION: 400,        // Duration of card drop animation
+                CARD_FLY_DURATION: 250,         // Duration of card flying out
+                CARD_SHRINK_DURATION: 250,      // Duration of card shrinking
+                HINT_SHAKE_DURATION: 600,       // Duration of hint shake animation
+                HAND_RESIZE_DURATION: 500       // Duration of hand resize transition
+            },
+            TIMING: {
+                COMPUTER_TURN_DELAY: 800,       // Delay before computer plays
+                HINT_INITIAL_DELAY: 5000,       // Initial delay before first hint
+                HINT_REPEAT_DELAY: 5000,        // Delay between hint repetitions
+                STATUS_MESSAGE_SHORT: 1500,     // Short status message duration
+                STATUS_MESSAGE_LONG: 2000,      // Long status message duration
+                DRAW_MESSAGE_DELAY: 1200,       // Delay for draw message
+                ANIMATION_DELAY: 400,           // General animation delay
+                GAME_END_DELAY: 500             // Delay before showing game over
+            },
+            URLS: {
+                BASE_IMAGE: 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/',
+                CARD_INFO_BASE: 'https://playingarts.com/one/',
+                BACKSIDE_IMAGE: 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2'
+            }
+        };
+
+        // ============================================================================
+        // CARD DATA
+        // ============================================================================
         const cardData = {
             '2♠️': { artist: 'Mattias Adolfsson' }, '3♠️': { artist: 'Teagan White' },
             '4♠️': { artist: 'Serial Cut™' }, '5♠️': { artist: 'Musketon' },
@@ -1229,6 +1291,57 @@
         let isFirstGame = true; // Track if this is the first game after page load
         let playerHasActed = false; // Track if player has made any action yet
 
+        // ============================================================================
+        // TIMEOUT MANAGEMENT - Prevent memory leaks
+        // ============================================================================
+        let activeTimeouts = new Set();
+
+        /**
+         * Create a tracked timeout that will be automatically cleaned up
+         * @param {Function} callback - Function to execute
+         * @param {number} delay - Delay in milliseconds
+         * @returns {number} Timeout ID
+         */
+        function createTimeout(callback, delay) {
+            const timeoutId = setTimeout(() => {
+                activeTimeouts.delete(timeoutId);
+                callback();
+            }, delay);
+            activeTimeouts.add(timeoutId);
+            return timeoutId;
+        }
+
+        /**
+         * Clear a specific timeout
+         * @param {number} timeoutId - The timeout ID to clear
+         */
+        function clearTrackedTimeout(timeoutId) {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                activeTimeouts.delete(timeoutId);
+            }
+        }
+
+        /**
+         * Clear all active timeouts
+         */
+        function clearAllTimeouts() {
+            activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            activeTimeouts.clear();
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+        }
+
+        // ============================================================================
+        // GAME LOGIC
+        // ============================================================================
+
+        /**
+         * Create a new deck of 54 cards (52 standard + 2 jokers)
+         * @returns {Array} Shuffled deck of card objects
+         */
         function createDeck() {
             const newDeck = [];
             for (let suit of suits) {
@@ -1242,6 +1355,12 @@
             return shuffleDeck(newDeck);
         }
 
+        /**
+         * Create a card object with artist information
+         * @param {string} rank - Card rank (2-10, J, Q, K, A)
+         * @param {string} suit - Card suit emoji
+         * @returns {Object} Card object
+         */
         function createCard(rank, suit) {
             const cardKey = `${rank}${suit}`;
             const data = cardData[cardKey];
@@ -1254,6 +1373,11 @@
             };
         }
 
+        /**
+         * Shuffle deck using Fisher-Yates algorithm
+         * @param {Array} deck - Array of card objects
+         * @returns {Array} Shuffled deck
+         */
         function shuffleDeck(deck) {
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1320,6 +1444,11 @@
             'JOKER_2': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/joker-joshua-davis.jpg?2'
         };
 
+        /**
+         * Get the image URL for a card
+         * @param {Object} card - The card object
+         * @returns {string} Image URL
+         */
         function getCardImageUrl(card) {
             if (card.isJoker) {
                 return card.artist === 'Mike Friedrich' ? cardImages['JOKER'] : cardImages['JOKER_2'];
@@ -1328,87 +1457,214 @@
             return cardImages[key] || '';
         }
 
+        /**
+         * Get the artist page URL for a card
+         * @param {Object} card - The card object
+         * @returns {string} Artist page URL
+         */
+        function getCardUrl(card) {
+            // Map artist names to URL slugs
+            const artistSlugs = {
+                'Mattias Adolfsson': 'mattias-adolfsson',
+                'Teagan White': 'teagan-white',
+                'Serial Cut™': 'serial-cut',
+                'Musketon': 'musketon',
+                'Fernando Volken Togni': 'fernando-volken-togni',
+                'Muxxi': 'muxxi',
+                'Gary Fernández': 'gary-fernández',
+                'Anton Repponen': 'anton-repponen',
+                'Bicicleta Sem Freio': 'bicicleta-sem-freio',
+                'Seb Niark1': 'seb-niark1',
+                'David Mack': 'david-mack',
+                'Yulia Brodskaya': 'yulia-brodskaya',
+                'Iain Macarthur': 'iain-macarthur',
+                'Peter Tarka': 'peter-tarka',
+                'Mercedes deBellard': 'mercedes-debellard',
+                'Ruben Ireland': 'ruben-ireland',
+                'Aitch': 'aitch',
+                'Javier Medellin Puyou': 'jilipollo',
+                'Felix LaFlamme': 'felix-laflamme',
+                'Raul Urias': 'raul-urias',
+                'Carlos Lerma': 'carlos-lerma',
+                'Caramelaw': 'caramelaw',
+                'Steve Simpson': 'steve-simpson',
+                'Conrad Roset': 'conrad-roset',
+                'Sara Blake': 'sara-blake',
+                'Mr. Kone': 'mr-kone',
+                'Yema Yema': 'yema-yema',
+                'Carne Griffiths': 'carne-griffiths',
+                'Peter Olschinsky': 'peter-olschinsky',
+                'Fab Ciraolo': 'fab-ciraolo',
+                'VASAVA': 'vasava',
+                'Matt W. Moore': 'matt-w.-moore',
+                'Jthree Concepts': 'jthree-concepts',
+                'Pirecco': 'pirecco',
+                'Lei Melendres': 'lei-melendres',
+                'Newfren': 'newfren',
+                'agnes-cecile': 'agnes-cecile',
+                'Saturno (THE CREATTER)': 'saturno',
+                'Jordan Debney': 'jordan-debney',
+                'Tang Yau Hoong': 'tang-yau-hoong',
+                'Fernando Chamarelli': 'fernando-chamarelli',
+                'MUTI': 'muti',
+                'Valerie Ann Chua': 'valerie-ann-chua',
+                'Tobias van Schneider': 'tobias-van-schneider',
+                'Krzysztof CHKN Nowak': 'krzysztof-chkn-nowak',
+                'El Grand Chamaco': 'el-grand-chamaco',
+                'Chuck Anderson': 'chuck-anderson',
+                'Hey': 'hey',
+                'Bakea': 'bakea',
+                'Ise Ananphada': 'ise-ananphada',
+                'James White': 'james-white',
+                'Andreas Preis': 'andreas-preis',
+                'Mike Friedrich': 'mike-friedrich',
+                'Joshua Davis': 'joshua-davis'
+            };
+
+            const slug = artistSlugs[card.artist];
+            if (slug) {
+                return `https://playingarts.com/one/${slug}`;
+            }
+
+            return 'https://playingarts.com/one';
+        }
+
+        /**
+         * Get CSS class name for a suit
+         * @param {string} suit - Card suit emoji
+         * @returns {string} CSS class name
+         */
         function getSuitClass(suit) {
             const suitMap = { '♠️': 'spades', '♥️': 'hearts', '♦️': 'diamonds', '♣️': 'clubs', 'joker': 'joker' };
             return suitMap[suit] || '';
         }
 
-        function initGame() {
-            deck = createDeck();
-            console.log(`Deck created with ${deck.length} cards`);
-            playerHand = deck.splice(0, 7);
-            computerHand = deck.splice(0, 7);
-            console.log(`After dealing: ${deck.length} cards remaining in deck`);
+        /**
+         * Initialize a new game
+         * @async
+         * @returns {Promise<void>}
+         */
+        async function initGame() {
+            try {
+                // Clear all existing timeouts to prevent memory leaks
+                clearAllTimeouts();
 
-            // First discard card (not Ace or joker)
-            let firstCard;
-            do {
-                firstCard = deck.shift();
-            } while (firstCard.isAce || firstCard.isJoker);
+                deck = createDeck();
+                console.log(`Deck created with ${deck.length} cards`);
+                playerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
+                computerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
+                console.log(`After dealing: ${deck.length} cards remaining in deck`);
 
-            discardPile = [firstCard];
-            currentSuit = firstCard.suit;
-            currentRank = firstCard.rank;
+                // First discard card (not Ace or joker)
+                let firstCard;
+                do {
+                    firstCard = deck.shift();
+                } while (firstCard.isAce || firstCard.isJoker);
 
-            // Ensure player has at least one playable card
-            const hasPlayableCard = playerHand.some(card =>
-                card.isJoker || card.isAce || card.suit === currentSuit || card.rank === currentRank
-            );
+                discardPile = [firstCard];
+                currentSuit = firstCard.suit;
+                currentRank = firstCard.rank;
 
-            if (!hasPlayableCard) {
-                // Find a matching card in the deck and swap with a random card in player's hand
-                const matchingCardIndex = deck.findIndex(card =>
-                    card.suit === currentSuit || card.rank === currentRank
+                // Ensure player has at least one playable card
+                const hasPlayableCard = playerHand.some(card =>
+                    card.isJoker || card.isAce || card.suit === currentSuit || card.rank === currentRank
                 );
-                if (matchingCardIndex !== -1) {
-                    const matchingCard = deck.splice(matchingCardIndex, 1)[0];
-                    const randomIndex = Math.floor(Math.random() * playerHand.length);
-                    deck.push(playerHand[randomIndex]);
-                    playerHand[randomIndex] = matchingCard;
+
+                if (!hasPlayableCard) {
+                    // Find a matching card in the deck and swap with a random card in player's hand
+                    const matchingCardIndex = deck.findIndex(card =>
+                        card.suit === currentSuit || card.rank === currentRank
+                    );
+                    if (matchingCardIndex !== -1) {
+                        const matchingCard = deck.splice(matchingCardIndex, 1)[0];
+                        const randomIndex = Math.floor(Math.random() * playerHand.length);
+                        deck.push(playerHand[randomIndex]);
+                        playerHand[randomIndex] = matchingCard;
+                    }
                 }
-            }
 
-            gameOver = false;
-            pendingEightCard = null;
-            isComputerTurn = false;
-            isFirstMove = true;
-            suitWasChanged = false;
-            isDrawing = false;
-            jokerWasPlayed = false;
-            playerHasActed = false;
+                gameOver = false;
+                pendingEightCard = null;
+                isComputerTurn = false;
+                isFirstMove = true;
+                suitWasChanged = false;
+                isDrawing = false;
+                jokerWasPlayed = false;
+                playerHasActed = false;
 
-            // Clear any existing hint timeout
-            if (hintTimeout) {
-                clearTimeout(hintTimeout);
-                hintTimeout = null;
-            }
+                // Clear any existing hint timeout
+                if (hintTimeout) {
+                    clearTimeout(hintTimeout);
+                    hintTimeout = null;
+                }
 
-            // Show both player and computer hands - reset opacity
-            const opponentHand = document.getElementById('opponentHandPreview');
-            const playerHandContainer = document.querySelector('.player-hand');
-            const playerHandSection = document.querySelector('.player-hand-section');
-            if (opponentHand) {
-                opponentHand.style.display = 'flex';
-                opponentHand.style.visibility = 'visible';
-                opponentHand.style.opacity = '1';
-            }
-            if (playerHandContainer) {
-                playerHandContainer.style.display = 'block';
-                playerHandContainer.style.visibility = 'visible';
-                playerHandContainer.style.opacity = '1';
-            }
-            if (playerHandSection) {
-                playerHandSection.style.opacity = '1';
-            }
+                // Preload hand images and table card
+                updateStatus('Loading cards...');
+                const tableCardUrl = getCardImageUrl(firstCard);
+                if (tableCardUrl) {
+                    await preloadImage(tableCardUrl);
+                }
+                await preloadHandImages();
 
-            document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Play a card with the same rank or suit');
-            updateDisplay();
-            console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
+                // Show both player and computer hands - reset opacity
+                const opponentHand = document.getElementById('opponentHandPreview');
+                const playerHandContainer = document.querySelector('.player-hand');
+                const playerHandSection = document.querySelector('.player-hand-section');
+                if (opponentHand) {
+                    opponentHand.style.display = 'flex';
+                    opponentHand.style.visibility = 'visible';
+                    opponentHand.style.opacity = '1';
+                }
+                if (playerHandContainer) {
+                    playerHandContainer.style.display = 'block';
+                    playerHandContainer.style.visibility = 'visible';
+                    playerHandContainer.style.opacity = '1';
+                }
+                if (playerHandSection) {
+                    playerHandSection.style.opacity = '1';
+                }
 
-            // Start hint timer only on first game after page load
-            if (isFirstGame) {
-                hintTimeout = setTimeout(showPlayableCardHint, 5000);
+                document.getElementById('gameOver').classList.remove('show');
+                updateStatus('Play a card with the same rank or suit');
+                updateDisplay();
+                console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
+
+                // Start hint timer only on first game after page load
+                if (isFirstGame) {
+                    hintTimeout = setTimeout(showPlayableCardHint, CONFIG.TIMING.HINT_INITIAL_DELAY);
+                }
+            } catch (error) {
+                console.error('Error initializing game:', error);
+                updateStatus('Error starting game. Please refresh the page.');
+            }
+        }
+
+        /**
+         * Wrapper functions for onclick handlers to handle async operations
+         * @async
+         * @returns {Promise<void>}
+         */
+        async function handlePlayAgain() {
+            try {
+                await initGame();
+            } catch (error) {
+                console.error('Error restarting game:', error);
+                updateStatus('Error restarting game. Please refresh the page.');
+            }
+        }
+
+        /**
+         * Wrapper function for draw card action
+         * @async
+         * @returns {Promise<void>}
+         */
+        async function handleDrawCard() {
+            try {
+                await drawCard();
+            } catch (error) {
+                console.error('Error drawing card:', error);
+                updateStatus('Error drawing card. Please try again.');
+                isDrawing = false;
             }
         }
 
@@ -1440,9 +1696,9 @@
             hintTimeout = setTimeout(showPlayableCardHint, 5000);
         }
 
-        function updateDisplay(animate = true) {
+        function updateDisplay(animate = true, animateFrom = 'top') {
             renderOpponentHand();
-            renderTopCard(animate);
+            renderTopCard(animate, animateFrom);
             renderPlayerHand();
         }
 
@@ -1457,25 +1713,31 @@
             }
         }
 
-        function renderTopCard(animate = true) {
+        /**
+         * Render the top card on the discard pile
+         * @param {boolean} animate - Whether to animate the card
+         * @param {string} animateFrom - Direction to animate from ('top' or 'bottom')
+         */
+        function renderTopCard(animate = true, animateFrom = 'top') {
             const topCardEl = document.getElementById('topCard');
             const card = discardPile[discardPile.length - 1];
             const imageUrl = getCardImageUrl(card);
-            
+
             // First card is straight (0°), subsequent cards have slight rotation (-3 to 3 degrees)
             const isFirstCard = discardPile.length === 1;
             const rotation = isFirstCard ? 0 : (Math.random() - 0.5) * 6;
-            
-            // Only add animation class if animate is true
-            topCardEl.className = animate ? 'card card-animating' : 'card';
+
+            // Only add animation class if animate is true, with direction
+            const animationClass = animate ? `card card-animating-from-${animateFrom}` : 'card';
+            topCardEl.className = animationClass;
             topCardEl.style.backgroundImage = `url('${imageUrl}')`;
             topCardEl.style.setProperty('--rotation', `${rotation}deg`);
             topCardEl.style.transform = `rotate(${rotation}deg)`;
-            
+
             // Remove animation class after animation completes
             if (animate) {
                 setTimeout(() => {
-                    topCardEl.classList.remove('card-animating');
+                    topCardEl.classList.remove(`card-animating-from-${animateFrom}`);
                 }, 400);
             }
             
@@ -1514,7 +1776,7 @@
                     <div class="card-info">
                         <span class="info-joker">JOKER</span>
                     </div>
-                    <div class="card-artist">${card.artist}</div>
+                    <div class="card-artist"><a href="${getCardUrl(card)}" target="_blank">${card.artist}</a></div>
                 `;
                 
                 // Add animation class
@@ -1529,7 +1791,7 @@
                         <span class="info-rank">${card.rank}</span>
                         <span class="info-suit">${card.suit}</span>
                     </div>
-                    <div class="card-artist">${card.artist}</div>
+                    <div class="card-artist"><a href="${getCardUrl(card)}" target="_blank">${card.artist}</a></div>
                 `;
                 
                 // Add animation class
@@ -1544,11 +1806,14 @@
                         <span class="info-rank">${card.rank}</span>
                         <span class="info-suit">${card.suit}</span>
                     </div>
-                    <div class="card-artist">${card.artist}</div>
+                    <div class="card-artist"><a href="${getCardUrl(card)}" target="_blank">${card.artist}</a></div>
                 `;
             }
         }
 
+        /**
+         * Render the player's hand to the DOM
+         */
         function renderPlayerHand() {
             const handEl = document.getElementById('playerHand');
             handEl.innerHTML = '';
@@ -1613,6 +1878,11 @@
             });
         }
 
+        /**
+         * Check if a card can be played on the current card
+         * @param {Object} card - The card to check
+         * @returns {boolean} True if the card can be played
+         */
         function canPlayCard(card) {
             if (!card) return false;
             if (card.isJoker) return true;
@@ -1623,6 +1893,10 @@
             return false;
         }
 
+        /**
+         * Play a card from the player's hand
+         * @param {number} index - The index of the card in the player's hand
+         */
         function playCard(index) {
             if (gameOver || isComputerTurn || pendingEightCard) return;
 
@@ -1687,7 +1961,7 @@
                 jokerWasPlayed = true;
                 isComputerTurn = false; // Keep turn unlocked
                 updateStatus('You played Joker - play another card to define the suit');
-                updateDisplay();
+                updateDisplay(true, 'bottom');
                 return;
             }
 
@@ -1719,7 +1993,7 @@
                 setTimeout(() => updateStatus(''), 1500);
             }
 
-            updateDisplay();
+            updateDisplay(true, 'bottom');
 
             if (playerHand.length === 0) {
                 // Hide player hand immediately with the card animation
@@ -1739,8 +2013,8 @@
                 return;
             }
 
-            setTimeout(() => {
-                computerTurn();
+            setTimeout(async () => {
+                await computerTurn();
             }, 800);
             }, 400); // Animation delay - wait for card to fly and resize
         }
@@ -1768,7 +2042,7 @@
             updateStatus(`You changed suit to ${suit}`);
             setTimeout(() => updateStatus(''), 2000);
 
-            updateDisplay();
+            updateDisplay(true, 'bottom');
 
             if (playerHand.length === 0) {
                 setTimeout(() => {
@@ -1780,8 +2054,8 @@
             // If joker was played, skip computer's turn
             if (!wasJoker) {
                 isComputerTurn = true;
-                setTimeout(() => {
-                    computerTurn();
+                setTimeout(async () => {
+                    await computerTurn();
                 }, 800);
             }
         }
@@ -1830,13 +2104,19 @@
             setTimeout(() => updateStatus(''), 1500);
         }
 
+        /**
+         * Draw a card from the deck
+         * @async
+         * @returns {Promise<void>}
+         */
         async function drawCard() {
-            // Check all locks including the drawing lock
-            if (gameOver || isComputerTurn || pendingEightCard || isDrawing) return;
+            try {
+                // Check all locks including the drawing lock
+                if (gameOver || isComputerTurn || pendingEightCard || isDrawing) return;
 
-            // LOCK DRAWING IMMEDIATELY before any other operations
-            isDrawing = true;
-            isComputerTurn = true;
+                // LOCK DRAWING IMMEDIATELY before any other operations
+                isDrawing = true;
+                isComputerTurn = true;
 
             // Mark that player has acted
             if (!playerHasActed) {
@@ -1862,10 +2142,10 @@
 
             if (deck.length === 0) {
                 updateStatus('Deck empty - pass turn');
-                setTimeout(() => {
+                setTimeout(async () => {
                     updateStatus('');
                     isDrawing = false; // Unlock drawing
-                    computerTurn();
+                    await computerTurn();
                 }, 1500);
                 return;
             }
@@ -1874,10 +2154,10 @@
             if (!card) {
                 // Safety check - deck was empty
                 updateStatus('Deck empty - pass turn');
-                setTimeout(() => {
+                setTimeout(async () => {
                     updateStatus('');
                     isDrawing = false; // Unlock drawing
-                    computerTurn();
+                    await computerTurn();
                 }, 1500);
                 return;
             }
@@ -1894,85 +2174,102 @@
 
             if (!canPlayCard(card)) {
                 // Card can't be played, computer's turn
-                setTimeout(() => {
+                setTimeout(async () => {
                     isDrawing = false; // Unlock drawing before computer turn
-                    computerTurn();
+                    await computerTurn();
                 }, 1000);
-            } else {
-                // Card can be played, unlock turn for player to play it
+                } else {
+                    // Card can be played, unlock turn for player to play it
+                    isComputerTurn = false;
+                    isDrawing = false; // Unlock drawing
+                }
+            } catch (error) {
+                console.error('Error drawing card:', error);
+                isDrawing = false;
                 isComputerTurn = false;
-                isDrawing = false; // Unlock drawing
+                updateStatus('Error drawing card. Please try again.');
             }
         }
 
+        /**
+         * Computer's turn to play
+         * @async
+         * @returns {Promise<void>}
+         */
         async function computerTurn() {
-            if (gameOver) return;
+            try {
+                if (gameOver) return;
 
-            // Find playable cards
-            const playableCards = computerHand.filter(canPlayCard);
+                // Find playable cards
+                const playableCards = computerHand.filter(canPlayCard);
 
-            if (playableCards.length === 0) {
-                // Must draw
-                if (deck.length > 0) {
-                    const card = deck.shift();
-                    if (!card) {
-                        // Deck empty after shift
-                        updateDisplay(false); // No animation
-                        isComputerTurn = false;
-                        return;
-                    }
-                    computerHand.push(card);
-
-                    // Preload the drawn card before playing it
-                    await preloadCardOnDraw(card);
-
-                    animateDeckDraw(); // Animate the deck pile
-                    updateStatus('Computer drew a card');
-                    setTimeout(() => updateStatus(''), 1200);
-                    updateDisplay(false); // Update display without animating the face-up card
-
-                    if (canPlayCard(card)) {
-                        setTimeout(() => {
-                            const index = computerHand.indexOf(card);
-                            if (index !== -1) {
-                                computerPlayCard(index);
-                            } else {
-                                isComputerTurn = false;
-                            }
-                        }, 1200);
-                    } else {
-                        setTimeout(() => {
+                if (playableCards.length === 0) {
+                    // Must draw
+                    if (deck.length > 0) {
+                        const card = deck.shift();
+                        if (!card) {
+                            // Deck empty after shift
+                            updateDisplay(false); // No animation
                             isComputerTurn = false;
-                        }, 1200);
+                            return;
+                        }
+                        computerHand.push(card);
+
+                        // Preload the drawn card before playing it
+                        await preloadCardOnDraw(card);
+
+                        animateDeckDraw(); // Animate the deck pile
+                        updateStatus('Computer drew a card');
+                        setTimeout(() => updateStatus(''), 1200);
+                        updateDisplay(false); // Update display without animating the face-up card
+
+                        if (canPlayCard(card)) {
+                            setTimeout(() => {
+                                const index = computerHand.indexOf(card);
+                                if (index !== -1) {
+                                    computerPlayCard(index);
+                                } else {
+                                    isComputerTurn = false;
+                                }
+                            }, 1200);
+                        } else {
+                            setTimeout(() => {
+                                isComputerTurn = false;
+                            }, 1200);
+                        }
+                    } else {
+                        // Deck empty, computer must pass
+                        updateStatus('Computer passes');
+                        setTimeout(() => updateStatus(''), 1500);
+                        isComputerTurn = false;
                     }
+                    return;
+                }
+
+                // Play lowest non-special card, or special if needed
+                playableCards.sort((a, b) => {
+                    if (a.isJoker) return 1;
+                    if (b.isJoker) return -1;
+                    if (a.isAce) return 1;
+                    if (b.isAce) return -1;
+                    const rankOrder = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+                    return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
+                });
+
+                const cardToPlay = playableCards[0];
+                const index = computerHand.indexOf(cardToPlay);
+            
+                if (index !== -1) {
+                    setTimeout(() => {
+                        computerPlayCard(index);
+                    }, CONFIG.TIMING.COMPUTER_TURN_DELAY);
                 } else {
-                    // Deck empty, computer must pass
-                    updateStatus('Computer passes');
-                    setTimeout(() => updateStatus(''), 1500);
                     isComputerTurn = false;
                 }
-                return;
-            }
-            
-            // Play lowest non-special card, or special if needed
-            playableCards.sort((a, b) => {
-                if (a.isJoker) return 1;
-                if (b.isJoker) return -1;
-                if (a.isAce) return 1;
-                if (b.isAce) return -1;
-                const rankOrder = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-                return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
-            });
-            
-            const cardToPlay = playableCards[0];
-            const index = computerHand.indexOf(cardToPlay);
-            
-            if (index !== -1) {
-                setTimeout(() => {
-                    computerPlayCard(index);
-                }, 800);
-            } else {
+            } catch (error) {
+                console.error('Error in computer turn:', error);
                 isComputerTurn = false;
+                updateStatus('Error in computer turn. Please try again.');
             }
         }
 
@@ -2091,10 +2388,14 @@
                 return;
             }
 
-            isComputerTurn = false; // Unlock turn for player
-            }, 400); // Animation delay - wait for card to fly and resize
+                isComputerTurn = false; // Unlock turn for player
+            }, CONFIG.ANIMATION_DELAY); // Animation delay - wait for card to fly and resize
         }
 
+        /**
+         * Update status message display
+         * @param {string} message - The status message to display
+         */
         function updateStatus(message) {
             const statusEl = document.getElementById('statusMessage');
             if (message) {
@@ -2104,14 +2405,21 @@
             }
         }
 
+        /**
+         * Animate the deck pile when a card is drawn
+         */
         function animateDeckDraw() {
             const deckPile = document.querySelector('.deck-pile');
             deckPile.classList.add('deck-drawing');
             setTimeout(() => {
                 deckPile.classList.remove('deck-drawing');
-            }, 400);
+            }, CONFIG.ANIMATION.CARD_DROP_DURATION);
         }
 
+        /**
+         * End the game and display the result
+         * @param {string} winner - 'player' or 'computer'
+         */
         function endGame(winner) {
             gameOver = true;
 
@@ -2198,143 +2506,180 @@
             });
         }
 
-        // Preload both player and computer hand cards in background
+        /**
+         * Preload both player and computer hand cards in background
+         * @async
+         * @returns {Promise<void>}
+         */
         async function preloadHandImages() {
-            const urls = [];
-            let hasAce = false;
+            try {
+                const urls = [];
+                let hasAce = false;
 
-            // Player hand
-            playerHand.forEach(card => {
-                const url = getCardImageUrl(card);
-                if (url) urls.push(url);
-                if (card.isAce) hasAce = true;
-            });
+                // Player hand
+                playerHand.forEach(card => {
+                    const url = getCardImageUrl(card);
+                    if (url) urls.push(url);
+                    if (card.isAce) hasAce = true;
+                });
 
-            // Computer hand
-            computerHand.forEach(card => {
-                const url = getCardImageUrl(card);
-                if (url) urls.push(url);
-                if (card.isAce) hasAce = true;
-            });
+                // Computer hand
+                computerHand.forEach(card => {
+                    const url = getCardImageUrl(card);
+                    if (url) urls.push(url);
+                    if (card.isAce) hasAce = true;
+                });
 
-            await Promise.all(urls.map(url => preloadImage(url)));
-            console.log(`✓ Hand images loaded (${urls.length} cards)`);
+                await Promise.all(urls.map(url => preloadImage(url)));
+                console.log(`✓ Hand images loaded (${urls.length} cards)`);
 
-            // If any hand has an ace, preload all 4 aces
-            if (hasAce) {
-                await preloadAllAces();
+                // If any hand has an ace, preload all 4 aces
+                if (hasAce) {
+                    await preloadAllAces();
+                }
+            } catch (error) {
+                console.error('Error preloading hand images:', error);
+                // Continue anyway - images will load on demand
             }
         }
 
-        // Preload all four aces (since aces can change suit)
+        /**
+         * Preload all four aces (since aces can change suit)
+         * @async
+         * @returns {Promise<void>}
+         */
         async function preloadAllAces() {
-            const aceUrls = [
-                cardImages['A♠️'],
-                cardImages['A♥️'],
-                cardImages['A♦️'],
-                cardImages['A♣️']
-            ];
-            await Promise.all(aceUrls.map(url => preloadImage(url)));
-            console.log('✓ All 4 aces preloaded');
+            try {
+                const aceUrls = [
+                    cardImages['A♠️'],
+                    cardImages['A♥️'],
+                    cardImages['A♦️'],
+                    cardImages['A♣️']
+                ];
+                await Promise.all(aceUrls.map(url => preloadImage(url)));
+                console.log('✓ All 4 aces preloaded');
+            } catch (error) {
+                console.error('Error preloading aces:', error);
+                // Continue anyway - images will load on demand
+            }
         }
 
-        // Preload card when drawn from deck
+        /**
+         * Preload card when drawn from deck
+         * @async
+         * @param {Object} card - The card to preload
+         * @returns {Promise<void>}
+         */
         async function preloadCardOnDraw(card) {
-            const url = getCardImageUrl(card);
-            if (url) {
-                await preloadImage(url);
-            }
+            try {
+                const url = getCardImageUrl(card);
+                if (url) {
+                    await preloadImage(url);
+                }
 
-            // If it's an ace, preload all aces (since ace can change suit)
-            if (card.isAce) {
-                await preloadAllAces();
+                // If it's an ace, preload all aces (since ace can change suit)
+                if (card.isAce) {
+                    await preloadAllAces();
+                }
+            } catch (error) {
+                console.error('Error preloading card on draw:', error);
+                // Continue anyway - image will load on demand
             }
         }
 
         // Initialize - progressive loading
         async function initialize() {
-            // Initialize game data without displaying
-            deck = createDeck();
-            playerHand = deck.splice(0, 7);
-            computerHand = deck.splice(0, 7);
+            try {
+                // Initialize game data without displaying
+                deck = createDeck();
+                playerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
+                computerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
 
-            // First discard card (not Ace or joker)
-            let firstCard;
-            do {
-                firstCard = deck.shift();
-            } while (firstCard.isAce || firstCard.isJoker);
+                // First discard card (not Ace or joker)
+                let firstCard;
+                do {
+                    firstCard = deck.shift();
+                } while (firstCard.isAce || firstCard.isJoker);
 
-            discardPile = [firstCard];
-            currentSuit = firstCard.suit;
-            currentRank = firstCard.rank;
+                discardPile = [firstCard];
+                currentSuit = firstCard.suit;
+                currentRank = firstCard.rank;
 
-            // Load only critical images (backside + table card)
-            const tableCardUrl = getCardImageUrl(firstCard);
-            const backsideUrl = 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2';
+                // Load only critical images (backside + table card)
+                const tableCardUrl = getCardImageUrl(firstCard);
+                const backsideUrl = CONFIG.URLS.BACKSIDE_IMAGE;
 
-            const criticalPromises = [
-                preloadImage(backsideUrl),
-                tableCardUrl ? preloadImage(tableCardUrl) : Promise.resolve()
-            ];
+                const criticalPromises = [
+                    preloadImage(backsideUrl),
+                    tableCardUrl ? preloadImage(tableCardUrl) : Promise.resolve()
+                ];
 
-            await Promise.all(criticalPromises);
-            console.log('✓ Critical images loaded (backside + table card)');
+                await Promise.all(criticalPromises);
+                console.log('✓ Critical images loaded (backside + table card)');
 
-            updateStatus('Loading cards...');
+                updateStatus('Loading cards...');
 
-            // Preload ALL hand cards before displaying game
-            await preloadHandImages();
-            console.log('✓ All hand images preloaded');
-            console.log('Preloaded images count:', window.preloadedImages.length);
-            console.log('Preloaded URLs count:', window.preloadedUrls.size);
+                // Preload ALL hand cards before displaying game
+                await preloadHandImages();
+                console.log('✓ All hand images preloaded');
+                console.log('Preloaded images count:', window.preloadedImages.length);
+                console.log('Preloaded URLs count:', window.preloadedUrls.size);
 
-            // Now display the game with everything ready
-            gameOver = false;
-            pendingEightCard = null;
-            isComputerTurn = false;
-            isFirstMove = true;
-            suitWasChanged = false;
-            isDrawing = false;
-            jokerWasPlayed = false;
-            playerHasActed = false;
+                // Now display the game with everything ready
+                gameOver = false;
+                pendingEightCard = null;
+                isComputerTurn = false;
+                isFirstMove = true;
+                suitWasChanged = false;
+                isDrawing = false;
+                jokerWasPlayed = false;
+                playerHasActed = false;
 
-            // Show both player and computer hands
-            const opponentHand = document.getElementById('opponentHandPreview');
-            const playerHandContainer = document.querySelector('.player-hand');
-            if (opponentHand) {
-                opponentHand.style.display = 'flex';
-                opponentHand.style.visibility = 'visible';
-            }
-            if (playerHandContainer) {
-                playerHandContainer.style.display = 'block';
-                playerHandContainer.style.visibility = 'visible';
-            }
-
-            document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Play a card with the same rank or suit');
-            updateDisplay();
-
-            // Start hint timer only on first game after page load
-            if (isFirstGame) {
-                hintTimeout = setTimeout(showPlayableCardHint, 5000);
-            }
-
-            // Fade in the game and hide loading screen after everything is loaded
-            setTimeout(() => {
-                const gameContainer = document.querySelector('.game-container');
-                const loadingScreen = document.getElementById('loadingScreen');
-
-                if (gameContainer) gameContainer.classList.add('loaded');
-                if (loadingScreen) {
-                    loadingScreen.classList.add('hidden');
-                    // Remove from DOM after transition
-                    setTimeout(() => {
-                        loadingScreen.remove();
-                    }, 500);
+                // Show both player and computer hands
+                const opponentHand = document.getElementById('opponentHandPreview');
+                const playerHandContainer = document.querySelector('.player-hand');
+                if (opponentHand) {
+                    opponentHand.style.display = 'flex';
+                    opponentHand.style.visibility = 'visible';
                 }
-            }, 100);
+                if (playerHandContainer) {
+                    playerHandContainer.style.display = 'block';
+                    playerHandContainer.style.visibility = 'visible';
+                }
 
-            // Cards drawn from deck load dynamically via preloadCardOnDraw()
+                document.getElementById('gameOver').classList.remove('show');
+                updateStatus('Play a card with the same rank or suit');
+                updateDisplay();
+
+                // Start hint timer only on first game after page load
+                if (isFirstGame) {
+                    hintTimeout = setTimeout(showPlayableCardHint, CONFIG.TIMING.HINT_INITIAL_DELAY);
+                }
+
+                // Fade in the game and hide loading screen after everything is loaded
+                setTimeout(() => {
+                    const gameContainer = document.querySelector('.game-container');
+                    const loadingScreen = document.getElementById('loadingScreen');
+
+                    if (gameContainer) gameContainer.classList.add('loaded');
+                    if (loadingScreen) {
+                        loadingScreen.classList.add('hidden');
+                        // Remove from DOM after transition
+                        setTimeout(() => {
+                            loadingScreen.remove();
+                        }, 500);
+                    }
+                }, 100);
+
+                // Cards drawn from deck load dynamically via preloadCardOnDraw()
+            } catch (error) {
+                console.error('Error initializing game:', error);
+                // Hide loading screen even on error
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.innerHTML = '<div style="color: white; font-size: 24px;">Error loading game. Please refresh the page.</div>';
+                }
+            }
         }
 
         initialize();
