@@ -178,10 +178,16 @@
         .card-flying-out {
             animation: cardPlayedFromHand 0.25s ease forwards;
             pointer-events: none;
+            /* Hardware acceleration for smoother mobile performance */
+            transform: translateZ(0);
+            will-change: transform, opacity;
         }
 
         .card-flying-out-opponent {
             animation: cardPlayedFromOpponent 0.25s ease forwards;
+            /* Hardware acceleration for smoother mobile performance */
+            transform: translateZ(0);
+            will-change: transform, opacity;
         }
 
         @keyframes hintShake {
@@ -508,7 +514,7 @@
         .player-hand {
             background: #f5f5f5;
             border-radius: 20px;
-            padding: 13px;
+            padding: 13px 7px 13px 13px;
             display: inline-block;
             margin: 0 auto;
             overflow: visible;
@@ -517,7 +523,6 @@
 
         .hand-cards {
             display: flex;
-            gap: 7px;
             justify-content: center;
             flex-wrap: nowrap;
             overflow: visible;
@@ -529,7 +534,8 @@
             height: 87px;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            margin-right: 7px;
+            transition: width 0.3s ease, margin 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -985,6 +991,7 @@
                 position: relative;
                 z-index: 1;
                 -webkit-tap-highlight-color: transparent;
+                margin-right: 4px; /* Reduced spacing on mobile */
             }
 
             .hand-card:not(.hint-shake) {
@@ -1016,8 +1023,7 @@
             }
 
             .hand-cards {
-                gap: 5px;
-                padding: 15px 8px;
+                padding: 15px 4px; /* Reduced horizontal padding */
                 overflow-x: auto;
                 overflow-y: visible;
                 -webkit-overflow-scrolling: touch;
@@ -1050,9 +1056,10 @@
             }
 
             .player-hand {
-                padding: 10px 5px;
+                padding: 10px 2px 10px 6px;
                 max-width: 100%;
                 overflow: visible;
+                border-radius: 15px;
             }
 
             .suit-selector {
@@ -1932,24 +1939,17 @@
                 isFirstMove = false;
             }
 
-            // Animate the card flying out - find the correct card element by its data-card-index
+            // Animate the card flying out FIRST - find the correct card element by its data-card-index
             const handEl = document.getElementById('playerHand');
             const cardElement = handEl.querySelector(`[data-card-index="${index}"]`);
             if (cardElement) {
                 cardElement.classList.add('card-flying-out');
-                // Also set width to 0 with transition for smooth resize
-                setTimeout(() => {
-                    cardElement.style.transition = 'all 0.25s ease';
-                    cardElement.style.width = '0';
-                    cardElement.style.marginRight = '0';
-                    cardElement.style.opacity = '0';
-                }, 150);
             }
 
-            // Wait for animation before removing card from array
-            setTimeout(() => {
-                playerHand.splice(index, 1);
-                discardPile.push(card);
+            // Immediately remove from array and re-render for smooth hand resize
+            playerHand.splice(index, 1);
+            discardPile.push(card);
+            renderPlayerHand();
 
             // Card from hand is already preloaded - no need to preload again
 
@@ -1961,7 +1961,9 @@
                 jokerWasPlayed = true;
                 isComputerTurn = false; // Keep turn unlocked
                 updateStatus('You played Joker - play another card to define the suit');
-                updateDisplay(true, 'bottom');
+                // Update table card and opponent hand immediately
+                renderOpponentHand();
+                renderTopCard(true, 'bottom');
                 return;
             }
 
@@ -1993,7 +1995,12 @@
                 setTimeout(() => updateStatus(''), 1500);
             }
 
-            updateDisplay(true, 'bottom');
+            // Update table card and opponent hand immediately
+            renderOpponentHand();
+            renderTopCard(true, 'bottom');
+
+            // Wait for fly-out animation before starting computer turn
+            setTimeout(() => {
 
             if (playerHand.length === 0) {
                 // Hide player hand immediately with the card animation
@@ -2015,8 +2022,8 @@
 
             setTimeout(async () => {
                 await computerTurn();
-            }, 800);
-            }, 400); // Animation delay - wait for card to fly and resize
+            }, CONFIG.TIMING.COMPUTER_TURN_DELAY);
+            }, CONFIG.ANIMATION.CARD_FLY_DURATION); // Wait for fly-out animation
         }
 
         function chooseSuit(suit) {
