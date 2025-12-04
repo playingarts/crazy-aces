@@ -2167,13 +2167,14 @@
                     clearTimeout(hintTimeout);
                     hintTimeout = null;
                 }
-                // Hide deck hint after first draw
-                const deckHint = document.getElementById('deckHint');
-                if (deckHint) {
-                    deckHint.style.display = 'none';
-                }
                 // Disable hints for future games
                 isFirstGame = false;
+            }
+
+            // Hide deck hint after drawing (always, not just first time)
+            const deckHint = document.getElementById('deckHint');
+            if (deckHint) {
+                deckHint.style.display = 'none';
             }
 
             // Clear rules message on first move
