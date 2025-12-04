@@ -72,6 +72,123 @@
             opacity: 0.5;
         }
 
+        .rules-logo {
+            position: fixed;
+            top: 30px;
+            left: 40px;
+            width: 128px;
+            height: 26px;
+            color: #ffffff;
+            z-index: 1001;
+        }
+
+        .rules-box {
+            position: fixed;
+            top: 90px;
+            left: 40px;
+            width: 300px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            z-index: 1000;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .rules-box.hidden {
+            opacity: 0;
+            transform: translateX(-100%);
+            pointer-events: none;
+        }
+
+        .rules-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .rules-content {
+            color: rgba(255,255,255,0.5);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .rules-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .rules-content ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .rules-content li {
+            margin-bottom: 4px;
+        }
+
+        .rules-ok-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 8px 28px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            width: auto;
+            display: block;
+            float: left;
+            transition: all 0.3s ease;
+        }
+
+        .rules-ok-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        @keyframes cardPlayedFromHand {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-150px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        @keyframes cardPlayedFromOpponent {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(150px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        .card-flying-out {
+            animation: cardPlayedFromHand 0.25s ease forwards;
+            pointer-events: none;
+        }
+
+        .card-flying-out-opponent {
+            animation: cardPlayedFromOpponent 0.25s ease forwards;
+        }
+
+        @keyframes hintShake {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30%, 50%, 70%, 90% { transform: rotate(-5deg); }
+            20%, 40%, 60%, 80% { transform: rotate(5deg); }
+        }
+
+        .hint-shake {
+            animation: hintShake 0.6s ease-in-out;
+        }
+
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -87,6 +204,12 @@
             color: rgba(255,255,255,0.8);
         }
 
+        .opponent-hand-section {
+            min-height: 110px;
+            display: flex;
+            justify-content: center;
+        }
+
         .opponent-hand-preview {
             display: inline-flex;
             gap: 8px;
@@ -95,6 +218,7 @@
             background: rgba(255,255,255,0.03);
             border-radius: 12px;
             min-height: 80px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .card-back-small {
@@ -341,6 +465,14 @@
             opacity: 1;
         }
 
+        .player-hand-section {
+            min-height: 135px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+        }
+
         .player-hand {
             background: #f5f5f5;
             border-radius: 20px;
@@ -348,6 +480,7 @@
             display: inline-block;
             margin: 0 auto;
             overflow: visible;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .hand-cards {
@@ -356,6 +489,7 @@
             justify-content: center;
             flex-wrap: nowrap;
             overflow: visible;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .hand-card {
@@ -422,32 +556,40 @@
             font-weight: 700;
         }
 
+        /* Hide logo and rules on mobile */
+        @media (max-width: 767px) {
+            .rules-logo,
+            .rules-box {
+                display: none;
+            }
+        }
+
         @media (min-width: 768px) {
             .card {
                 width: 225px;
                 height: 322px;
             }
-            
+
             .card .card-rank {
                 font-size: 78px;
             }
-            
+
             .card .card-suit {
                 font-size: 90px;
             }
-            
+
             .play-area {
                 gap: 35px;
                 padding: 0 45px;
                 min-height: 420px;
                 padding-bottom: 60px;
             }
-            
+
             .opponent-hand-preview {
                 padding: 13px;
                 min-height: 90px;
             }
-            
+
             .card-back-small {
                 width: 50px;
                 height: 72px;
@@ -455,6 +597,25 @@
 
             .card-back-small::after {
                 font-size: 36px;
+            }
+
+            body {
+                align-items: flex-start;
+                padding-top: 20px;
+            }
+
+            .game-container {
+                justify-content: flex-start;
+            }
+
+            .player-hand-section {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                min-height: 135px;
+                background: #1a1a1a;
+                z-index: 100;
             }
         }
 
@@ -897,9 +1058,38 @@
         <div class="loading-text">Loading...</div>
     </div>
 
+    <!-- Playing Arts Logo - Always Visible -->
+    <svg class="rules-logo" width="128" height="26" viewBox="0 0 128 26" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M114.633 21.0497L106.583 13L114.633 4.95038L122.682 13L114.633 21.0497ZM113.345 1.08811L102.721 11.7126C102.01 12.4236 102.01 13.5764 102.721 14.2874L113.345 24.9119C114.056 25.6229 115.209 25.6229 115.92 24.9119L126.545 14.2874C127.256 13.5764 127.256 12.4236 126.545 11.7126L115.92 1.08811C115.209 0.377085 114.056 0.377083 113.345 1.08811ZM80.6667 12.0667C83.7595 12.0667 86.2667 9.55947 86.2667 6.46668C86.2667 3.37388 83.7595 0.866679 80.6667 0.866679C77.5739 0.866679 75.0667 3.37388 75.0667 6.46668C75.0667 9.55947 77.5739 12.0667 80.6667 12.0667ZM88.1333 25.1333C91.2261 25.1333 93.7333 22.6261 93.7333 19.5333C93.7333 16.4406 91.2261 13.9333 88.1333 13.9333C85.0405 13.9333 82.5333 16.4406 82.5333 19.5333C82.5333 22.6261 85.0405 25.1333 88.1333 25.1333ZM78.8 19.5333C78.8 22.6261 76.2928 25.1333 73.2 25.1333C70.1072 25.1333 67.6 22.6261 67.6 19.5333C67.6 16.4406 70.1072 13.9333 73.2 13.9333C76.2928 13.9333 78.8 16.4406 78.8 19.5333ZM53.8945 5.65178L46.8334 18.4031L39.7724 5.65178L53.8945 5.65178ZM48.4464 23.2323C47.7319 24.5226 45.9349 24.5226 45.2204 23.2323L34.9493 4.68404C34.2383 3.40013 35.1333 1.80001 36.5623 1.80001L57.1045 1.80001C58.5336 1.80001 59.4285 3.40013 58.7175 4.68405L48.4464 23.2323ZM5.93897 20.3483L13 7.59693L20.0611 20.3483H5.93897ZM11.387 2.76775C12.1015 1.47744 13.8985 1.47744 14.613 2.76775L24.8841 21.316C25.5951 22.5999 24.7002 24.2 23.2711 24.2H2.72892C1.29988 24.2 0.404947 22.5999 1.11592 21.316L11.387 2.76775Z" style="opacity:0.3"></path>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="url(#color2)" d="M114.633 21.0497L106.583 13L114.633 4.95038L122.682 13L114.633 21.0497ZM113.345 1.08811L102.721 11.7126C102.01 12.4236 102.01 13.5764 102.721 14.2874L113.345 24.9119C114.056 25.6229 115.209 25.6229 115.92 24.9119L126.545 14.2874C127.256 13.5764 127.256 12.4236 126.545 11.7126L115.92 1.08811C115.209 0.377085 114.056 0.377083 113.345 1.08811ZM80.6667 12.0667C83.7595 12.0667 86.2667 9.55947 86.2667 6.46668C86.2667 3.37388 83.7595 0.866679 80.6667 0.866679C77.5739 0.866679 75.0667 3.37388 75.0667 6.46668C75.0667 9.55947 77.5739 12.0667 80.6667 12.0667ZM88.1333 25.1333C91.2261 25.1333 93.7333 22.6261 93.7333 19.5333C93.7333 16.4406 91.2261 13.9333 88.1333 13.9333C85.0405 13.9333 82.5333 16.4406 82.5333 19.5333C82.5333 22.6261 85.0405 25.1333 88.1333 25.1333ZM78.8 19.5333C78.8 22.6261 76.2928 25.1333 73.2 25.1333C70.1072 25.1333 67.6 22.6261 67.6 19.5333C67.6 16.4406 70.1072 13.9333 73.2 13.9333C76.2928 13.9333 78.8 16.4406 78.8 19.5333ZM53.8945 5.65178L46.8334 18.4031L39.7724 5.65178L53.8945 5.65178ZM48.4464 23.2323C47.7319 24.5226 45.9349 24.5226 45.2204 23.2323L34.9493 4.68404C34.2383 3.40013 35.1333 1.80001 36.5623 1.80001L57.1045 1.80001C58.5336 1.80001 59.4285 3.40013 58.7175 4.68405L48.4464 23.2323ZM5.93897 20.3483L13 7.59693L20.0611 20.3483H5.93897ZM11.387 2.76775C12.1015 1.47744 13.8985 1.47744 14.613 2.76775L24.8841 21.316C25.5951 22.5999 24.7002 24.2 23.2711 24.2H2.72892C1.29988 24.2 0.404947 22.5999 1.11592 21.316L11.387 2.76775Z" style="opacity:0"></path>
+        <defs>
+            <linearGradient id="color2" x1="18.5985" y1="0.554879" x2="109.834" y2="2.1169" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#82A7F8"></stop>
+                <stop offset="0.5" stop-color="#A6FBF6"></stop>
+                <stop offset="1" stop-color="#CDB0FF"></stop>
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Rules Box -->
+    <div class="rules-box" id="rulesBox">
+        <div class="rules-content">
+            <h3>How to Play</h3>
+            <ul>
+                <li>Match the rank or suit of the top card</li>
+                <li>Aces can be played anytime and let you choose a new suit</li>
+                <li>Jokers can be played anytime and act as wild cards</li>
+                <li>If you can't play, draw from the deck</li>
+                <li>First to empty their hand wins!</li>
+            </ul>
+        </div>
+
+        <button class="rules-ok-btn" onclick="hideRulesBox()">OK</button>
+    </div>
+
     <div class="confetti-container" id="confettiContainer"></div>
     <div class="game-container">
-        <div style="display: flex; justify-content: center;">
+        <div class="opponent-hand-section">
             <div class="opponent-hand-preview" id="opponentHandPreview">
                 <!-- Card backs will be generated here -->
             </div>
@@ -924,7 +1114,7 @@
             </div>
         </div>
 
-        <div style="display: flex; justify-content: center; overflow: visible;">
+        <div class="player-hand-section">
             <div class="player-hand">
                 <div class="hand-cards" id="playerHand">
                     <!-- Player cards will be generated here -->
@@ -1005,6 +1195,9 @@
         let suitWasChanged = false;
         let isDrawing = false; // Prevent multiple simultaneous draws
         let jokerWasPlayed = false; // Track if joker was just played
+        let hintTimeout = null;
+        let isFirstGame = true; // Track if this is the first game after page load
+        let playerHasActed = false; // Track if player has made any action yet
 
         function createDeck() {
             const newDeck = [];
@@ -1126,6 +1319,25 @@
             discardPile = [firstCard];
             currentSuit = firstCard.suit;
             currentRank = firstCard.rank;
+
+            // Ensure player has at least one playable card
+            const hasPlayableCard = playerHand.some(card =>
+                card.isJoker || card.isAce || card.suit === currentSuit || card.rank === currentRank
+            );
+
+            if (!hasPlayableCard) {
+                // Find a matching card in the deck and swap with a random card in player's hand
+                const matchingCardIndex = deck.findIndex(card =>
+                    card.suit === currentSuit || card.rank === currentRank
+                );
+                if (matchingCardIndex !== -1) {
+                    const matchingCard = deck.splice(matchingCardIndex, 1)[0];
+                    const randomIndex = Math.floor(Math.random() * playerHand.length);
+                    deck.push(playerHand[randomIndex]);
+                    playerHand[randomIndex] = matchingCard;
+                }
+            }
+
             gameOver = false;
             pendingEightCard = null;
             isComputerTurn = false;
@@ -1133,23 +1345,76 @@
             suitWasChanged = false;
             isDrawing = false;
             jokerWasPlayed = false;
+            playerHasActed = false;
 
-            // Show both player and computer hands
+            // Clear any existing hint timeout
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+
+            // Show both player and computer hands - reset opacity
             const opponentHand = document.getElementById('opponentHandPreview');
             const playerHandContainer = document.querySelector('.player-hand');
             if (opponentHand) {
                 opponentHand.style.display = 'flex';
                 opponentHand.style.visibility = 'visible';
+                opponentHand.style.opacity = '1';
             }
             if (playerHandContainer) {
                 playerHandContainer.style.display = 'block';
                 playerHandContainer.style.visibility = 'visible';
+                playerHandContainer.style.opacity = '1';
             }
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Match the rank or suit!\nClick a card to play it, or draw from the deck.');
+            updateStatus('Play a card with the same rank or suit');
             updateDisplay();
             console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
+
+            // Start hint timer only on first game after page load
+            console.log('isFirstGame:', isFirstGame);
+            if (isFirstGame) {
+                console.log('Starting hint timer for 3 seconds...');
+                hintTimeout = setTimeout(showPlayableCardHint, 3000);
+            } else {
+                console.log('Not first game, skipping hint timer');
+            }
+        }
+
+        function showPlayableCardHint() {
+            console.log('Hint function called. gameOver:', gameOver, 'isComputerTurn:', isComputerTurn, 'playerHasActed:', playerHasActed);
+            if (gameOver || isComputerTurn || playerHasActed) {
+                console.log('Hint cancelled due to conditions');
+                return;
+            }
+
+            // Find all playable cards
+            const handEl = document.getElementById('playerHand');
+            const cardElements = handEl.querySelectorAll('.hand-card');
+            console.log('Found card elements:', cardElements.length);
+
+            let shakingCards = 0;
+            cardElements.forEach((cardEl, visualIndex) => {
+                const cardIndex = parseInt(cardEl.dataset.cardIndex);
+                const card = playerHand[cardIndex];
+
+                if (card && canPlayCard(card)) {
+                    console.log('Shaking card:', card.rank, card.suit);
+                    shakingCards++;
+                    // Add shake animation
+                    cardEl.classList.add('hint-shake');
+
+                    // Remove animation class after it completes
+                    setTimeout(() => {
+                        cardEl.classList.remove('hint-shake');
+                    }, 600);
+                }
+            });
+            console.log('Total cards shaking:', shakingCards);
+
+            // Schedule next hint in 5 seconds
+            hintTimeout = setTimeout(showPlayableCardHint, 5000);
         }
 
         function updateDisplay(animate = true) {
@@ -1161,7 +1426,7 @@
         function renderOpponentHand() {
             const container = document.getElementById('opponentHandPreview');
             container.innerHTML = '';
-            
+
             for (let i = 0; i < computerHand.length; i++) {
                 const cardBack = document.createElement('div');
                 cardBack.className = 'card-back-small';
@@ -1275,6 +1540,7 @@
                 const actualIndex = playerHand.indexOf(card);
                 const cardEl = document.createElement('div');
                 cardEl.className = 'hand-card joker-card';
+                cardEl.dataset.cardIndex = actualIndex;
                 cardEl.innerHTML = `
                     <div class="card-rank joker-text">JOKER</div>
                 `;
@@ -1291,6 +1557,7 @@
                 const actualIndex = playerHand.indexOf(card);
                 const cardEl = document.createElement('div');
                 cardEl.className = 'hand-card ace-card';
+                cardEl.dataset.cardIndex = actualIndex;
                 // Show only "A" for Aces, no suit symbol
                 cardEl.innerHTML = `
                     <div class="card-rank">${card.rank}</div>
@@ -1308,6 +1575,7 @@
                 const actualIndex = playerHand.indexOf(card);
                 const cardEl = document.createElement('div');
                 cardEl.className = 'hand-card';
+                cardEl.dataset.cardIndex = actualIndex;
 
                 cardEl.innerHTML = `
                     <div class="card-rank">${card.rank}</div>
@@ -1350,13 +1618,41 @@
             // LOCK TURN IMMEDIATELY before any other operations
             isComputerTurn = true;
 
+            // Mark that player has acted
+            if (!playerHasActed) {
+                playerHasActed = true;
+                // Clear hint timeout on first action
+                if (hintTimeout) {
+                    clearTimeout(hintTimeout);
+                    hintTimeout = null;
+                }
+                // Disable hints for future games
+                isFirstGame = false;
+            }
+
             // Clear rules message on first move
             if (isFirstMove) {
                 isFirstMove = false;
             }
 
-            playerHand.splice(index, 1);
-            discardPile.push(card);
+            // Animate the card flying out - find the correct card element by its data-card-index
+            const handEl = document.getElementById('playerHand');
+            const cardElement = handEl.querySelector(`[data-card-index="${index}"]`);
+            if (cardElement) {
+                cardElement.classList.add('card-flying-out');
+                // Also set width to 0 with transition for smooth resize
+                setTimeout(() => {
+                    cardElement.style.transition = 'all 0.25s ease';
+                    cardElement.style.width = '0';
+                    cardElement.style.marginRight = '0';
+                    cardElement.style.opacity = '0';
+                }, 150);
+            }
+
+            // Wait for animation before removing card from array
+            setTimeout(() => {
+                playerHand.splice(index, 1);
+                discardPile.push(card);
 
             // Card from hand is already preloaded - no need to preload again
 
@@ -1403,6 +1699,12 @@
             updateDisplay();
 
             if (playerHand.length === 0) {
+                // Hide player hand immediately with the card animation
+                const playerHandContainer = document.querySelector('.player-hand');
+                if (playerHandContainer) {
+                    playerHandContainer.style.transition = 'opacity 0.25s ease';
+                    playerHandContainer.style.opacity = '0';
+                }
                 setTimeout(() => {
                     endGame('player');
                 }, 500);
@@ -1412,6 +1714,7 @@
             setTimeout(() => {
                 computerTurn();
             }, 800);
+            }, 400); // Animation delay - wait for card to fly and resize
         }
 
         function chooseSuit(suit) {
@@ -1506,6 +1809,18 @@
             // LOCK DRAWING IMMEDIATELY before any other operations
             isDrawing = true;
             isComputerTurn = true;
+
+            // Mark that player has acted
+            if (!playerHasActed) {
+                playerHasActed = true;
+                // Clear hint timeout on first action
+                if (hintTimeout) {
+                    clearTimeout(hintTimeout);
+                    hintTimeout = null;
+                }
+                // Disable hints for future games
+                isFirstGame = false;
+            }
 
             // Clear rules message on first move
             if (isFirstMove) {
@@ -1635,8 +1950,25 @@
 
         function computerPlayCard(index) {
             const card = computerHand[index];
-            computerHand.splice(index, 1);
-            discardPile.push(card);
+
+            // Animate the card flying out from opponent hand
+            const opponentHandEl = document.getElementById('opponentHandPreview');
+            const cardElements = opponentHandEl.querySelectorAll('.card-back-small');
+            if (cardElements[index]) {
+                cardElements[index].classList.add('card-flying-out-opponent');
+                // Also set width to 0 with transition for smooth resize
+                setTimeout(() => {
+                    cardElements[index].style.transition = 'all 0.25s ease';
+                    cardElements[index].style.width = '0';
+                    cardElements[index].style.marginRight = '0';
+                    cardElements[index].style.opacity = '0';
+                }, 150);
+            }
+
+            // Wait for animation before removing card from array
+            setTimeout(() => {
+                computerHand.splice(index, 1);
+                discardPile.push(card);
 
             // Card from hand is already preloaded - no need to preload again
 
@@ -1719,6 +2051,12 @@
             updateDisplay();
 
             if (computerHand.length === 0) {
+                // Hide computer hand immediately with the card animation
+                const opponentHandContainer = document.getElementById('opponentHandPreview');
+                if (opponentHandContainer) {
+                    opponentHandContainer.style.transition = 'opacity 0.25s ease';
+                    opponentHandContainer.style.opacity = '0';
+                }
                 setTimeout(() => {
                     endGame('computer');
                 }, 500);
@@ -1726,6 +2064,7 @@
             }
 
             isComputerTurn = false; // Unlock turn for player
+            }, 400); // Animation delay - wait for card to fly and resize
         }
 
         function updateStatus(message) {
@@ -1747,15 +2086,6 @@
 
         function endGame(winner) {
             gameOver = true;
-
-            // Hide winner's hand block (use visibility to prevent content jump)
-            if (winner === 'player') {
-                const playerHandContainer = document.querySelector('.player-hand');
-                if (playerHandContainer) playerHandContainer.style.visibility = 'hidden';
-            } else {
-                const opponentHand = document.getElementById('opponentHandPreview');
-                if (opponentHand) opponentHand.style.visibility = 'hidden';
-            }
 
             const gameOverEl = document.getElementById('gameOver');
             const resultText = document.getElementById('resultText');
@@ -1792,6 +2122,13 @@
                         confetti.remove();
                     }, 5000);
                 }, i * 30);
+            }
+        }
+
+        function hideRulesBox() {
+            const rulesBox = document.getElementById('rulesBox');
+            if (rulesBox) {
+                rulesBox.classList.add('hidden');
             }
         }
 
@@ -1931,6 +2268,7 @@
             suitWasChanged = false;
             isDrawing = false;
             jokerWasPlayed = false;
+            playerHasActed = false;
 
             // Show both player and computer hands
             const opponentHand = document.getElementById('opponentHandPreview');
@@ -1945,8 +2283,17 @@
             }
 
             document.getElementById('gameOver').classList.remove('show');
-            updateStatus('Match the rank or suit!\nClick a card to play it, or draw from the deck.');
+            updateStatus('Play a card with the same rank or suit');
             updateDisplay();
+
+            // Start hint timer only on first game after page load
+            console.log('isFirstGame:', isFirstGame);
+            if (isFirstGame) {
+                console.log('Starting hint timer for 3 seconds...');
+                hintTimeout = setTimeout(showPlayableCardHint, 3000);
+            } else {
+                console.log('Not first game, skipping hint timer');
+            }
 
             // Fade in the game and hide loading screen after everything is loaded
             setTimeout(() => {
