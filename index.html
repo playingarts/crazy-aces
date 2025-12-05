@@ -78,7 +78,7 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 30px;
             opacity: 0;
             transition: opacity 0.5s ease-in;
         }
@@ -264,6 +264,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex: 0 0 auto;
         }
 
         .opponent-hand-preview {
@@ -306,8 +307,8 @@
             justify-content: center;
             gap: 40px;
             padding: 0 40px;
-            min-height: 350px;
             padding-bottom: 29px;
+            flex: 1;
         }
 
         .deck-pile {
@@ -556,9 +557,11 @@
         .player-hand-section {
             min-height: 135px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: visible;
+            flex: 0 0 auto;
         }
 
         .player-hand {
@@ -566,7 +569,7 @@
             border-radius: 20px;
             padding: 13px 7px 13px 13px;
             display: inline-block;
-            margin: 0 auto;
+            margin: 0 auto 20px auto;
             overflow: visible;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -678,9 +681,11 @@
                 height: 100vh;
                 height: -webkit-fill-available;
                 max-height: 100vh;
-                gap: 0;
+                gap: 10px;
                 padding: 0;
+                padding-bottom: 150px;
                 overflow: hidden;
+                justify-content: center;
             }
 
             .rules-logo,
@@ -715,7 +720,7 @@
             }
 
             .player-hand {
-                margin-bottom: 0;
+                margin-bottom: 20px;
             }
         }
 
@@ -736,8 +741,6 @@
             .play-area {
                 gap: 35px;
                 padding: 0 45px;
-                min-height: 420px;
-                padding-bottom: 60px;
             }
 
             .opponent-hand-preview {
@@ -760,7 +763,7 @@
             }
 
             .game-container {
-                justify-content: flex-start;
+                justify-content: center;
             }
 
             .player-hand-section {
@@ -791,8 +794,6 @@
             .play-area {
                 gap: 40px;
                 padding: 0 50px;
-                min-height: 480px;
-                padding-bottom: 60px;
             }
             
             .opponent-hand-preview {
@@ -1231,9 +1232,10 @@
             }
 
             .game-container {
-                gap: 23px;
+                gap: 20px;
                 overflow: visible;
-                padding-bottom: 0;
+                padding-bottom: 130px;
+                justify-content: center;
             }
 
             .game-container > div {
@@ -1291,8 +1293,9 @@
             .play-area {
                 gap: 22px;
                 padding: 10px 8px;
-                min-height: 250px;
-                flex: 0 1 auto;
+                min-height: auto;
+                flex: 1;
+                padding-bottom: 0;
             }
 
             .hand-card {
@@ -1372,6 +1375,7 @@
                 max-width: 100%;
                 overflow: visible;
                 border-radius: 15px;
+                margin-bottom: 20px;
             }
 
             .suit-selector {
@@ -1527,10 +1531,6 @@
             </div>
         </div>
 
-        <div class="status-message" id="statusMessage">
-            Loading game...
-        </div>
-
         <div class="play-area">
             <div class="deck-pile" onclick="handleDrawCard()">
                 <div class="card card-back" id="deckCard"></div>
@@ -1548,6 +1548,9 @@
         </div>
 
         <div class="player-hand-section">
+            <div class="status-message" id="statusMessage">
+                Loading game...
+            </div>
             <div class="player-hand">
                 <div class="hand-cards" id="playerHand">
                     <!-- Player cards will be generated here -->
