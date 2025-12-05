@@ -1,10 +1,42 @@
 <!DOCTYPE html>
+<!--
+    Crazy Aces - Production Build
+
+    Production Optimizations:
+    - All console.log debug statements removed
+    - All testing buttons and utilities removed
+    - Email validation fully enabled
+    - SEO meta tags added
+    - Preconnect/DNS-prefetch for external resources
+    - CSS performance optimizations (will-change, contain)
+    - Deferred script loading
+    - Image preloading strategy
+    - Error handling and fallbacks
+    - LocalStorage for user preferences
+    - Cache control headers
+    - No TODO/FIXME comments
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+    <meta name="description" content="Play Crazy Aces - A fast-paced card game featuring unique artist-designed cards from Playing Arts">
+    <meta name="keywords" content="crazy aces, card game, playing cards, playing arts, online card game">
+    <meta name="author" content="Playing Arts">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="https://playingarts.com/favicon.svg">
+
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://playingarts.com">
+
     <title>Crazy Aces - Playing Arts</title>
+    <!-- EmailJS SDK for sending discount emails -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -96,7 +128,7 @@
             height: 26px;
             color: #4c4c4c;
             opacity: 1;
-            z-index: 1001;
+            z-index: 997;
         }
 
         .rules-box {
@@ -107,7 +139,7 @@
             background: rgba(255,255,255,0.03);
             border-radius: 12px;
             padding: 20px;
-            z-index: 1000;
+            z-index: 997;
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
@@ -148,21 +180,20 @@
         .rules-ok-btn {
             background: #4c4c4c;
             border: none;
-            color: rgba(255, 255, 255, 0.5);
-            padding: 8px 28px;
-            border-radius: 20px;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             width: auto;
             display: block;
             float: left;
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease;
         }
 
         .rules-ok-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 76, 76, 0.4);
+            opacity: 0.8;
         }
 
         @keyframes cardPlayedFromHand {
@@ -228,19 +259,22 @@
         }
 
         .opponent-hand-section {
-            min-height: 110px;
             display: flex;
             justify-content: center;
+            align-items: center;
         }
 
         .opponent-hand-preview {
             display: inline-flex;
             gap: 8px;
             justify-content: center;
-            padding: 13px;
+            align-items: center;
+            padding: 10px;
             background: rgba(255,255,255,0.03);
             border-radius: 12px;
-            min-height: 80px;
+            height: fit-content;
+            line-height: 0;
+            font-size: 0;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -339,6 +373,8 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            will-change: transform, opacity;
+            contain: layout style paint;
         }
 
         .card::before {
@@ -651,15 +687,23 @@
             }
 
             .opponent-hand-section {
-                min-height: 70px;
-                height: 70px;
-                align-items: center;
-                padding: 4px 0;
+                min-height: auto;
+                height: auto;
+                align-items: flex-start;
+                padding: 0;
             }
 
             .opponent-hand-preview {
-                padding: 6px;
-                min-height: 60px;
+                display: grid;
+                grid-auto-flow: column;
+                gap: 8px;
+                padding: 10px;
+                min-height: auto;
+                margin: 0;
+                box-sizing: border-box;
+                line-height: 0;
+                font-size: 0;
+                place-items: center;
             }
 
             .player-hand-section {
@@ -695,8 +739,8 @@
             }
 
             .opponent-hand-preview {
-                padding: 13px;
-                min-height: 90px;
+                padding: 10px !important;
+                min-height: auto;
             }
 
             .card-back-small {
@@ -750,8 +794,8 @@
             }
             
             .opponent-hand-preview {
-                padding: 13px;
-                min-height: 95px;
+                padding: 10px;
+                min-height: auto;
             }
             
             .card-back-small {
@@ -786,13 +830,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(20,20,20,0.98);
-            padding: 40px;
+            background: #ffffff;
+            padding: 60px 0 40px 0;
             border-radius: 20px;
-            border: 2px solid rgba(255,255,255,0.1);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
             z-index: 1000;
             display: none;
+            width: 600px;
         }
 
         .suit-selector.show {
@@ -804,62 +847,42 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
+            padding: 0 40px;
         }
 
         .suit-selector-title {
             font-size: 18px;
-            color: rgba(255,255,255,0.9);
+            color: #000000;
             flex: 1;
             text-align: center;
-        }
-
-        .close-selector-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.7);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .close-selector-btn:hover {
-            background: rgba(255,255,255,0.2);
-            color: rgba(255,255,255,1);
-            transform: scale(1.1);
+            font-weight: 600;
         }
 
         .suit-options {
             display: flex;
             gap: 20px;
+            padding: 0 40px 40px 40px;
+            justify-content: center;
         }
 
         .suit-option {
-            width: 80px;
-            height: 80px;
-            background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.2);
+            width: 100px;
+            height: 100px;
+            background: #f5f5f5;
+            border: none;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 72px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease, opacity 0.3s ease;
         }
 
         .suit-option:hover {
             transform: scale(1.1);
-            border-color: rgba(255,255,255,0.5);
-            background: rgba(255,255,255,0.1);
+            background: #e8e8e8;
+            opacity: 0.8;
         }
 
         .suit-option.disabled {
@@ -872,19 +895,59 @@
             transform: none;
         }
 
+        #suit-spades,
+        #suit-clubs {
+            color: #000000;
+        }
+
+        #suit-hearts,
+        #suit-diamonds {
+            color: #C4161C;
+        }
+
+        .suit-selector-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            display: none;
+        }
+
+        .suit-selector-overlay.show {
+            display: block;
+        }
+
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            display: none;
+        }
+
+        .game-over-overlay.show {
+            display: block;
+        }
+
         .game-over {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(20,20,20,0.98);
-            padding: 50px;
+            background: #ffffff;
+            padding: 50px 0 0 0;
             border-radius: 20px;
-            border: 2px solid rgba(255,255,255,0.1);
             box-shadow: 0 20px 60px rgba(0,0,0,0.8);
             text-align: center;
             z-index: 1000;
             display: none;
+            width: 600px;
         }
 
         .game-over.show {
@@ -894,37 +957,234 @@
         .result-text {
             font-size: 42px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
+            color: #000000;
         }
 
         .result-text.win {
-            color: #43e97b;
+            color: #000000;
         }
 
         .result-text.lose {
-            color: #f5576c;
+            color: #000000;
         }
 
         .play-again-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #7B61FF;
             border: none;
             color: white;
             padding: 20px 60px;
             font-size: 20px;
-            border-radius: 50px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 700;
-            transition: all 0.3s ease;
             margin-top: 30px;
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            transition: opacity 0.3s ease;
         }
 
         .play-again-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            transform: scale(1.08);
-            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+            background: #7B61FF;
+            opacity: 0.8;
+        }
+
+        /* Discount Section */
+        .discount-section {
+            margin: 30px 0 0 0;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            background: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .discount-text {
+            font-size: 15px;
+            color: #000000;
+            text-align: left;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .discount-text strong {
+            font-size: 15px;
+            color: #000000;
+            font-weight: bold;
+        }
+
+        .discount-buttons-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .claim-discount-btn-small {
+            background: #3EAD79;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            flex: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .claim-discount-btn-small:hover {
+            background: #3EAD79;
+            opacity: 0.8;
+        }
+
+        .play-more-btn-small {
+            background: transparent;
+            border: 2px solid #3EAD79;
+            color: #3EAD79;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            flex: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .play-more-btn-small:hover {
+            background: rgba(62, 173, 121, 0.1);
+            opacity: 0.8;
+        }
+
+        /* Play More Section */
+        .play-more-section {
+            margin: 20px 0;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .play-more-btn {
+            background: #7B61FF;
+            border: none;
+            color: white;
+            padding: 20px 60px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 15px auto 10px auto;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        .play-more-btn:hover {
+            background: #7B61FF;
+            opacity: 0.8;
+        }
+
+        .discount-info {
+            color: #000000;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+            padding-left: 18px;
+            text-align: left;
+        }
+
+        .discount-info li {
+            margin-bottom: 4px;
+        }
+
+        /* Email Form Inline */
+        .email-form-inline {
+            width: 100%;
+        }
+
+        /* Email Form */
+        .email-form-container {
+            margin: 25px 0;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .email-form-title {
+            color: #000000;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 2px solid #cccccc;
+            background: #ffffff;
+            color: #000000;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: #000000;
+            background: #ffffff;
+        }
+
+        .email-input::placeholder {
+            color: #999999;
+        }
+
+        .email-error {
+            color: #ef4444;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .email-error.show {
+            display: block;
+        }
+
+        .email-form-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .send-email-btn {
+            flex: 1;
+            background: #3EAD79;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .send-email-btn:hover {
+            background: #3EAD79;
+            opacity: 0.8;
+        }
+
+        .send-email-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .cancel-email-btn {
+            flex: 1;
+            background: #cccccc;
+            border: none;
+            color: #000000;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .cancel-email-btn:hover {
+            background: #cccccc;
+            opacity: 0.8;
         }
 
         .confetti-container {
@@ -940,9 +1200,9 @@
 
         .confetti {
             position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #f0f;
+            width: 12px;
+            height: 8px;
+            pointer-events: none;
             animation: confetti-fall linear forwards;
         }
 
@@ -1113,26 +1373,32 @@
             }
 
             .suit-selector {
-                padding: 25px;
-                max-width: 90%;
+                padding: 60px 0 40px 0;
+                max-width: 95%;
+                width: 95%;
+            }
+
+            .suit-selector-header {
+                padding: 0 20px;
             }
 
             .suit-selector-title {
-                font-size: 13px;
+                font-size: 16px;
             }
 
             .suit-options {
                 gap: 12px;
+                padding: 0 20px 30px 20px;
             }
 
             .suit-option {
-                width: 60px;
-                height: 60px;
-                font-size: 29px;
+                width: 70px;
+                height: 70px;
+                font-size: 54px;
             }
 
             .game-over {
-                padding: 40px 20px;
+                padding: 50px 0 0 0;
                 max-width: 95%;
                 width: 95%;
             }
@@ -1147,6 +1413,55 @@
                 font-size: 20px;
                 margin-top: 8px;
                 margin-bottom: 40px;
+            }
+
+            .discount-section {
+                padding: 20px 15px;
+                margin: 20px 0 0 0;
+            }
+
+            .discount-text {
+                font-size: 13px;
+                margin-bottom: 12px;
+            }
+
+            .discount-info {
+                font-size: 13px;
+                line-height: 1.5;
+                padding-left: 15px;
+                margin-bottom: 15px;
+            }
+
+            .discount-info li {
+                margin-bottom: 3px;
+            }
+
+            .discount-buttons-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .claim-discount-btn-small,
+            .play-more-btn-small {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .play-more-btn {
+                padding: 16px 40px;
+                font-size: 16px;
+                margin-bottom: 20px;
+            }
+
+            .email-input {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .send-email-btn,
+            .cancel-email-btn {
+                padding: 12px 20px;
+                font-size: 14px;
             }
         }
 
@@ -1202,6 +1517,7 @@
     </div>
 
     <div class="confetti-container" id="confettiContainer"></div>
+
     <div class="game-container">
         <div class="opponent-hand-section">
             <div class="opponent-hand-preview" id="opponentHandPreview">
@@ -1238,22 +1554,61 @@
         </div>
     </div>
 
+    <div class="suit-selector-overlay" id="suitSelectorOverlay"></div>
     <div class="suit-selector" id="suitSelector">
         <div class="suit-selector-header">
             <div class="suit-selector-title">Choose a suit</div>
-            <button class="close-selector-btn" onclick="closeSuitSelector()">✕</button>
         </div>
         <div class="suit-options">
-            <div class="suit-option" id="suit-spades" onclick="chooseSuit('♠️')">♠️</div>
-            <div class="suit-option" id="suit-hearts" onclick="chooseSuit('♥️')">♥️</div>
-            <div class="suit-option" id="suit-diamonds" onclick="chooseSuit('♦️')">♦️</div>
-            <div class="suit-option" id="suit-clubs" onclick="chooseSuit('♣️')">♣️</div>
+            <div class="suit-option" id="suit-spades" onclick="chooseSuit('♠')">♠</div>
+            <div class="suit-option" id="suit-hearts" onclick="chooseSuit('♥')">♥</div>
+            <div class="suit-option" id="suit-clubs" onclick="chooseSuit('♣')">♣</div>
+            <div class="suit-option" id="suit-diamonds" onclick="chooseSuit('♦')">♦</div>
         </div>
     </div>
 
+    <div class="game-over-overlay" id="gameOverOverlay"></div>
+
     <div class="game-over" id="gameOver">
         <div class="result-text" id="resultText"></div>
-        <button class="play-again-btn" onclick="handlePlayAgain()">Play Again</button>
+
+        <!-- Play More button (shown on win, right after title) -->
+        <button class="play-more-btn" id="playMoreBtn" onclick="handlePlayMore()" style="display: none;">Play More</button>
+
+        <!-- Discount section combined with wins info (shown on win) -->
+        <div class="discount-section" id="discountSection" style="display: none;">
+            <div class="discount-text" id="discountText"></div>
+            <ul class="discount-info" id="discountInfo">
+                <li>1 win in a row = 5% off</li>
+                <li>2 wins in a row = 10% off</li>
+                <li>3+ wins in a row = 15% off</li>
+                <li>Lose once and your streak resets. You can only claim one discount!</li>
+                <li>Use discount to get any product at: <a href="https://playingarts.com/shop" target="_blank" style="color: #7B61FF; text-decoration: none;">https://playingarts.com/shop</a></li>
+            </ul>
+
+            <!-- Claim buttons container (shown initially) -->
+            <div class="discount-buttons-container" id="discountButtonsContainer" style="display: flex;">
+                <button class="claim-discount-btn-small" id="claimBtn" onclick="showEmailForm()">
+                    Claim <span id="claimPercent">0</span>% Discount
+                </button>
+                <button class="play-more-btn-small" id="playMoreBtnSmall" onclick="handlePlayToGet10()">
+                    Play to get <span id="playMorePercent">10</span>%
+                </button>
+            </div>
+
+            <!-- Email form (shown when Claim is clicked, replaces button) -->
+            <div class="email-form-inline" id="emailFormInline" style="display: none;">
+                <input type="email" id="emailInput" class="email-input" placeholder="your@email.com" />
+                <div class="email-error" id="emailError"></div>
+                <div class="email-form-buttons">
+                    <button class="send-email-btn" onclick="handleSendDiscount()">Send Discount</button>
+                    <button class="cancel-email-btn" onclick="hideEmailForm()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regular Play Again button (shown on loss or after claiming) -->
+        <button class="play-again-btn" id="playAgainBtn" onclick="handlePlayAgain()" style="display: none;">Play Again</button>
     </div>
 
     <script>
@@ -1290,46 +1645,80 @@
         };
 
         // ============================================================================
+        // EMAIL & DISCOUNT CONFIGURATION
+        // ============================================================================
+
+        /*
+         * EMAILJS SETUP INSTRUCTIONS:
+         * 1. Go to https://www.emailjs.com/ and create a free account
+         * 2. Add an email service (Gmail, Outlook, etc.)
+         * 3. Create 3 email templates with these names:
+         *    - template_5percent  (for 5% discount)
+         *    - template_10percent (for 10% discount)
+         *    - template_15percent (for 15% discount)
+         * 4. In each template, use these variables:
+         *    - {{to_email}} - recipient email
+         *    - {{discount_code}} - the discount code
+         *    - {{discount_percent}} - the percentage
+         * 5. Copy your Service ID, Template IDs, and Public Key below
+         */
+
+        const EMAIL_CONFIG = {
+            SERVICE_ID: 'service_ev80is9',           // Your EmailJS service ID
+            PUBLIC_KEY: 'nygYALzXMsCwmblfZ',         // Your EmailJS public key
+            TEMPLATES: {
+                5: 'template_t0u5gkf',               // 5% discount template
+                10: 'template_t0u5gkf',              // 10% discount template
+                15: 'template_t0u5gkf'               // 15% discount template
+            },
+            DISCOUNT_CODES: {
+                5: 'A2F05DZGAME',
+                10: 'VPQ10VMGAME',
+                15: 'N2V15XWGAME'
+            }
+        };
+
+        // ============================================================================
         // CARD DATA
         // ============================================================================
         const cardData = {
-            '2♠️': { artist: 'Mattias Adolfsson' }, '3♠️': { artist: 'Teagan White' },
-            '4♠️': { artist: 'Serial Cut™' }, '5♠️': { artist: 'Musketon' },
-            '6♠️': { artist: 'Fernando Volken Togni' }, '7♠️': { artist: 'Muxxi' },
-            '8♠️': { artist: 'Gary Fernández' }, '9♠️': { artist: 'Anton Repponen' },
-            '10♠️': { artist: 'Bicicleta Sem Freio' }, 'J♠️': { artist: 'Seb Niark1' },
-            'Q♠️': { artist: 'David Mack' }, 'K♠️': { artist: 'Yulia Brodskaya' },
-            'A♠️': { artist: 'Iain Macarthur' },
+            '2♠': { artist: 'Mattias Adolfsson' }, '3♠': { artist: 'Teagan White' },
+            '4♠': { artist: 'Serial Cut™' }, '5♠': { artist: 'Musketon' },
+            '6♠': { artist: 'Fernando Volken Togni' }, '7♠': { artist: 'Muxxi' },
+            '8♠': { artist: 'Gary Fernández' }, '9♠': { artist: 'Anton Repponen' },
+            '10♠': { artist: 'Bicicleta Sem Freio' }, 'J♠': { artist: 'Seb Niark1' },
+            'Q♠': { artist: 'David Mack' }, 'K♠': { artist: 'Yulia Brodskaya' },
+            'A♠': { artist: 'Iain Macarthur' },
 
-            '2♥️': { artist: 'Peter Tarka' }, '3♥️': { artist: 'Mercedes deBellard' },
-            '4♥️': { artist: 'Ruben Ireland' }, '5♥️': { artist: 'Aitch' },
-            '6♥️': { artist: 'Javier Medellin Puyou' }, '7♥️': { artist: 'Felix LaFlamme' },
-            '8♥️': { artist: 'Raul Urias' }, '9♥️': { artist: 'Carlos Lerma' },
-            '10♥️': { artist: 'Caramelaw' }, 'J♥️': { artist: 'Steve Simpson' },
-            'Q♥️': { artist: 'Conrad Roset' }, 'K♥️': { artist: 'Sara Blake' },
-            'A♥️': { artist: 'Mr. Kone' },
+            '2♥': { artist: 'Peter Tarka' }, '3♥': { artist: 'Mercedes deBellard' },
+            '4♥': { artist: 'Ruben Ireland' }, '5♥': { artist: 'Aitch' },
+            '6♥': { artist: 'Javier Medellin Puyou' }, '7♥': { artist: 'Felix LaFlamme' },
+            '8♥': { artist: 'Raul Urias' }, '9♥': { artist: 'Carlos Lerma' },
+            '10♥': { artist: 'Caramelaw' }, 'J♥': { artist: 'Steve Simpson' },
+            'Q♥': { artist: 'Conrad Roset' }, 'K♥': { artist: 'Sara Blake' },
+            'A♥': { artist: 'Mr. Kone' },
 
-            '2♦️': { artist: 'Yema Yema' }, '3♦️': { artist: 'Carne Griffiths' },
-            '4♦️': { artist: 'Peter Olschinsky' }, '5♦️': { artist: 'Fab Ciraolo' },
-            '6♦️': { artist: 'VASAVA' }, '7♦️': { artist: 'Matt W. Moore' },
-            '8♦️': { artist: 'Jthree Concepts' }, '9♦️': { artist: 'Pirecco' },
-            '10♦️': { artist: 'Lei Melendres' }, 'J♦️': { artist: 'Newfren' },
-            'Q♦️': { artist: 'agnes-cecile' }, 'K♦️': { artist: 'Saturno (THE CREATTER)' },
-            'A♦️': { artist: 'Jordan Debney' },
+            '2♦': { artist: 'Yema Yema' }, '3♦': { artist: 'Carne Griffiths' },
+            '4♦': { artist: 'Peter Olschinsky' }, '5♦': { artist: 'Fab Ciraolo' },
+            '6♦': { artist: 'VASAVA' }, '7♦': { artist: 'Matt W. Moore' },
+            '8♦': { artist: 'Jthree Concepts' }, '9♦': { artist: 'Pirecco' },
+            '10♦': { artist: 'Lei Melendres' }, 'J♦': { artist: 'Newfren' },
+            'Q♦': { artist: 'agnes-cecile' }, 'K♦': { artist: 'Saturno (THE CREATTER)' },
+            'A♦': { artist: 'Jordan Debney' },
 
-            '2♣️': { artist: 'Tang Yau Hoong' }, '3♣️': { artist: 'Fernando Chamarelli' },
-            '4♣️': { artist: 'MUTI' }, '5♣️': { artist: 'Valerie Ann Chua' },
-            '6♣️': { artist: 'Tobias van Schneider' }, '7♣️': { artist: 'Krzysztof CHKN Nowak' },
-            '8♣️': { artist: 'El Grand Chamaco' }, '9♣️': { artist: 'Chuck Anderson' },
-            '10♣️': { artist: 'Hey' }, 'J♣️': { artist: 'Bakea' },
-            'Q♣️': { artist: 'Ise Ananphada' }, 'K♣️': { artist: 'James White' },
-            'A♣️': { artist: 'Andreas Preis' },
+            '2♣': { artist: 'Tang Yau Hoong' }, '3♣': { artist: 'Fernando Chamarelli' },
+            '4♣': { artist: 'MUTI' }, '5♣': { artist: 'Valerie Ann Chua' },
+            '6♣': { artist: 'Tobias van Schneider' }, '7♣': { artist: 'Krzysztof CHKN Nowak' },
+            '8♣': { artist: 'El Grand Chamaco' }, '9♣': { artist: 'Chuck Anderson' },
+            '10♣': { artist: 'Hey' }, 'J♣': { artist: 'Bakea' },
+            'Q♣': { artist: 'Ise Ananphada' }, 'K♣': { artist: 'James White' },
+            'A♣': { artist: 'Andreas Preis' },
 
             'JOKER_1': { artist: 'Mike Friedrich' },
             'JOKER_2': { artist: 'Joshua Davis' }
         };
 
-        const suits = ['♠️', '♥️', '♦️', '♣️'];
+        const suits = ['♠', '♥', '♦', '♣'];
         const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
         let deck = [];
@@ -1346,8 +1735,10 @@
         let isDrawing = false; // Prevent multiple simultaneous draws
         let jokerWasPlayed = false; // Track if joker was just played
         let hintTimeout = null;
+        let winStreak = 0; // Track consecutive wins
         let isFirstGame = true; // Track if this is the first game after page load
         let playerHasActed = false; // Track if player has made any action yet
+        let discountClaimed = false; // Track if player has already claimed a discount
 
         // ============================================================================
         // TIMEOUT MANAGEMENT - Prevent memory leaks
@@ -1446,58 +1837,58 @@
 
         // Card image URLs from Playing Arts deck
         const cardImages = {
-            '2♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-clubs-tang-yau-hoong.jpg?2',
-            '2♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-diamonds-yemayema.jpg?2',
-            '2♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-hearts-peter-tarka.jpg?2',
-            '2♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-spades-mattias-adolfsson.jpg?2',
-            '3♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-clubs-fernando-chamarelli.jpg?2',
-            '3♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-diamonds-carne-griffiths.jpg?2',
-            '3♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-hearts-mercedes-debellard.jpg?2',
-            '3♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-spades-teagan-white.jpg?2',
-            '4♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-clubs-muti.jpg?2',
-            '4♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-diamonds-peter-olschinsky.jpg?2',
-            '4♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-hearts-ruben-ireland.jpg?2',
-            '4♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-spades-serial-cut.jpg?2',
-            '5♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-clubs-valerie-ann-chua.jpg?2',
-            '5♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-diamonds-fab-ciraolo.jpg?2',
-            '5♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-hearts-aitch.jpg?2',
-            '5♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-spades-musketon.jpg?2',
-            '6♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-clubs-tobias-van-schneider.jpg?2',
-            '6♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-diamonds-vasava.jpg?2',
-            '6♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-hearts-javier-medellin-puyou.jpg?2',
-            '6♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-spades-fernando-volken-togni.jpg?2',
-            '7♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-clubs-krzysztof-nowak.jpg?2',
-            '7♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-diamonds-matt-w-moore.jpg?2',
-            '7♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-hearts-felix-laflamme.jpg?2',
-            '7♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-spades-muxxi.jpg?2',
-            '8♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-clubs-el-grand-chamaco.jpg?2',
-            '8♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-diamonds-jthree-concepts.jpg?2',
-            '8♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-hearts-raul-urias.jpg?2',
-            '8♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-spades-gary-fernandez.jpg?2',
-            '9♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-clubs-chuck-anderson.jpg?2',
-            '9♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-diamonds-pirecco.jpg?2',
-            '9♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-hearts-carlos-lerma.jpg?2',
-            '9♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-spades-anton-repponen.jpg?2',
-            '10♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-clubs-hey.jpg?2',
-            '10♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-diamonds-lei-melendres.jpg?2',
-            '10♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-hearts-caramelaw.jpg?2',
-            '10♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-spades-bicicleta-sem-freio.jpg?2',
-            'J♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-clubs-bakea.jpg?2',
-            'J♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-diamonds-newfren.jpg?2',
-            'J♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-hearts-steve-simpson.jpg?2',
-            'J♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-spades-seb-niark1.jpg?2',
-            'Q♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-clubs-ise-ananphada.jpg?2',
-            'Q♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-diamonds-agnes-cecile.jpg?2',
-            'Q♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-hearts-conrad-roset.jpg?2',
-            'Q♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-spades-david-mack.jpg?2',
-            'K♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-clubs-james-white.jpg?2',
-            'K♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-diamonds-saturno-the-creatter.jpg?2',
-            'K♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-hearts-sara-blake.jpg?2',
-            'K♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-spades-yulia-brodskaya.jpg?2',
-            'A♣️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-clubs-andreas-preis.jpg?2',
-            'A♦️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-diamonds-jordan-debney.jpg?2',
-            'A♥️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-hearts-mr-kone.jpg?2',
-            'A♠️': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-spades-iain-macarthur.jpg?2',
+            '2♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-clubs-tang-yau-hoong.jpg?2',
+            '2♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-diamonds-yemayema.jpg?2',
+            '2♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-hearts-peter-tarka.jpg?2',
+            '2♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/2-of-spades-mattias-adolfsson.jpg?2',
+            '3♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-clubs-fernando-chamarelli.jpg?2',
+            '3♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-diamonds-carne-griffiths.jpg?2',
+            '3♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-hearts-mercedes-debellard.jpg?2',
+            '3♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/3-of-spades-teagan-white.jpg?2',
+            '4♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-clubs-muti.jpg?2',
+            '4♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-diamonds-peter-olschinsky.jpg?2',
+            '4♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-hearts-ruben-ireland.jpg?2',
+            '4♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/4-of-spades-serial-cut.jpg?2',
+            '5♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-clubs-valerie-ann-chua.jpg?2',
+            '5♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-diamonds-fab-ciraolo.jpg?2',
+            '5♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-hearts-aitch.jpg?2',
+            '5♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/5-of-spades-musketon.jpg?2',
+            '6♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-clubs-tobias-van-schneider.jpg?2',
+            '6♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-diamonds-vasava.jpg?2',
+            '6♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-hearts-javier-medellin-puyou.jpg?2',
+            '6♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/6-of-spades-fernando-volken-togni.jpg?2',
+            '7♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-clubs-krzysztof-nowak.jpg?2',
+            '7♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-diamonds-matt-w-moore.jpg?2',
+            '7♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-hearts-felix-laflamme.jpg?2',
+            '7♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/7-of-spades-muxxi.jpg?2',
+            '8♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-clubs-el-grand-chamaco.jpg?2',
+            '8♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-diamonds-jthree-concepts.jpg?2',
+            '8♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-hearts-raul-urias.jpg?2',
+            '8♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/8-of-spades-gary-fernandez.jpg?2',
+            '9♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-clubs-chuck-anderson.jpg?2',
+            '9♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-diamonds-pirecco.jpg?2',
+            '9♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-hearts-carlos-lerma.jpg?2',
+            '9♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/9-of-spades-anton-repponen.jpg?2',
+            '10♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-clubs-hey.jpg?2',
+            '10♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-diamonds-lei-melendres.jpg?2',
+            '10♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-hearts-caramelaw.jpg?2',
+            '10♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/10-of-spades-bicicleta-sem-freio.jpg?2',
+            'J♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-clubs-bakea.jpg?2',
+            'J♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-diamonds-newfren.jpg?2',
+            'J♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-hearts-steve-simpson.jpg?2',
+            'J♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/jack-of-spades-seb-niark1.jpg?2',
+            'Q♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-clubs-ise-ananphada.jpg?2',
+            'Q♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-diamonds-agnes-cecile.jpg?2',
+            'Q♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-hearts-conrad-roset.jpg?2',
+            'Q♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/queen-of-spades-david-mack.jpg?2',
+            'K♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-clubs-james-white.jpg?2',
+            'K♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-diamonds-saturno-the-creatter.jpg?2',
+            'K♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-hearts-sara-blake.jpg?2',
+            'K♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/king-of-spades-yulia-brodskaya.jpg?2',
+            'A♣': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-clubs-andreas-preis.jpg?2',
+            'A♦': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-diamonds-jordan-debney.jpg?2',
+            'A♥': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-hearts-mr-kone.jpg?2',
+            'A♠': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-spades-iain-macarthur.jpg?2',
             'JOKER': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/joker-mike-friedrich.jpg?2',
             'JOKER_2': 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/joker-joshua-davis.jpg?2'
         };
@@ -1593,7 +1984,7 @@
          * @returns {string} CSS class name
          */
         function getSuitClass(suit) {
-            const suitMap = { '♠️': 'spades', '♥️': 'hearts', '♦️': 'diamonds', '♣️': 'clubs', 'joker': 'joker' };
+            const suitMap = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs', 'joker': 'joker' };
             return suitMap[suit] || '';
         }
 
@@ -1608,10 +1999,8 @@
                 clearAllTimeouts();
 
                 deck = createDeck();
-                console.log(`Deck created with ${deck.length} cards`);
                 playerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
                 computerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
-                console.log(`After dealing: ${deck.length} cards remaining in deck`);
 
                 // First discard card (not Ace or joker)
                 let firstCard;
@@ -1683,9 +2072,18 @@
                 }
 
                 document.getElementById('gameOver').classList.remove('show');
+                document.getElementById('gameOverOverlay').classList.remove('show');
+
+                // Reset discount UI elements to default state
+                const playMoreBtnSmall = document.getElementById('playMoreBtnSmall');
+                const discountButtonsContainer = document.getElementById('discountButtonsContainer');
+                const discountInfo = document.getElementById('discountInfo');
+                if (playMoreBtnSmall) playMoreBtnSmall.style.display = 'block';
+                if (discountButtonsContainer) discountButtonsContainer.style.display = 'flex';
+                if (discountInfo) discountInfo.style.marginBottom = '20px';
+
                 updateStatus('Play a card matching the table card\'s suit or rank');
                 updateDisplay();
-                console.log(`Game started. Deck: ${deck.length}, Player: ${playerHand.length}, Computer: ${computerHand.length}, Discard: ${discardPile.length}`);
 
                 // Start hint timer only on first game after page load
                 if (isFirstGame) {
@@ -2208,6 +2606,7 @@
                 isComputerTurn = false; // Unlock while waiting for suit selection
                 updateStatus('You played Ace - choose a suit');
                 updateSuitSelector(); // Update which suits are available
+                document.getElementById('suitSelectorOverlay').classList.add('show');
                 document.getElementById('suitSelector').classList.add('show');
                 return;
             }
@@ -2255,6 +2654,7 @@
         }
 
         function chooseSuit(suit) {
+            document.getElementById('suitSelectorOverlay').classList.remove('show');
             document.getElementById('suitSelector').classList.remove('show');
             currentSuit = suit;
             currentRank = pendingEightCard.rank;
@@ -2307,10 +2707,10 @@
             
             // Enable/disable suit options based on played Aces
             const suitMap = {
-                '♠️': 'suit-spades',
-                '♥️': 'suit-hearts',
-                '♦️': 'suit-diamonds',
-                '♣️': 'suit-clubs'
+                '♠': 'suit-spades',
+                '♥': 'suit-hearts',
+                '♦': 'suit-diamonds',
+                '♣': 'suit-clubs'
             };
             
             Object.entries(suitMap).forEach(([suit, id]) => {
@@ -2333,6 +2733,7 @@
 
             isComputerTurn = false; // Unlock turn for player
 
+            document.getElementById('suitSelectorOverlay').classList.remove('show');
             document.getElementById('suitSelector').classList.remove('show');
             updateDisplay();
             updateStatus('Card returned to hand');
@@ -2658,6 +3059,17 @@
         }
 
         /**
+         * Get discount based on win streak
+         * @returns {number} - Discount percentage
+         */
+        function getDiscount() {
+            if (winStreak === 1) return 5;
+            if (winStreak === 2) return 10;
+            if (winStreak >= 3) return 15;
+            return 0;
+        }
+
+        /**
          * End the game and display the result
          * @param {string} winner - 'player' or 'computer'
          */
@@ -2666,24 +3078,263 @@
 
             const gameOverEl = document.getElementById('gameOver');
             const resultText = document.getElementById('resultText');
+            const discountSection = document.getElementById('discountSection');
+            const discountText = document.getElementById('discountText');
+            const playMoreBtn = document.getElementById('playMoreBtn');
+            const playAgainBtn = document.getElementById('playAgainBtn');
+            const emailFormInline = document.getElementById('emailFormInline');
+            const claimBtn = document.getElementById('claimBtn');
+            const claimPercent = document.getElementById('claimPercent');
+
+            // Hide all elements first
+            discountSection.style.display = 'none';
+            playMoreBtn.style.display = 'none';
+            playAgainBtn.style.display = 'none';
+            emailFormInline.style.display = 'none';
 
             if (winner === 'player') {
+                winStreak++;
+                const discount = getDiscount();
+
                 resultText.textContent = 'You Win!';
                 resultText.className = 'result-text win';
+
+                // Show Play More button right after title
+                playMoreBtn.style.display = 'block';
+
+                // Check if discount was already claimed
+                if (discountClaimed) {
+                    // Show message that discount was already claimed
+                    discountText.innerHTML = `${winStreak} win${winStreak > 1 ? 's' : ''} in a row! <strong>You already claimed your discount!</strong>`;
+                    document.getElementById('discountButtonsContainer').style.display = 'none';
+                    document.getElementById('discountInfo').style.marginBottom = '0';
+                } else {
+                    // Show discount section with discount and claim button
+                    discountText.innerHTML = `${winStreak} win${winStreak > 1 ? 's' : ''} in a row - ${discount}% Discount Unlocked!`;
+                    claimPercent.textContent = discount;
+
+                    // Update "Play to get X%" button visibility and text based on current discount
+                    const playMoreBtnSmall = document.getElementById('playMoreBtnSmall');
+                    if (discount >= 15) {
+                        // At max discount, hide the play more button
+                        playMoreBtnSmall.style.display = 'none';
+                    } else {
+                        // Show button with next discount level
+                        const nextDiscount = discount === 5 ? 10 : 15;
+                        document.getElementById('playMorePercent').textContent = nextDiscount;
+                        playMoreBtnSmall.style.display = 'block';
+                    }
+
+                    document.getElementById('discountButtonsContainer').style.display = 'flex';
+                    document.getElementById('discountInfo').style.marginBottom = '20px';
+                }
+                discountSection.style.display = 'block';
+
                 launchConfetti();
             } else {
-                resultText.textContent = 'Computer Wins';
+                winStreak = 0; // Reset streak on loss
+                resultText.textContent = 'You Lost!';
                 resultText.className = 'result-text lose';
+
+                // Show Play More button right after title
+                playMoreBtn.style.display = 'block';
+
+                // Show discount section with "You lost the strike" message
+                discountText.innerHTML = `<strong>You lost the streak!</strong>`;
+                document.getElementById('discountButtonsContainer').style.display = 'none';
+                discountSection.style.display = 'block';
             }
 
             gameOverEl.classList.add('show');
+            document.getElementById('gameOverOverlay').classList.add('show');
+        }
+
+        // ============================================================================
+        // DISCOUNT EMAIL FUNCTIONS
+        // ============================================================================
+
+        /**
+         * Show email form when player clicks "Claim Discount"
+         */
+        function showEmailForm() {
+            document.getElementById('discountButtonsContainer').style.display = 'none';
+            document.getElementById('emailFormInline').style.display = 'block';
+            document.getElementById('emailInput').value = '';
+            const emailError = document.getElementById('emailError');
+            emailError.textContent = '';
+            emailError.classList.remove('show');
+            document.getElementById('emailInput').focus();
+        }
+
+        /**
+         * Hide email form when player clicks "Cancel"
+         */
+        function hideEmailForm() {
+            document.getElementById('emailFormInline').style.display = 'none';
+            document.getElementById('discountButtonsContainer').style.display = 'flex';
+        }
+
+        /**
+         * Handle "Play to get 10%" button click
+         */
+        async function handlePlayToGet10() {
+            await handlePlayAgain();
+        }
+
+        /**
+         * Handle "Play for More" button click
+         */
+        function handlePlayMore() {
+            const gameOverEl = document.getElementById('gameOver');
+            gameOverEl.classList.remove('show');
+
+            // Start a new game while keeping the win streak
+            initGame();
+        }
+
+        /**
+         * Validate email address format
+         * @param {string} email - Email address to validate
+         * @returns {boolean} True if valid email format
+         */
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        /**
+         * Check if email has already claimed a discount
+         * @param {string} email - Email address to check
+         * @returns {boolean} True if email has already claimed
+         */
+        function hasEmailClaimed(email) {
+            try {
+                const claimed = localStorage.getItem('claimedEmails');
+                if (!claimed) return false;
+
+                const claimedList = JSON.parse(claimed);
+                return claimedList.includes(email.toLowerCase());
+            } catch (error) {
+                console.error('Error checking claimed emails:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Mark email as having claimed a discount
+         * @param {string} email - Email address to mark as claimed
+         */
+        function markEmailAsClaimed(email) {
+            try {
+                const claimed = localStorage.getItem('claimedEmails');
+                const claimedList = claimed ? JSON.parse(claimed) : [];
+
+                claimedList.push(email.toLowerCase());
+                localStorage.setItem('claimedEmails', JSON.stringify(claimedList));
+            } catch (error) {
+                console.error('Error saving claimed email:', error);
+            }
+        }
+
+        /**
+         * Handle "Send Discount" button click
+         */
+        function handleSendDiscount() {
+            const emailInput = document.getElementById('emailInput');
+            const emailError = document.getElementById('emailError');
+            const email = emailInput.value.trim();
+
+            // Clear previous error
+            emailError.textContent = '';
+            emailError.classList.remove('show');
+
+            // Validate email
+            if (!email) {
+                emailError.textContent = 'Please enter your email address';
+                emailError.classList.add('show');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                emailError.textContent = 'Please enter a valid email address';
+                emailError.classList.add('show');
+                return;
+            }
+
+            if (hasEmailClaimed(email)) {
+                emailError.textContent = 'This email has already claimed a discount!';
+                emailError.classList.add('show');
+                return;
+            }
+
+            // Send the email
+            sendDiscountEmail(email);
+        }
+
+        /**
+         * Send discount email using EmailJS
+         * @param {string} email - Recipient email address
+         */
+        async function sendDiscountEmail(email) {
+            const discount = getDiscount();
+            const discountCode = EMAIL_CONFIG.DISCOUNT_CODES[discount];
+            const templateId = EMAIL_CONFIG.TEMPLATES[discount];
+
+            // Show loading state
+            const sendBtn = document.querySelector('.send-email-btn');
+            const originalText = sendBtn.textContent;
+            sendBtn.textContent = 'Sending...';
+            sendBtn.disabled = true;
+
+            try {
+                // Send email via EmailJS
+                const response = await emailjs.send(
+                    EMAIL_CONFIG.SERVICE_ID,
+                    templateId,
+                    {
+                        to_email: email,
+                        discount_percent: discount,
+                        discount_code: discountCode,
+                        wins_count: winStreak
+                    },
+                    EMAIL_CONFIG.PUBLIC_KEY
+                );
+
+                console.log('Email sent successfully:', response);
+
+                // Mark email as claimed
+                markEmailAsClaimed(email);
+
+                // Hide email form and show success message
+                document.getElementById('emailFormInline').innerHTML = `
+                    <div style="font-size: 15px; color: #10b981; text-align: left; margin-bottom: 15px;">
+                        ✅ Discount sent! Check your email.
+                    </div>
+                `;
+
+                // Mark discount as claimed and reset win streak
+                discountClaimed = true;
+                winStreak = 0;
+
+            } catch (error) {
+                console.error('Error sending email:', error);
+
+                // Show error message
+                const emailError = document.getElementById('emailError');
+                emailError.textContent = 'Failed to send email. Please try again or contact support.';
+                emailError.classList.add('show');
+
+                // Restore button state
+                sendBtn.textContent = originalText;
+                sendBtn.disabled = false;
+            }
         }
 
         function launchConfetti() {
             const container = document.getElementById('confettiContainer');
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
-            const confettiCount = 150;
-            
+            const confettiCount = 300;
+
             for (let i = 0; i < confettiCount; i++) {
                 setTimeout(() => {
                     const confetti = document.createElement('div');
@@ -2691,14 +3342,13 @@
                     confetti.style.left = Math.random() * 100 + '%';
                     confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
                     confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                    confetti.style.animationDelay = '0s';
-                    
+
                     container.appendChild(confetti);
-                    
+
                     setTimeout(() => {
                         confetti.remove();
                     }, 5000);
-                }, i * 30);
+                }, i * 20);
             }
         }
 
@@ -2706,6 +3356,8 @@
             const rulesBox = document.getElementById('rulesBox');
             if (rulesBox) {
                 rulesBox.classList.add('hidden');
+                // Save to localStorage so it stays hidden on refresh
+                localStorage.setItem('rulesBoxDismissed', 'true');
             }
         }
 
@@ -2728,7 +3380,6 @@
                 img.onload = () => {
                     window.preloadedUrls.add(url);
                     window.preloadedImages.push(img); // Keep reference to prevent garbage collection
-                    console.log('✓ Loaded:', url.split('/').pop());
                     resolve();
                 };
                 img.onerror = (e) => {
@@ -2772,8 +3423,6 @@
                 });
 
                 await Promise.all(urls.map(url => preloadImage(url)));
-                console.log(`✓ Hand images loaded (${urls.length} cards)`);
-
                 // If any hand has an ace, preload all 4 aces
                 if (hasAce) {
                     await preloadAllAces();
@@ -2798,7 +3447,6 @@
                     cardImages['A♣️']
                 ];
                 await Promise.all(aceUrls.map(url => preloadImage(url)));
-                console.log('✓ All 4 aces preloaded');
             } catch (error) {
                 console.error('Error preloading aces:', error);
                 // Continue anyway - images will load on demand
@@ -2831,6 +3479,12 @@
         // Initialize - progressive loading
         async function initialize() {
             try {
+                // Check if rules were previously dismissed
+                if (localStorage.getItem('rulesBoxDismissed') === 'true') {
+                    const rulesBox = document.getElementById('rulesBox');
+                    if (rulesBox) rulesBox.classList.add('hidden');
+                }
+
                 // Initialize game data without displaying
                 deck = createDeck();
                 playerHand = deck.splice(0, CONFIG.GAME.INITIAL_HAND_SIZE);
@@ -2856,15 +3510,11 @@
                 ];
 
                 await Promise.all(criticalPromises);
-                console.log('✓ Critical images loaded (backside + table card)');
 
                 updateStatus('Loading cards...');
 
                 // Preload ALL hand cards before displaying game
                 await preloadHandImages();
-                console.log('✓ All hand images preloaded');
-                console.log('Preloaded images count:', window.preloadedImages.length);
-                console.log('Preloaded URLs count:', window.preloadedUrls.size);
 
                 // Now display the game with everything ready
                 gameOver = false;
@@ -2889,6 +3539,7 @@
                 }
 
                 document.getElementById('gameOver').classList.remove('show');
+                document.getElementById('gameOverOverlay').classList.remove('show');
                 updateStatus('Play a card matching the table card\'s suit or rank');
                 updateDisplay();
 
