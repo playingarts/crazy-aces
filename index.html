@@ -19,7 +19,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="public, max-age=31536000">
     <meta name="description" content="Play Crazy Aces - A fast-paced card game featuring unique artist-designed cards from Playing Arts">
     <meta name="keywords" content="crazy aces, card game, playing cards, playing arts, online card game">
@@ -52,6 +52,7 @@
             overflow: hidden;
             height: 100vh;
             width: 100vw;
+            touch-action: manipulation;
         }
 
         body {
@@ -69,6 +70,7 @@
             position: fixed;
             top: 0;
             left: 0;
+            touch-action: manipulation;
         }
 
         .game-container {
