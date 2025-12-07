@@ -228,10 +228,26 @@ export default async function handler(req, res) {
             });
 
             console.log('Resend API response:', JSON.stringify(emailResult, null, 2));
-            console.log('Email sent successfully:', {
-                id: emailResult.data?.id,
-                error: emailResult.error
-            });
+
+            // Check if Resend returned an error
+            if (emailResult.error) {
+                console.error('Resend API error:', emailResult.error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to send email. Please try again later.',
+                    details: emailResult.error
+                });
+            }
+
+            if (!emailResult.data?.id) {
+                console.error('Resend returned no email ID:', emailResult);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to send email. Please try again later.'
+                });
+            }
+
+            console.log('Email sent successfully:', { id: emailResult.data.id });
 
         } catch (error) {
             console.error('Resend error:', error);
