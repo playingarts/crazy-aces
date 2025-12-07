@@ -19,14 +19,17 @@
  * - EmailJS credentials server-side only
  */
 
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 import { verifySessionToken } from './start-game.js';
 
-// Initialize Redis client (uses KV_REST_API_URL and KV_REST_API_TOKEN env vars)
-const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
-    ? new Redis({
-        url: process.env.KV_REST_API_URL,
-        token: process.env.KV_REST_API_TOKEN,
+// Initialize Redis client (uses KV_REST_API_REDIS_URL env var)
+const redis = process.env.KV_REST_API_REDIS_URL
+    ? new Redis(process.env.KV_REST_API_REDIS_URL, {
+        maxRetriesPerRequest: 3,
+        retryStrategy(times) {
+            if (times > 3) return null;
+            return Math.min(times * 50, 2000);
+        }
     })
     : null;
 

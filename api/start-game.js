@@ -11,14 +11,17 @@
  * - Session expiration (1 hour timeout)
  */
 
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 import crypto from 'crypto';
 
 // Initialize Redis client
-const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
-    ? new Redis({
-        url: process.env.KV_REST_API_URL,
-        token: process.env.KV_REST_API_TOKEN,
+const redis = process.env.KV_REST_API_REDIS_URL
+    ? new Redis(process.env.KV_REST_API_REDIS_URL, {
+        maxRetriesPerRequest: 3,
+        retryStrategy(times) {
+            if (times > 3) return null;
+            return Math.min(times * 50, 2000);
+        }
     })
     : null;
 
