@@ -149,13 +149,16 @@ export default async function handler(req, res) {
             }
         }
 
-        // Validate win streak
-        if (![1, 2, 3].includes(winStreak)) {
+        // Validate win streak (must have at least 1 win)
+        if (winStreak < 1) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid win streak'
+                error: 'You must win at least one game to claim a discount'
             });
         }
+
+        // Map win streak to discount tier (3+ wins = 15% discount)
+        const discountTier = Math.min(winStreak, 3);
 
         // Get discount code from environment (server-side only!)
         const discountCodes = {
@@ -164,17 +167,17 @@ export default async function handler(req, res) {
             3: process.env.DISCOUNT_CODE_15
         };
 
-        const discountCode = discountCodes[winStreak];
-        const discountPercent = winStreak === 1 ? 5 : winStreak === 2 ? 10 : 15;
+        const discountCode = discountCodes[discountTier];
+        const discountPercent = discountTier === 1 ? 5 : discountTier === 2 ? 10 : 15;
 
-        // Get EmailJS template based on discount
+        // Get EmailJS template based on discount tier
         const templateIds = {
             1: process.env.EMAILJS_TEMPLATE_5,
             2: process.env.EMAILJS_TEMPLATE_10,
             3: process.env.EMAILJS_TEMPLATE_15
         };
 
-        const templateId = templateIds[winStreak];
+        const templateId = templateIds[discountTier];
 
         // Verify environment variables are set
         if (!discountCode || !templateId) {
