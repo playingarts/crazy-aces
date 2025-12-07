@@ -25,11 +25,12 @@ export default async function handler(req, res) {
         };
 
         // Try sending a test email with private key (strict mode)
-        // In strict mode, use accessToken instead of user_id
+        // In strict mode, need BOTH user_id AND accessToken
         const testPayload = {
             service_id: process.env.EMAILJS_SERVICE_ID,
             template_id: process.env.EMAILJS_TEMPLATE_5,
-            accessToken: process.env.EMAILJS_PRIVATE_KEY, // Use private key for server-side
+            user_id: process.env.EMAILJS_PUBLIC_KEY, // Public key required
+            accessToken: process.env.EMAILJS_PRIVATE_KEY, // Private key for strict mode
             template_params: {
                 to_email: 'test@example.com',
                 discount_code: 'TEST123',
