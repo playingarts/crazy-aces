@@ -191,6 +191,11 @@ export default async function handler(req, res) {
 
         // Send email via Resend
         try {
+            console.log('Resend configuration:', {
+                hasApiKey: !!process.env.RESEND_API_KEY,
+                apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 8),
+                from: process.env.EMAIL_FROM
+            });
             console.log('Sending email via Resend:', {
                 to: normalizedEmail,
                 discountPercent,
@@ -222,7 +227,11 @@ export default async function handler(req, res) {
                 `
             });
 
-            console.log('Email sent successfully:', { id: emailResult.data?.id });
+            console.log('Resend API response:', JSON.stringify(emailResult, null, 2));
+            console.log('Email sent successfully:', {
+                id: emailResult.data?.id,
+                error: emailResult.error
+            });
 
         } catch (error) {
             console.error('Resend error:', error);
