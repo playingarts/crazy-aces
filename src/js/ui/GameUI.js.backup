@@ -1,0 +1,1015 @@
+/**
+ * GameUI - Handles all DOM manipulation and rendering
+ * Separates presentation layer from game logic
+ */
+
+import { GAME_CONFIG } from '../config/constants.js';
+import { CARD_IMAGE_FILENAMES } from '../config/cardData.js';
+
+export class GameUI {
+    constructor(config) {
+        this.config = config;
+        this.elements = this.cacheElements();
+        this.hintTimeout = null;
+        this.statusClearTimeout = null;
+        this.activeTimeouts = new Set();
+
+        // Drag and drop state
+        this.draggedCardIndex = null;
+        this.touchStartY = null;
+        this.touchStartX = null;
+        this.isDragging = false;
+        this.draggedCardElement = null;
+        this.cardOffsetX = 0;
+        this.cardOffsetY = 0;
+
+        // Track if discard pile handlers are setup
+        this.discardPileHandlersSetup = false;
+
+        // Image preloading cache
+        this.preloadedImages = [];
+        this.preloadedUrls = new Set();
+    }
+
+    /**
+     * Cache DOM elements for better performance
+     */
+    cacheElements() {
+        const elements = {
+            // Containers
+            playerHand: document.getElementById('playerHand'),
+            opponentHand: document.getElementById('opponentHandPreview'),
+            tableCard: document.getElementById('topCard'),
+            deckPile: document.querySelector('.deck-pile'),
+            statusMessage: document.getElementById('statusMessage'),
+
+            // Game over elements
+            gameOver: document.getElementById('gameOver'),
+            gameOverOverlay: document.getElementById('gameOverOverlay'),
+            gameOverMessage: document.getElementById('gameOverMessage'),
+
+            // Suit selector
+            suitSelector: document.getElementById('suitSelector'),
+
+            // Counters
+            playerCardCount: document.querySelector('.player-card-count'),
+            opponentCardCount: document.querySelector('.opponent-card-count'),
+            deckCardCount: document.querySelector('.deck-card-count'),
+
+            // Loading
+            loadingScreen: document.getElementById('loadingScreen'),
+
+            // Discount/email elements
+            playMoreBtnSmall: document.getElementById('playMoreBtnSmall'),
+            discountButtonsContainer: document.getElementById('discountButtonsContainer'),
+            discountInfo: document.getElementById('discountInfo'),
+            emailFormOverlay: document.getElementById('emailFormOverlay')
+        };
+
+        return elements;
+    }
+
+    /**
+     * Get image URL for an Ace of the specified suit
+     * @param {string} suit - The suit symbol (♠, ♥, ♦, ♣)
+     * @returns {string} Image URL for the Ace of that suit
+     */
+    getAceImageUrl(suit) {
+        const key = `A${suit}`;
+        const filename = CARD_IMAGE_FILENAMES[key];
+        return filename ? `${GAME_CONFIG.URLS.BASE_IMAGE}${filename}` : '';
+    }
+
+    /**
+     * Update status message
+     * @param {string} message - Message to display
+     * @param {number} autoClearDelay - Optional delay in ms to auto-clear the message
+     */
+    updateStatus(message, autoClearDelay = 0) {
+        if (this.elements.statusMessage) {
+            this.elements.statusMessage.textContent = message;
+
+            // Clear any existing auto-clear timeout
+            if (this.statusClearTimeout) {
+                clearTimeout(this.statusClearTimeout);
+                this.statusClearTimeout = null;
+            }
+
+            // Set new auto-clear timeout if specified
+            if (autoClearDelay > 0 && message) {
+                this.statusClearTimeout = setTimeout(() => {
+                    if (this.elements.statusMessage) {
+                        this.elements.statusMessage.textContent = '';
+                    }
+                    this.statusClearTimeout = null;
+                }, autoClearDelay);
+            }
+        }
+    }
+
+    /**
+     * Update card counters
+     * @param {number} playerCount - Number of cards in player's hand
+     * @param {number} computerCount - Number of cards in computer's hand
+     * @param {number} deckCount - Number of cards in deck
+     */
+    updateCounters(playerCount, computerCount, deckCount) {
+        if (this.elements.playerCardCount) {
+            this.elements.playerCardCount.textContent = playerCount;
+        }
+        if (this.elements.opponentCardCount) {
+            this.elements.opponentCardCount.textContent = computerCount;
+        }
+        if (this.elements.deckCardCount) {
+            this.elements.deckCardCount.textContent = deckCount;
+        }
+    }
+
+    /**
+     * Render the table card (discard pile top card)
+     * @param {Card} card - Card to display
+     * @param {boolean} animate - Whether to animate the card
+     * @param {string} animateFrom - Direction to animate from ('top' or 'bottom')
+     * @param {Array} discardPile - Full discard pile for stack rendering
+     * @param {boolean} suitWasChanged - Whether suit was changed by wild card
+     * @param {string} currentSuit - Current active suit
+     */
+    renderTableCard(card, animate = false, animateFrom = 'bottom', discardPile = [], suitWasChanged = false, currentSuit = null) {
+        if (!this.elements.tableCard || !card) {
+            return;
+        }
+
+        // For Aces with changed suit, render the Ace of the chosen suit (not original)
+        let imageUrl = card.imageUrl;
+        if (card.isAce && suitWasChanged && currentSuit && currentSuit !== card.suit) {
+            // Construct image URL for Ace of the chosen suit
+            imageUrl = this.getAceImageUrl(currentSuit);
+        }
+
+        const artistUrl = card.artistUrl;
+
+        // Calculate rotation (first card is straight, others have slight rotation)
+        const isFirstCard = discardPile.length <= 1;
+        const rotation = isFirstCard ? 0 : (Math.random() - 0.5) * 6;
+
+        // Set animation class if needed
+        const animationClass = animate ? `card card-animating-from-${animateFrom}` : 'card';
+        this.elements.tableCard.className = animationClass;
+        this.elements.tableCard.style.backgroundImage = `url('${imageUrl}')`;
+        this.elements.tableCard.style.setProperty('--rotation', `${rotation}deg`);
+        this.elements.tableCard.style.transform = `rotate(${rotation}deg)`;
+
+        // Remove animation class after animation completes
+        if (animate) {
+            setTimeout(() => {
+                this.elements.tableCard.classList.remove(`card-animating-from-${animateFrom}`);
+            }, this.config.ANIMATION.CARD_DROP_DURATION);
+        }
+
+        // Render card info overlay (rank, suit, artist)
+        if (suitWasChanged && currentSuit) {
+            // After suit is changed, show rank + new suit (or just suit for Joker)
+            if (card.isJoker) {
+                // Joker: show only the new suit
+                this.elements.tableCard.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-suit">${currentSuit}</span>
+                    </div>
+                `;
+            } else if (card.isAce) {
+                // Ace: show rank + new suit
+                this.elements.tableCard.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-rank">${card.rank}</span>
+                        <span class="info-suit">${currentSuit}</span>
+                    </div>
+                `;
+            }
+        } else if (card.isJoker) {
+            // Show JOKER text before suit is chosen
+            this.elements.tableCard.innerHTML = `
+                <div class="card-info">
+                    <span class="info-joker">JOKER</span>
+                </div>
+                <div class="card-artist"><a href="${artistUrl}" target="_blank">${card.artist}</a></div>
+            `;
+            // Add wild card animation
+            this.elements.tableCard.classList.add('wild-card-played');
+            setTimeout(() => {
+                this.elements.tableCard.classList.remove('wild-card-played');
+            }, 1000);
+        } else if (card.isAce) {
+            // Show Ace rank and suit before suit is chosen
+            this.elements.tableCard.innerHTML = `
+                <div class="card-info">
+                    <span class="info-rank">${card.rank}</span>
+                    <span class="info-suit">${card.suit}</span>
+                </div>
+                <div class="card-artist"><a href="${artistUrl}" target="_blank">${card.artist}</a></div>
+            `;
+            // Add wild card animation
+            this.elements.tableCard.classList.add('wild-card-played');
+            setTimeout(() => {
+                this.elements.tableCard.classList.remove('wild-card-played');
+            }, 1000);
+        } else {
+            // Show rank and suit for regular cards
+            this.elements.tableCard.innerHTML = `
+                <div class="card-info">
+                    <span class="info-rank">${card.rank}</span>
+                    <span class="info-suit">${card.suit}</span>
+                </div>
+                <div class="card-artist"><a href="${artistUrl}" target="_blank">${card.artist}</a></div>
+            `;
+        }
+
+        // Render card stack (last 3 cards before current)
+        this.renderCardStack(discardPile);
+    }
+
+    /**
+     * Render the card stack in discard pile
+     * @param {Array} discardPile - Full discard pile
+     */
+    renderCardStack(discardPile) {
+        const stackEl = document.getElementById('cardStack');
+        if (!stackEl) return;
+
+        stackEl.innerHTML = '';
+
+        const stackCount = Math.min(3, discardPile.length - 1);
+        for (let i = 1; i <= stackCount; i++) {
+            const prevCard = discardPile[discardPile.length - 1 - i];
+            if (!prevCard) continue;
+
+            const prevImageUrl = prevCard.imageUrl;
+            const stackCard = document.createElement('div');
+            stackCard.className = 'card';
+            stackCard.style.backgroundImage = `url('${prevImageUrl}')`;
+            stackCard.style.position = 'absolute';
+            stackCard.style.zIndex = -i;
+
+            // Slight offset and rotation for stacked cards
+            const stackRotation = (Math.random() - 0.5) * 6;
+            stackCard.style.transform = `translate(${i * -3}px, ${i * 2}px) rotate(${stackRotation}deg)`;
+            stackCard.style.opacity = 0.3;
+
+            stackEl.appendChild(stackCard);
+        }
+    }
+
+    /**
+     * Render player's hand
+     * @param {Card[]} hand - Player's cards
+     * @param {Function} onCardClick - Callback when card is clicked
+     */
+    renderPlayerHand(hand, onCardClick) {
+        if (!this.elements.playerHand) return;
+
+        // Separate cards: Jokers first, then Aces, then regular cards
+        const jokers = hand.filter(card => card.isJoker);
+        const aces = hand.filter(card => card.isAce && !card.isJoker);
+        const regularCards = hand.filter(card => !card.isAce && !card.isJoker);
+
+        const allSortedCards = [...jokers, ...aces, ...regularCards];
+
+        const htmlContent = allSortedCards.map((card) => {
+            const actualIndex = hand.indexOf(card);
+            let className = 'hand-card';
+            let content = '';
+
+            if (card.isJoker) {
+                className += ' joker-card';
+                content = '<div class="card-rank joker-text">JOKER</div>';
+            } else if (card.isAce) {
+                className += ' ace-card';
+                content = `<div class="card-rank">${card.rank}</div>`;
+            } else {
+                content = `
+                    <div class="card-rank">${card.rank}</div>
+                    <div class="card-suit">${card.suit}</div>
+                `;
+            }
+
+            return `<div class="${className}" data-card-index="${actualIndex}">${content}</div>`;
+        }).join('');
+
+        this.elements.playerHand.innerHTML = htmlContent;
+
+        // Attach event handlers (click, drag, touch)
+        this.elements.playerHand.querySelectorAll('.hand-card').forEach((cardEl, displayIndex) => {
+            const cardIndex = parseInt(cardEl.dataset.cardIndex, 10);
+
+            // Click handler
+            cardEl.addEventListener('click', () => {
+                onCardClick(cardIndex);
+            });
+
+            // Drag and drop handlers
+            cardEl.draggable = true;
+            cardEl.addEventListener('dragstart', (e) => this.handleDragStart(e, cardIndex));
+            cardEl.addEventListener('dragend', (e) => this.handleDragEnd(e));
+
+            // Touch handlers for mobile
+            cardEl.addEventListener('touchstart', (e) => this.handleTouchStart(e, cardIndex));
+            cardEl.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+            cardEl.addEventListener('touchend', (e) => this.handleTouchEnd(e, onCardClick));
+        });
+
+        // Store/update onCardClick reference for drop handler
+        this.onCardClickHandler = onCardClick;
+
+        // Setup discard pile as drop target (only once)
+        if (!this.discardPileHandlersSetup && this.elements.tableCard && this.elements.tableCard.parentElement) {
+            const discardPile = this.elements.tableCard.parentElement;
+
+            discardPile.addEventListener('dragover', (e) => this.handleDragOver(e));
+            discardPile.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+            discardPile.addEventListener('drop', (e) => this.handleDrop(e));
+
+            this.discardPileHandlersSetup = true;
+        }
+    }
+
+    /**
+     * Handle drag start
+     */
+    handleDragStart(e, cardIndex) {
+        this.draggedCardIndex = cardIndex;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+
+        // Add dragging class after a tiny delay
+        setTimeout(() => {
+            if (e.currentTarget) {
+                e.currentTarget.classList.add('dragging');
+            }
+        }, 0);
+    }
+
+    /**
+     * Handle drag end
+     */
+    handleDragEnd(e) {
+        if (e.currentTarget) {
+            e.currentTarget.classList.remove('dragging');
+        }
+        this.draggedCardIndex = null;
+    }
+
+    /**
+     * Handle drag over (for drop target)
+     */
+    handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+
+        // Add visual feedback
+        const discardPile = this.elements.tableCard?.parentElement;
+        if (discardPile) {
+            discardPile.classList.add('drag-over');
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle drag leave (remove visual feedback)
+     */
+    handleDragLeave(e) {
+        const discardPile = this.elements.tableCard?.parentElement;
+        if (discardPile) {
+            discardPile.classList.remove('drag-over');
+        }
+    }
+
+    /**
+     * Handle drop
+     */
+    handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        e.preventDefault();
+
+        // Remove visual feedback
+        const discardPile = this.elements.tableCard?.parentElement;
+        if (discardPile) {
+            discardPile.classList.remove('drag-over');
+        }
+
+        if (this.draggedCardIndex !== null && this.onCardClickHandler) {
+            this.onCardClickHandler(this.draggedCardIndex);
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle touch start (mobile)
+     */
+    handleTouchStart(e, cardIndex) {
+        const touch = e.touches[0];
+        const target = e.currentTarget;
+        const rect = target.getBoundingClientRect();
+
+        this.touchStartX = touch.clientX;
+        this.touchStartY = touch.clientY;
+        this.draggedCardIndex = cardIndex;
+        this.draggedCardElement = target;
+        this.isDragging = false;
+
+        // Calculate offset from touch point to card center
+        this.cardOffsetX = touch.clientX - (rect.left + rect.width / 2);
+        this.cardOffsetY = touch.clientY - (rect.top + rect.height / 2);
+    }
+
+    /**
+     * Handle touch move (mobile)
+     */
+    handleTouchMove(e) {
+        if (this.draggedCardIndex === null || !this.draggedCardElement) return;
+
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - this.touchStartX);
+        const deltaY = Math.abs(touch.clientY - this.touchStartY);
+
+        // Start dragging if moved more than 10px
+        if (deltaX > 10 || deltaY > 10) {
+            if (!this.isDragging) {
+                this.isDragging = true;
+                // Make card follow finger
+                this.draggedCardElement.style.position = 'fixed';
+                this.draggedCardElement.style.zIndex = '1000';
+                this.draggedCardElement.style.opacity = '0.8';
+                this.draggedCardElement.style.pointerEvents = 'none';
+                this.draggedCardElement.style.transition = 'none';
+            }
+
+            e.preventDefault(); // Prevent scrolling while dragging
+
+            // Move card to follow finger
+            this.draggedCardElement.style.left = (touch.clientX - this.cardOffsetX - this.draggedCardElement.offsetWidth / 2) + 'px';
+            this.draggedCardElement.style.top = (touch.clientY - this.cardOffsetY - this.draggedCardElement.offsetHeight / 2) + 'px';
+
+            // Check if over discard pile
+            const discardPileEl = this.elements.tableCard?.parentElement;
+            if (discardPileEl) {
+                const rect = discardPileEl.getBoundingClientRect();
+                const isOver = touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                               touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+
+                if (isOver && !discardPileEl.classList.contains('drag-over')) {
+                    discardPileEl.classList.add('drag-over');
+                } else if (!isOver && discardPileEl.classList.contains('drag-over')) {
+                    discardPileEl.classList.remove('drag-over');
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle touch end (mobile)
+     */
+    handleTouchEnd(e, onCardClick) {
+        if (this.draggedCardIndex === null) return;
+
+        const discardPileEl = this.elements.tableCard?.parentElement;
+        if (discardPileEl) {
+            discardPileEl.classList.remove('drag-over');
+        }
+
+        // Reset card styling
+        if (this.draggedCardElement && this.isDragging) {
+            this.draggedCardElement.style.position = '';
+            this.draggedCardElement.style.left = '';
+            this.draggedCardElement.style.top = '';
+            this.draggedCardElement.style.zIndex = '';
+            this.draggedCardElement.style.opacity = '';
+            this.draggedCardElement.style.pointerEvents = '';
+            this.draggedCardElement.style.transition = '';
+        }
+
+        // Only play card if dragged (not just a tap)
+        if (this.isDragging) {
+            const touch = e.changedTouches[0];
+            if (discardPileEl) {
+                const rect = discardPileEl.getBoundingClientRect();
+                const isOver = touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                               touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+
+                if (isOver) {
+                    onCardClick(this.draggedCardIndex);
+                }
+            }
+        }
+
+        this.draggedCardIndex = null;
+        this.draggedCardElement = null;
+        this.isDragging = false;
+    }
+
+    /**
+     * Render computer's hand (face down)
+     * @param {number} count - Number of cards
+     */
+    renderComputerHand(count) {
+        if (!this.elements.opponentHand) return;
+
+        this.elements.opponentHand.innerHTML = Array(count).fill(null).map((_, index) => `
+            <div class="card-back-small" data-card-index="${index}"></div>
+        `).join('');
+    }
+
+    /**
+     * Animate computer card flying out
+     * @param {number} previousCount - Count before card was removed
+     * @returns {Promise<void>}
+     */
+    animateComputerCardPlay(previousCount) {
+        return new Promise((resolve) => {
+            if (!this.elements.opponentHand) {
+                resolve();
+                return;
+            }
+
+            const cardElements = this.elements.opponentHand.querySelectorAll('.card-back-small');
+            const lastCardIndex = previousCount - 1;
+
+            if (cardElements[lastCardIndex]) {
+                const cardEl = cardElements[lastCardIndex];
+                cardEl.classList.add('card-flying-out-opponent');
+
+                // Also shrink with transition for smooth resize
+                setTimeout(() => {
+                    cardEl.style.transition = 'all 0.25s ease';
+                    cardEl.style.width = '0';
+                    cardEl.style.marginRight = '0';
+                    cardEl.style.opacity = '0';
+                }, 150);
+
+                setTimeout(() => {
+                    resolve();
+                }, this.config.ANIMATION.CARD_FLY_DURATION + this.config.ANIMATION.CARD_SHRINK_DURATION);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * Show suit selector
+     * @param {Function} onSuitSelect - Callback when suit is selected (not used, kept for compatibility)
+     * @param {Function} onCancel - Optional callback when cancelled
+     */
+    /**
+     * Update suit selector to disable certain suits
+     * @param {Array<string>} disabledSuits - Array of suits to disable (suits already chosen by previous Aces)
+     */
+    updateSuitSelector(disabledSuits = []) {
+        const suitIds = {
+            '♠': 'suit-spades',
+            '♥': 'suit-hearts',
+            '♦': 'suit-diamonds',
+            '♣': 'suit-clubs'
+        };
+
+        // Enable all suits first
+        Object.values(suitIds).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.classList.remove('disabled');
+                element.style.pointerEvents = 'auto';
+                element.style.opacity = '1';
+            }
+        });
+
+        // Disable suits that have already been chosen by previous Aces
+        if (Array.isArray(disabledSuits)) {
+            disabledSuits.forEach(suit => {
+                if (suitIds[suit]) {
+                    const element = document.getElementById(suitIds[suit]);
+                    if (element) {
+                        element.classList.add('disabled');
+                        element.style.pointerEvents = 'none';
+                        element.style.opacity = '0.3';
+                    }
+                }
+            });
+        }
+    }
+
+    showSuitSelector(onSuitSelect, onCancel = null, _unused = null, disabledSuits = []) {
+        if (!this.elements.suitSelector) return;
+
+        // Update which suits are available (disable suits already chosen by previous Aces)
+        this.updateSuitSelector(disabledSuits);
+
+        // Use CSS class instead of inline style
+        this.elements.suitSelector.classList.add('show');
+
+        // Show overlay
+        const suitSelectorOverlay = document.getElementById('suitSelectorOverlay');
+        if (suitSelectorOverlay) {
+            suitSelectorOverlay.classList.add('show');
+            // Allow clicking overlay to cancel
+            if (onCancel) {
+                suitSelectorOverlay.onclick = () => {
+                    this.hideSuitSelector();
+                    onCancel();
+                };
+            }
+        }
+
+        // The suit selector buttons use inline onclick handlers that call window.chooseSuit(suit)
+        // So we don't need to set up event listeners here
+    }
+
+    /**
+     * Hide suit selector
+     */
+    hideSuitSelector() {
+        if (this.elements.suitSelector) {
+            this.elements.suitSelector.classList.remove('show');
+        }
+
+        const suitSelectorOverlay = document.getElementById('suitSelectorOverlay');
+        if (suitSelectorOverlay) {
+            suitSelectorOverlay.classList.remove('show');
+            suitSelectorOverlay.onclick = null;
+        }
+    }
+
+    /**
+     * Show suit selector overlay (wrapper for compatibility)
+     */
+    showSuitSelectorOverlay() {
+        const suitSelectorOverlay = document.getElementById('suitSelectorOverlay');
+        if (suitSelectorOverlay) {
+            suitSelectorOverlay.classList.add('show');
+        }
+        if (this.elements.suitSelector) {
+            this.elements.suitSelector.classList.add('show');
+        }
+    }
+
+    /**
+     * Show game over screen with advanced UI states
+     * @param {boolean} playerWon - Whether player won
+     * @param {number} winStreak - Current win streak
+     * @param {boolean} discountClaimed - Whether discount was already claimed
+     */
+    showGameOver(playerWon, winStreak, discountClaimed = false) {
+        if (!this.elements.gameOver || !this.elements.gameOverOverlay) return;
+
+        const resultText = document.getElementById('resultText');
+        const discountSection = document.getElementById('discountSection');
+        const discountText = document.getElementById('discountText');
+        const playMoreBtn = document.getElementById('playMoreBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const emailFormInline = document.getElementById('emailFormInline');
+        const discountButtonsContainer = document.getElementById('discountButtonsContainer');
+        const discountInfo = document.getElementById('discountInfo');
+
+        // Hide all elements first
+        if (discountSection) discountSection.style.display = 'none';
+        if (playMoreBtn) playMoreBtn.style.display = 'none';
+        if (playAgainBtn) playAgainBtn.style.display = 'none';
+        if (emailFormInline) emailFormInline.style.display = 'none';
+
+        if (playerWon) {
+            const discount = this.getDiscountFromStreak(winStreak);
+
+            if (resultText) {
+                resultText.textContent = 'You Win!';
+                resultText.className = 'result-text win';
+            }
+
+            // Show Play More button
+            if (playMoreBtn) playMoreBtn.style.display = 'block';
+
+            // Check if discount was already claimed
+            if (discountClaimed) {
+                if (discountText) {
+                    discountText.innerHTML = `${winStreak} win${winStreak > 1 ? 's' : ''} in a row! <strong>You already claimed your discount!</strong>`;
+                }
+                if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
+                if (discountInfo) discountInfo.style.marginBottom = '0';
+            } else {
+                // Show discount section with discount and claim button
+                if (discountText) {
+                    discountText.innerHTML = `${winStreak} win${winStreak > 1 ? 's' : ''} in a row - ${discount}% Discount Unlocked!`;
+                }
+
+                const claimPercent = document.getElementById('claimPercent');
+                if (claimPercent) claimPercent.textContent = discount;
+
+                // Update "Play to get X%" button visibility and text based on current discount
+                const playMoreBtnSmall = document.getElementById('playMoreBtnSmall');
+                if (discount >= 15) {
+                    // At max discount, hide the play more button
+                    if (playMoreBtnSmall) playMoreBtnSmall.style.display = 'none';
+                } else {
+                    // Show button with next discount level
+                    const nextDiscount = discount === 5 ? 10 : 15;
+                    const playMorePercent = document.getElementById('playMorePercent');
+                    if (playMorePercent) playMorePercent.textContent = nextDiscount;
+                    if (playMoreBtnSmall) playMoreBtnSmall.style.display = 'block';
+                }
+
+                if (discountButtonsContainer) discountButtonsContainer.style.display = 'flex';
+                if (discountInfo) discountInfo.style.marginBottom = '20px';
+            }
+
+            if (discountSection) discountSection.style.display = 'block';
+            this.launchConfetti();
+        } else {
+            // Player lost
+            if (resultText) {
+                resultText.textContent = 'You Lost!';
+                resultText.className = 'result-text lose';
+            }
+
+            // Show Play More button
+            if (playMoreBtn) playMoreBtn.style.display = 'block';
+
+            // Show discount section with "You lost the streak" message
+            if (discountText) {
+                discountText.innerHTML = `<strong>You lost the streak!</strong>`;
+            }
+            if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
+            if (discountSection) discountSection.style.display = 'block';
+        }
+
+        this.elements.gameOver.classList.add('show');
+        this.elements.gameOverOverlay.classList.add('show');
+    }
+
+    /**
+     * Calculate discount from win streak
+     * @param {number} winStreak - Current win streak
+     * @returns {number} Discount percentage
+     */
+    getDiscountFromStreak(winStreak) {
+        if (winStreak >= 3) return 15;
+        if (winStreak >= 2) return 10;
+        if (winStreak >= 1) return 5;
+        return 0;
+    }
+
+    /**
+     * Launch confetti animation
+     */
+    launchConfetti() {
+        const container = document.getElementById('confettiContainer');
+        if (!container) return;
+
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+        const confettiCount = 300;
+
+        for (let i = 0; i < confettiCount; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+
+                container.appendChild(confetti);
+
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }, i * 20);
+        }
+    }
+
+    /**
+     * Hide game over screen
+     */
+    hideGameOver() {
+        if (this.elements.gameOver && this.elements.gameOverOverlay) {
+            this.elements.gameOver.classList.remove('show');
+            this.elements.gameOverOverlay.classList.remove('show');
+        }
+    }
+
+    /**
+     * Show loading screen
+     */
+    showLoading() {
+        if (this.elements.loadingScreen) {
+            this.elements.loadingScreen.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Hide loading screen
+     */
+    hideLoading() {
+        if (this.elements.loadingScreen) {
+            this.elements.loadingScreen.style.display = 'none';
+        }
+    }
+
+    /**
+     * Animate card draw from deck
+     */
+    animateDeckDraw() {
+        if (!this.elements.deckPile) return;
+
+        this.elements.deckPile.classList.add('draw-animation');
+        setTimeout(() => {
+            this.elements.deckPile.classList.remove('draw-animation');
+        }, this.config.ANIMATION.CARD_DROP_DURATION);
+    }
+
+    /**
+     * Animate card being played from hand
+     * @param {number} cardIndex - Index of card in hand
+     * @returns {Promise<void>}
+     */
+    animateCardPlay(cardIndex) {
+        return new Promise((resolve) => {
+            if (!this.elements.playerHand) {
+                resolve();
+                return;
+            }
+
+            const cardElement = this.elements.playerHand.querySelector(`[data-card-index="${cardIndex}"]`);
+            if (cardElement) {
+                cardElement.classList.add('card-flying-out');
+                setTimeout(() => {
+                    resolve();
+                }, this.config.ANIMATION.CARD_FLY_DURATION);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * Show hint for playable cards
+     * @param {Function} canPlayCard - Function to check if card is playable
+     */
+    showPlayableCardHint(canPlayCard) {
+        if (!this.elements.playerHand) return;
+
+        const cardElements = this.elements.playerHand.querySelectorAll('.hand-card');
+
+        cardElements.forEach((cardEl, index) => {
+            // Get card from data attribute or use index
+            const isPlayable = canPlayCard(index);
+
+            if (isPlayable) {
+                cardEl.classList.add('hint-shake');
+                setTimeout(() => {
+                    cardEl.classList.remove('hint-shake');
+                }, this.config.ANIMATION.HINT_SHAKE_DURATION);
+            }
+        });
+    }
+
+    /**
+     * Start hint timer
+     * @param {Function} hintCallback - Function to call for hint
+     */
+    startHintTimer(hintCallback) {
+        this.clearHintTimer();
+        this.hintTimeout = setTimeout(hintCallback, this.config.TIMING.HINT_INITIAL_DELAY);
+    }
+
+    /**
+     * Clear hint timer
+     */
+    clearHintTimer() {
+        if (this.hintTimeout) {
+            clearTimeout(this.hintTimeout);
+            this.hintTimeout = null;
+        }
+    }
+
+    /**
+     * Create a tracked timeout
+     * @param {Function} callback - Function to execute
+     * @param {number} delay - Delay in milliseconds
+     * @returns {number} Timeout ID
+     */
+    createTimeout(callback, delay) {
+        const timeoutId = setTimeout(() => {
+            this.activeTimeouts.delete(timeoutId);
+            callback();
+        }, delay);
+        this.activeTimeouts.add(timeoutId);
+        return timeoutId;
+    }
+
+    /**
+     * Clear all active timeouts
+     */
+    clearAllTimeouts() {
+        this.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.activeTimeouts.clear();
+        this.clearHintTimer();
+    }
+
+    /**
+     * Preload an image
+     * @param {string} url - Image URL
+     * @returns {Promise<void>}
+     */
+    preloadImage(url) {
+        if (!url || this.preloadedUrls.has(url)) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.loading = "eager";
+            img.decoding = "async";
+
+            img.onload = () => {
+                this.preloadedUrls.add(url);
+                this.preloadedImages.push(img);
+                resolve();
+            };
+            img.onerror = () => {
+                this.preloadedUrls.add(url); // Mark as attempted
+                resolve(); // Resolve anyway to not block
+            };
+            img.src = url;
+
+            if (img.complete && img.naturalWidth > 0) {
+                this.preloadedUrls.add(url);
+                this.preloadedImages.push(img);
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * Preload all hand images
+     * @param {Card[]} hand - Cards to preload
+     * @returns {Promise<void>}
+     */
+    async preloadHandImages(hand) {
+        try {
+            const urls = [];
+            let hasAce = false;
+
+            hand.forEach(card => {
+                if (card.imageUrl) urls.push(card.imageUrl);
+                if (card.isAce) hasAce = true;
+            });
+
+            await Promise.all(urls.map(url => this.preloadImage(url)));
+
+            // If any card is an Ace, preload all 4 Aces (since Aces can change suit)
+            if (hasAce) {
+                await this.preloadAllAces();
+            }
+        } catch (error) {
+            // Continue anyway - images will load on demand
+        }
+    }
+
+    /**
+     * Preload all four Aces (since Aces can change suit)
+     * @returns {Promise<void>}
+     */
+    async preloadAllAces() {
+        try {
+            const aceUrls = [
+                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-spades-iain-macarthur.jpg?2',
+                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-hearts-mr-kone.jpg?2',
+                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-diamonds-jordan-debney.jpg?2',
+                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-clubs-andreas-preis.jpg?2'
+            ];
+            await Promise.all(aceUrls.map(url => this.preloadImage(url)));
+        } catch (error) {
+            // Continue anyway
+        }
+    }
+
+    /**
+     * Preload card when drawn from deck
+     * @param {Card} card - Card to preload
+     * @returns {Promise<void>}
+     */
+    async preloadCardOnDraw(card) {
+        try {
+            if (card.imageUrl) {
+                await this.preloadImage(card.imageUrl);
+            }
+
+            // If it's an Ace, preload all Aces
+            if (card.isAce) {
+                await this.preloadAllAces();
+            }
+        } catch (error) {
+            // Continue anyway
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "crazy-aces",
+  "version": "1.0.0",
+  "description": "A card game inspired by Crazy Eights, featuring 54 artist-illustrated cards",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "format": "prettier --write \"src/**/*.{js,json,css,html}\"",
+    "format:check": "prettier --check \"src/**/*.{js,json,css,html}\""
+  },
+  "keywords": [
+    "card-game",
+    "crazy-eights",
+    "game"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@vitest/ui": "^3.2.4",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "jsdom": "^27.0.1",
+    "prettier": "^3.7.4",
+    "vite": "^5.0.0",
+    "vitest": "^3.2.4"
+  }
+}

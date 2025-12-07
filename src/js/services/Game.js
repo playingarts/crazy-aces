@@ -1,0 +1,764 @@
+/**
+ * Game - Main game controller
+ * Coordinates GameState, GameEngine, and GameUI
+ */
+
+import { GameState } from './GameState.js';
+import { GameEngine } from './GameEngine.js';
+import { GameUI } from '../ui/GameUI.js';
+
+export class Game {
+    constructor(config) {
+        this.config = config;
+        this.state = new GameState();
+        this.engine = new GameEngine(this.state);
+        this.ui = new GameUI(config);
+    }
+
+    /**
+     * Initialize and start a new game
+     */
+    async init() {
+        try {
+            this.ui.clearAllTimeouts();
+            this.ui.updateStatus('Loading cards...');
+
+            // Reset hand opacity and height styles (in case it was faded out from previous game)
+            const playerHandContainer = document.querySelector('.player-hand');
+            const playerHandSection = document.querySelector('.player-hand-section');
+            const opponentHandContainer = document.getElementById('opponentHandPreview');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (playerHandContainer) {
+                playerHandContainer.style.opacity = '1';
+                playerHandContainer.style.transition = '';
+                playerHandContainer.style.height = '';
+                playerHandContainer.style.minHeight = '';
+                playerHandContainer.style.display = '';
+                playerHandContainer.style.visibility = '';
+                playerHandContainer.style.pointerEvents = '';
+            }
+            if (playerHandSection) {
+                playerHandSection.style.display = '';
+                playerHandSection.style.opacity = '1';
+                playerHandSection.style.height = '';
+                playerHandSection.style.minHeight = '';
+                playerHandSection.style.visibility = '';
+                playerHandSection.style.pointerEvents = '';
+            }
+            if (opponentHandContainer) {
+                opponentHandContainer.style.display = '';
+                opponentHandContainer.style.opacity = '1';
+                opponentHandContainer.style.transition = '';
+                opponentHandContainer.style.height = '';
+                opponentHandContainer.style.minHeight = '';
+                opponentHandContainer.style.pointerEvents = '';
+            }
+            if (statusMessage) {
+                statusMessage.style.display = '';
+                statusMessage.style.height = '';
+                statusMessage.style.minHeight = '';
+                statusMessage.style.opacity = '';
+                statusMessage.style.pointerEvents = '';
+            }
+
+            // Initialize game state
+            this.state.initializeGame(this.config.GAME.INITIAL_HAND_SIZE);
+            this.state.ensurePlayerHasPlayableCard();
+
+            // Preload images (wait for completion to avoid loading flash)
+            this.ui.updateStatus('Loading images...');
+            const topCard = this.state.topCard;
+            if (topCard) {
+                try {
+                    await this.ui.preloadImage(topCard.imageUrl);
+                } catch (err) {
+                    console.error('Failed to preload top card image:', topCard.imageUrl, err);
+                }
+            }
+            // Preload both player and computer hands
+            try {
+                await this.ui.preloadHandImages(this.state.playerHand);
+            } catch (err) {
+                console.error('Failed to preload player hand images:', err);
+            }
+            try {
+                await this.ui.preloadHandImages(this.state.computerHand);
+            } catch (err) {
+                console.error('Failed to preload computer hand images:', err);
+            }
+
+            // Render initial state
+            this.render();
+
+            this.ui.hideGameOver();
+
+            // Show different message for first game vs subsequent games
+            if (!this.state.playerMadeFirstMove) {
+                this.ui.updateStatus("Play a card matching the table card's suit or rank");
+            } else {
+                this.ui.updateStatus("Your turn");
+            }
+
+            // Start hint timer on first game
+            if (this.state.isFirstGame) {
+                this.ui.startHintTimer(() => this.showHint());
+            }
+        } catch (error) {
+            console.error('Error initializing game:', error);
+            this.ui.updateStatus('Error starting game: ' + (error?.message || error));
+        }
+    }
+
+    /**
+     * Render the current game state
+     * @param {boolean} animateTableCard - Whether to animate the table card
+     * @param {string} animateFrom - Direction to animate from ('top' or 'bottom')
+     */
+    render(animateTableCard = false, animateFrom = 'bottom') {
+        // Render table card with full state for visual effects
+        this.ui.renderTableCard(
+            this.state.topCard,
+            animateTableCard,
+            animateFrom,
+            this.state.discardPile,
+            this.state.suitWasChanged,
+            this.state.currentSuit
+        );
+
+        // Render player hand
+        this.ui.renderPlayerHand(this.state.playerHand, (index) => {
+            this.handlePlayerCardClick(index);
+        });
+
+        // Render computer hand
+        this.ui.renderComputerHand(this.state.computerHand.length);
+
+        // Update counters
+        this.ui.updateCounters(
+            this.state.playerHand.length,
+            this.state.computerHand.length,
+            this.state.deck?.size || 0
+        );
+    }
+
+    /**
+     * Handle player clicking a card
+     * @param {number} cardIndex - Index of card in hand
+     */
+    async handlePlayerCardClick(cardIndex) {
+        try {
+            // Prevent race conditions - check and set processing flag immediately
+            if (this.state.isProcessingMove) return;
+            if (this.state.gameOver || this.state.isComputerTurn || this.state.pendingEightCard)
+                return;
+
+            const card = this.state.playerHand[cardIndex];
+            if (!card) return;
+
+            // Lock processing and turn FIRST to prevent race conditions
+            this.state.isProcessingMove = true;
+            this.state.isComputerTurn = true;
+
+            // Validate move
+            const validation = this.engine.validatePlayerMove(cardIndex);
+            if (!validation.valid) {
+                // Unlock turn and processing if validation fails
+                this.state.isComputerTurn = false;
+                this.state.isProcessingMove = false;
+                this.ui.updateStatus(validation.reason);
+                return;
+            }
+
+            // Clear hint timer and mark player has acted
+            this.ui.clearHintTimer();
+            this.ui.hideDeckHint(false); // Hide temporarily (they played instead of drawing)
+            if (!this.state.playerHasActed) {
+                this.state.playerHasActed = true;
+                this.state.playerMadeFirstMove = true; // Mark first move permanently
+                this.state.isFirstGame = false;
+            }
+
+            // Animate card flying out
+            await this.ui.animateCardPlay(cardIndex);
+
+            // Get suits that have already been CHOSEN by previous Aces
+            // (we check before playing the current card)
+            const playedAceSuits = this.getPlayedAceSuits();
+
+            // Remove from hand and add to discard pile
+            const playedCard = this.state.playCardFromHand(cardIndex);
+
+            // If player has no cards left, hide hand and status message instantly
+            if (this.state.playerHand.length === 0) {
+                const playerHandContainer = document.querySelector('.player-hand');
+                const playerHandSection = document.querySelector('.player-hand-section');
+                const statusMessage = document.getElementById('statusMessage');
+
+                // Lock heights before hiding to prevent layout shift
+                if (playerHandContainer) {
+                    const height = playerHandContainer.offsetHeight;
+                    playerHandContainer.style.height = height + 'px';
+                    playerHandContainer.style.minHeight = height + 'px';
+                    playerHandContainer.style.opacity = '0';
+                    playerHandContainer.style.pointerEvents = 'none';
+                }
+                if (playerHandSection) {
+                    const height = playerHandSection.offsetHeight;
+                    playerHandSection.style.height = height + 'px';
+                    playerHandSection.style.minHeight = height + 'px';
+                    playerHandSection.style.opacity = '0';
+                    playerHandSection.style.pointerEvents = 'none';
+                }
+                if (statusMessage) {
+                    const height = statusMessage.offsetHeight;
+                    statusMessage.style.height = height + 'px';
+                    statusMessage.style.minHeight = height + 'px';
+                    statusMessage.style.opacity = '0';
+                    statusMessage.style.pointerEvents = 'none';
+                }
+            }
+
+            // Handle Joker
+            if (playedCard.isJoker) {
+                console.log('🃏 Player played Joker. Hand size:', this.state.playerHand.length);
+
+                // Check for win BEFORE setting jokerWasPlayed flag
+                const winResult = this.engine.checkWinCondition();
+                console.log('🏆 Win check result:', winResult);
+
+                if (winResult) {
+                    // Player won with Joker as last card - end game immediately
+                    this.state.isProcessingMove = false;
+
+                    // Preload Joker image before showing game over
+                    if (playedCard.imageUrl) {
+                        try {
+                            await this.ui.preloadImage(playedCard.imageUrl);
+                        } catch (err) {
+                            console.error(
+                                'Failed to preload Joker image:',
+                                playedCard.imageUrl,
+                                err
+                            );
+                        }
+                    }
+                    this.render(true, 'bottom');
+
+                    await this.delay(this.config.TIMING.GAME_END_DELAY);
+                    this.handleGameEnd(winResult);
+                    return;
+                }
+
+                // Normal Joker handling - player has more cards
+                this.state.jokerWasPlayed = true;
+                this.state.isComputerTurn = false; // Keep turn unlocked
+                this.state.isProcessingMove = false; // Unlock processing so player can play another card
+                this.ui.updateStatus('You played Joker - play another card to define the suit');
+
+                // Preload Joker image before rendering
+                if (playedCard.imageUrl) {
+                    try {
+                        await this.ui.preloadImage(playedCard.imageUrl);
+                    } catch (err) {
+                        console.error('Failed to preload Joker image:', playedCard.imageUrl, err);
+                    }
+                } else {
+                    console.error('Joker card has no imageUrl:', playedCard);
+                }
+                this.render(true, 'bottom');
+                return;
+            }
+
+            // Check if this card was played after a Joker
+            const wasAfterJoker = this.state.jokerWasPlayed;
+            if (this.state.jokerWasPlayed) {
+                this.state.jokerWasPlayed = false;
+                this.state.suitWasChanged = true; // Show that suit was changed by joker
+            } else {
+                // Reset suit change flag only if not after Joker
+                this.state.suitWasChanged = false;
+            }
+
+            // Handle Ace - show suit selector
+            if (playedCard.isAce) {
+                this.state.pendingEightCard = playedCard;
+                this.state.isComputerTurn = false; // Unlock while waiting for suit selection
+                this.state.isProcessingMove = false; // Unlock processing while waiting for suit selection
+                this.ui.updateStatus('You played Ace - choose a suit');
+
+                // Preload all 4 Ace images (user will select which one to display)
+                console.log('🃏 Player played Ace - preloading all Ace images');
+                await this.ui.preloadHandImages([playedCard]).catch(() => {});
+
+                // Show suit selector with already-chosen suits disabled
+                // (these are the suits that were CHOSEN by previous Aces, not the original Ace suits)
+                this.ui.showSuitSelector(
+                    (suit) => this.handleSuitSelection(suit, playedCard),
+                    () => this.handleSuitSelectionCancel(playedCard),
+                    null,
+                    playedAceSuits // Suits that have already been chosen
+                );
+                return;
+            }
+
+            // Regular card
+            this.state.updateCurrentCard(playedCard.suit, playedCard.rank);
+
+            if (wasAfterJoker) {
+                this.ui.updateStatus(
+                    `You played ${playedCard.rank}${playedCard.suit} - suit is now ${playedCard.suit}`
+                );
+            } else {
+                this.ui.updateStatus(`You played ${playedCard.rank}${playedCard.suit}`);
+            }
+
+            // Preload card image before rendering to prevent blank cards
+            if (playedCard.imageUrl) {
+                try {
+                    await this.ui.preloadImage(playedCard.imageUrl);
+                } catch (err) {
+                    console.error('Failed to preload played card image:', playedCard.imageUrl, err);
+                }
+            } else {
+                console.error('Played card has no imageUrl:', playedCard);
+            }
+
+            // Render with animation
+            this.render(true, 'bottom');
+
+            // Check for win
+            const winResult = this.engine.checkWinCondition();
+            if (winResult) {
+                this.state.isProcessingMove = false; // Unlock processing - game is over
+                await this.delay(this.config.TIMING.GAME_END_DELAY);
+                this.handleGameEnd(winResult);
+                return;
+            }
+
+            await this.delay(this.config.TIMING.STATUS_MESSAGE_SHORT);
+
+            // Computer's turn (processing will be unlocked after computer completes)
+            await this.executeComputerTurn();
+        } catch (error) {
+            console.error('Error in handlePlayerCardClick:', error);
+            this.state.isComputerTurn = false;
+            this.state.isProcessingMove = false; // Unlock processing on error
+            this.ui.updateStatus('Error playing card. Please try again.');
+        }
+    }
+
+    /**
+     * Handle suit selection
+     * @param {string} suit - Selected suit
+     * @param {Card} card - Card that was played
+     */
+    async handleSuitSelection(suit, card) {
+        try {
+            // Lock processing to prevent multiple suit selections
+            this.state.isProcessingMove = true;
+
+            // Get the actual card from pending (should be same reference as parameter)
+            const cardToTransform = this.state.pendingEightCard || card;
+
+            // CRITICAL FIX: Check if we're in Joker continuation, not if current card is Joker
+            const wasAfterJoker = this.state.jokerWasPlayed;
+            const originalRank = cardToTransform.rank;
+
+            // DON'T mutate the Ace - it remains an Ace with its original suit
+            if (cardToTransform.isAce) {
+                // If this Ace was played after a Joker, show suit change
+                if (wasAfterJoker) {
+                    this.state.jokerWasPlayed = false; // Reset Joker flag
+                    this.state.suitWasChanged = true;
+                } else {
+                    this.state.suitWasChanged = true; // Show suit change indicator for Ace
+                }
+            } else {
+                this.state.suitWasChanged = true; // Keep flag for Jokers
+            }
+
+            // Update game state to reflect chosen suit
+            this.state.currentSuit = suit;
+            this.state.currentRank = originalRank; // Use original rank (always 'A' for Aces)
+
+            // Record the chosen suit (for Ace only)
+            if (cardToTransform.isAce) {
+                this.state.recordChosenAceSuit(suit);
+            }
+
+            this.state.pendingEightCard = null;
+
+            this.ui.updateStatus(`You changed suit to ${suit}`);
+
+            // Render with animation
+            this.render(true, 'bottom');
+
+            // Check for win
+            const winResult = this.engine.checkWinCondition();
+            if (winResult) {
+                this.state.isProcessingMove = false; // Unlock processing - game is over
+                await this.delay(this.config.TIMING.GAME_END_DELAY);
+                this.handleGameEnd(winResult);
+                return;
+            }
+
+            await this.delay(this.config.TIMING.STATUS_MESSAGE_LONG);
+
+            // If this Ace was played after Joker, player keeps the turn
+            if (!wasAfterJoker) {
+                this.state.isComputerTurn = true;
+                this.state.isProcessingMove = false; // Unlock processing - computer's turn
+                await this.executeComputerTurn();
+            } else {
+                // Player keeps turn after Joker→Ace sequence
+                this.state.isComputerTurn = false;
+                this.state.isProcessingMove = false; // Unlock processing - player's turn
+                this.ui.updateStatus('Your turn');
+            }
+        } catch (error) {
+            console.error('Error in handleSuitSelection:', error);
+            this.state.isComputerTurn = false; // CRITICAL FIX: Unlock turn on error
+            this.state.isProcessingMove = false; // Unlock processing on error
+            this.state.pendingEightCard = null; // Clear pending state
+            this.ui.updateStatus('Error changing suit. Please try again.');
+        }
+    }
+
+    /**
+     * Handle suit selection being cancelled
+     * @param {Card} card - Card that was played
+     */
+    async handleSuitSelectionCancel(card) {
+        // Return the card to player's hand
+        this.state.discardPile.pop(); // Remove from discard pile
+        this.state.playerHand.push(card); // Add back to hand
+        this.state.pendingEightCard = null;
+
+        this.state.isComputerTurn = false; // Unlock turn for player
+        this.state.isProcessingMove = false; // Unlock processing for player
+
+        this.render(false);
+        this.ui.updateStatus('Card returned to hand');
+
+        await this.delay(this.config.TIMING.STATUS_MESSAGE_SHORT);
+        this.ui.updateStatus('Your turn');
+    }
+
+    /**
+     * Handle player drawing a card
+     */
+    async handleDrawCard() {
+        try {
+            if (
+                this.state.isProcessingMove ||
+                this.state.isDrawing ||
+                this.state.isComputerTurn ||
+                this.state.gameOver ||
+                this.state.pendingEightCard
+            ) {
+                return;
+            }
+
+            this.state.isProcessingMove = true; // Lock processing
+            this.state.isDrawing = true;
+            this.state.isComputerTurn = true; // Lock turn
+            this.ui.clearHintTimer();
+            this.ui.hideDeckHint(true); // Hide and dismiss permanently (they learned to draw)
+
+            // Mark that player has acted
+            if (!this.state.playerHasActed) {
+                this.state.playerHasActed = true;
+                this.state.playerMadeFirstMove = true; // Mark first move permanently
+                this.state.isFirstGame = false;
+            }
+
+            const card = this.state.drawCardForPlayer();
+
+            if (!card) {
+                this.ui.updateStatus('Deck empty - pass turn');
+                this.state.isDrawing = false;
+                await this.delay(this.config.TIMING.STATUS_MESSAGE_SHORT);
+                await this.executeComputerTurn();
+                return;
+            }
+
+            // Preload the drawn card
+            await this.ui.preloadCardOnDraw(card);
+
+            // Render immediately so card appears in hand
+            this.render(false);
+
+            this.ui.animateDeckDraw();
+            this.ui.updateStatus('You drew a card');
+
+            // Check if drawn card is playable
+            const canPlayDrawnCard = this.engine.canPlayCard(card);
+            if (canPlayDrawnCard) {
+                this.ui.updateStatus('You can play the card you drew!');
+                this.state.isDrawing = false;
+                this.state.isComputerTurn = false; // Unlock for player
+                this.state.isProcessingMove = false; // Unlock processing for player
+            } else {
+                this.state.isDrawing = false;
+                await this.executeComputerTurn();
+            }
+        } catch (error) {
+            console.error('Error in handleDrawCard:', error);
+            this.state.isDrawing = false;
+            this.state.isComputerTurn = false;
+            this.state.isProcessingMove = false; // Unlock processing on error
+            this.ui.updateStatus('Error drawing card. Please try again.');
+        }
+    }
+
+    /**
+     * Execute computer's turn
+     */
+    async executeComputerTurn() {
+        try {
+            this.ui.updateStatus("Computer's turn...");
+
+            await this.delay(this.config.TIMING.COMPUTER_TURN_DELAY);
+
+            const computerHandSizeBefore = this.state.computerHand.length;
+            const result = await this.engine.executeComputerTurn();
+
+            if (result.action === 'play') {
+                // Animate computer card flying out
+                await this.ui.animateComputerCardPlay(computerHandSizeBefore);
+
+                // If computer has no cards left, hide hand and status message instantly
+                if (this.state.computerHand.length === 0) {
+                    const opponentHandContainer = document.getElementById('opponentHandPreview');
+                    const statusMessage = document.getElementById('statusMessage');
+
+                    // Lock heights before hiding to prevent layout shift
+                    if (opponentHandContainer) {
+                        const height = opponentHandContainer.offsetHeight;
+                        opponentHandContainer.style.height = height + 'px';
+                        opponentHandContainer.style.minHeight = height + 'px';
+                        opponentHandContainer.style.opacity = '0';
+                        opponentHandContainer.style.pointerEvents = 'none';
+                    }
+                    if (statusMessage) {
+                        const height = statusMessage.offsetHeight;
+                        statusMessage.style.height = height + 'px';
+                        statusMessage.style.minHeight = height + 'px';
+                        statusMessage.style.opacity = '0';
+                        statusMessage.style.pointerEvents = 'none';
+                    }
+                }
+
+                const card = result.card;
+
+                // Handle Joker - computer plays another card to define suit
+                if (result.isJoker) {
+                    this.ui.updateStatus('Computer played Joker');
+
+                    // Preload Joker image before rendering
+                    if (card.imageUrl) {
+                        try {
+                            await this.ui.preloadImage(card.imageUrl);
+                        } catch (err) {
+                            console.error(
+                                'Failed to preload computer Joker image:',
+                                card.imageUrl,
+                                err
+                            );
+                        }
+                    } else {
+                        console.error('Computer Joker card has no imageUrl:', card);
+                    }
+                    this.render(true, 'top');
+
+                    // Check for win
+                    const jokerWinResult = this.engine.checkWinCondition();
+                    if (jokerWinResult) {
+                        this.state.isProcessingMove = false; // Unlock processing - game is over
+                        await this.delay(this.config.TIMING.GAME_END_DELAY);
+                        this.handleGameEnd(jokerWinResult); // CRITICAL FIX: Use captured result
+                        return;
+                    }
+
+                    // Continue turn - play another card
+                    await this.delay(this.config.TIMING.COMPUTER_TURN_DELAY);
+                    await this.executeComputerTurn();
+                    return;
+                }
+
+                // Handle Ace with suit change
+                if (result.newSuit) {
+                    // Preload all 4 Ace images before rendering
+                    console.log('🤖 Computer played Ace - preloading all Ace images');
+                    await this.ui.preloadHandImages([card]).catch(() => {});
+
+                    const suitNames = {
+                        '♠': 'Spades',
+                        '♥': 'Hearts',
+                        '♦': 'Diamonds',
+                        '♣': 'Clubs'
+                    };
+                    this.ui.updateStatus(
+                        `Computer played Ace - changed to ${suitNames[result.newSuit]}`
+                    );
+                } else {
+                    const cardName = `${card.rank}${card.suit}`;
+                    this.ui.updateStatus(`Computer played ${cardName}`);
+                }
+            } else if (result.action === 'draw') {
+                // Preload the drawn card's image
+                if (result.card && result.card.imageUrl) {
+                    try {
+                        await this.ui.preloadCardOnDraw(result.card);
+                    } catch (err) {
+                        console.error(
+                            'Failed to preload computer drawn card:',
+                            result.card.imageUrl,
+                            err
+                        );
+                    }
+                } else if (result.card) {
+                    console.error('Computer drawn card has no imageUrl:', result.card);
+                }
+
+                this.ui.updateStatus('Computer drew a card');
+                this.render(false);
+
+                // If drawn card is playable, computer plays it
+                if (result.canPlayDrawnCard) {
+                    await this.delay(this.config.TIMING.COMPUTER_TURN_DELAY);
+                    await this.executeComputerTurn();
+                    return; // Recursive call will handle turn unlock
+                }
+                // If drawn card is NOT playable, computer passes turn - continue to unlock below
+            } else if (result.action === 'pass') {
+                this.ui.updateStatus('Computer passes - deck empty');
+            }
+
+            // Render with animation from top (computer's side) if card was played
+            if (result.action === 'play') {
+                // Preload computer's card image before rendering
+                if (result.card && result.card.imageUrl) {
+                    try {
+                        await this.ui.preloadImage(result.card.imageUrl);
+                    } catch (err) {
+                        console.error(
+                            'Failed to preload computer card image:',
+                            result.card.imageUrl,
+                            err
+                        );
+                    }
+                } else {
+                    console.error('Computer card has no imageUrl:', result.card);
+                }
+                this.render(true, 'top');
+            }
+
+            // Check for win
+            const winResult = this.engine.checkWinCondition();
+            if (winResult) {
+                this.state.isProcessingMove = false; // Unlock processing - game is over
+                await this.delay(this.config.TIMING.GAME_END_DELAY);
+                this.handleGameEnd(winResult);
+                return;
+            }
+
+            // Unlock player turn immediately - no delay
+            this.state.isComputerTurn = false; // Unlock turn for player
+            this.state.isProcessingMove = false; // Unlock processing for player
+            this.ui.updateStatus('Your turn');
+
+            // Restart hint timer (unless deck hint was dismissed)
+            // For shake hints: only on first game before first move
+            // For deck hints: anytime player has no playable cards (until dismissed)
+            if (!this.ui.deckHintDismissed) {
+                this.ui.startHintTimer(() => this.showHint());
+            }
+        } catch (error) {
+            console.error('Error in executeComputerTurn:', error);
+            this.state.isComputerTurn = false;
+            this.state.isProcessingMove = false; // Unlock processing on error
+            this.ui.updateStatus('Error in computer turn. Please try again.');
+        }
+    }
+
+    /**
+     * Handle game end
+     * @param {Object} winResult - Winner information
+     */
+    handleGameEnd(winResult) {
+        const playerWon = winResult.winner === 'player';
+
+        // Note: hands and notification are already hidden when last card was played
+
+        this.ui.showGameOver(playerWon, winResult.winStreak || 0, this.state.discountClaimed);
+
+        if (playerWon) {
+            this.ui.updateStatus(
+                `You won!${winResult.winStreak > 1 ? ` Streak: ${winResult.winStreak}` : ''}`
+            );
+        } else {
+            this.ui.updateStatus('Computer won!');
+        }
+    }
+
+    /**
+     * Show hint for playable cards
+     */
+    showHint() {
+        if (this.state.gameOver || this.state.isComputerTurn) {
+            return;
+        }
+
+        // Check if player has any playable cards
+        const hasPlayableCard = this.state.playerHand.some((card, index) =>
+            this.engine.canPlayCard(card)
+        );
+
+        if (hasPlayableCard) {
+            // Only show shake hints before first move
+            if (!this.state.playerMadeFirstMove) {
+                this.ui.showPlayableCardHint((index) => {
+                    const card = this.state.playerHand[index];
+                    return this.engine.canPlayCard(card);
+                });
+            }
+        } else {
+            // Player has no playable cards - show deck hint (works even after first move)
+            this.ui.showDeckHint();
+        }
+
+        // Repeat hint
+        this.ui.hintTimeout = setTimeout(
+            () => this.showHint(),
+            this.config.TIMING.HINT_REPEAT_DELAY
+        );
+    }
+
+    /**
+     * Get suits that have been CHOSEN when Aces were played
+     * @returns {Array<string>} Array of suits that cannot be chosen again
+     */
+    getPlayedAceSuits() {
+        // Return the suits that were CHOSEN, not the original suits of Ace cards
+        return this.state.chosenAceSuits;
+    }
+
+    /**
+     * Delay helper
+     * @param {number} ms - Milliseconds to delay
+     * @returns {Promise}
+     */
+    delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Reset and start new game
+     */
+    async reset() {
+        this.state.reset();
+        await this.init();
+    }
+}

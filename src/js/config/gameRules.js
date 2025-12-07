@@ -23,18 +23,14 @@ export class GameRules {
      * Determine if player has a playable card
      */
     static hasPlayableCard(hand, currentCard, jokerWasPlayed = false) {
-        return hand.some(card =>
-            this.canPlayCard(card, currentCard, jokerWasPlayed)
-        );
+        return hand.some((card) => this.canPlayCard(card, currentCard, jokerWasPlayed));
     }
 
     /**
      * Get all playable cards from hand
      */
     static getPlayableCards(hand, currentCard, jokerWasPlayed = false) {
-        return hand.filter(card =>
-            this.canPlayCard(card, currentCard, jokerWasPlayed)
-        );
+        return hand.filter((card) => this.canPlayCard(card, currentCard, jokerWasPlayed));
     }
 
     /**
@@ -101,9 +97,11 @@ export class GameRules {
     static chooseBestSuit(hand, availableSuits) {
         // Count cards by suit in hand
         const suitCounts = {};
-        availableSuits.forEach(suit => { suitCounts[suit] = 0; });
+        availableSuits.forEach((suit) => {
+            suitCounts[suit] = 0;
+        });
 
-        hand.forEach(card => {
+        hand.forEach((card) => {
             if (!card.isJoker && !card.isAce && availableSuits.includes(card.suit)) {
                 suitCounts[card.suit]++;
             }

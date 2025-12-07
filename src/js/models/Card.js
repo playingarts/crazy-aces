@@ -19,7 +19,9 @@ export class Card {
      */
     get imageUrl() {
         const key = this.isJoker
-            ? (this.artist === 'Mike Friedrich' ? 'JOKER' : 'JOKER_2')
+            ? this.artist === 'Mike Friedrich'
+                ? 'JOKER'
+                : 'JOKER_2'
             : `${this.rank}${this.suit}`;
 
         const filename = CARD_IMAGE_FILENAMES[key];
@@ -31,9 +33,7 @@ export class Card {
      */
     get artistUrl() {
         const slug = ARTIST_URL_SLUGS[this.artist];
-        return slug
-            ? `${GAME_CONFIG.URLS.CARD_INFO_BASE}${slug}`
-            : GAME_CONFIG.URLS.CARD_INFO_BASE;
+        return slug ? `${GAME_CONFIG.URLS.CARD_INFO_BASE}${slug}` : GAME_CONFIG.URLS.CARD_INFO_BASE;
     }
 
     /**

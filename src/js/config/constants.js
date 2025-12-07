@@ -32,7 +32,8 @@ export const GAME_CONFIG = {
     URLS: {
         BASE_IMAGE: 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/',
         CARD_INFO_BASE: 'https://playingarts.com/one/',
-        BACKSIDE_IMAGE: 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2'
+        BACKSIDE_IMAGE:
+            'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2'
     },
 
     // Card dimensions
@@ -59,10 +60,10 @@ export const GAME_CONFIG = {
 };
 
 export const SUITS = {
-    SPADES: '♠️',
-    HEARTS: '♥️',
-    DIAMONDS: '♦️',
-    CLUBS: '♣️',
+    SPADES: '♠',
+    HEARTS: '♥',
+    DIAMONDS: '♦',
+    CLUBS: '♣',
     JOKER: 'joker'
 };
 
@@ -77,17 +78,17 @@ export const SUIT_NAMES = {
 };
 
 export const RANK_NAMES = {
-    'A': 'ace',
-    '2': 'two',
-    '3': 'three',
-    '4': 'four',
-    '5': 'five',
-    '6': 'six',
-    '7': 'seven',
-    '8': 'eight',
-    '9': 'nine',
-    '10': 'ten',
-    'J': 'jack',
-    'Q': 'queen',
-    'K': 'king'
+    A: 'ace',
+    2: 'two',
+    3: 'three',
+    4: 'four',
+    5: 'five',
+    6: 'six',
+    7: 'seven',
+    8: 'eight',
+    9: 'nine',
+    10: 'ten',
+    J: 'jack',
+    Q: 'queen',
+    K: 'king'
 };

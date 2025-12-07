@@ -19,10 +19,10 @@ export class Deck {
         this.cards = [];
 
         // Create standard 52 cards
-        Object.values(SUITS).forEach(suit => {
+        Object.values(SUITS).forEach((suit) => {
             if (suit === SUITS.JOKER) return; // Skip joker suit
 
-            RANKS.forEach(rank => {
+            RANKS.forEach((rank) => {
                 const key = `${rank}${suit}`;
                 const artist = CARD_ARTISTS[key] || 'Unknown';
                 this.cards.push(new Card(rank, suit, artist));
@@ -71,7 +71,7 @@ export class Deck {
      * Get a non-special card (not Ace or Joker) for initial discard
      */
     drawNonSpecial() {
-        const index = this.cards.findIndex(card => !card.isAce && !card.isJoker);
+        const index = this.cards.findIndex((card) => !card.isAce && !card.isJoker);
         if (index === -1) {
             throw new Error('No non-special cards available');
         }
@@ -82,8 +82,8 @@ export class Deck {
      * Find and swap a card
      */
     swapCard(cardToRemove, cardToAdd) {
-        const index = this.cards.findIndex(c =>
-            c.rank === cardToRemove.rank && c.suit === cardToRemove.suit
+        const index = this.cards.findIndex(
+            (c) => c.rank === cardToRemove.rank && c.suit === cardToRemove.suit
         );
 
         if (index !== -1) {
@@ -97,8 +97,8 @@ export class Deck {
      * Find a matching card
      */
     findMatchingCard(targetCard) {
-        return this.cards.find(card =>
-            card.suit === targetCard.suit || card.rank === targetCard.rank
+        return this.cards.find(
+            (card) => card.suit === targetCard.suit || card.rank === targetCard.rank
         );
     }
 
@@ -106,8 +106,8 @@ export class Deck {
      * Remove a specific card
      */
     removeCard(card) {
-        const index = this.cards.findIndex(c =>
-            c.rank === card.rank && c.suit === card.suit && c.artist === card.artist
+        const index = this.cards.findIndex(
+            (c) => c.rank === card.rank && c.suit === card.suit && c.artist === card.artist
         );
 
         if (index !== -1) {
