@@ -8,6 +8,7 @@ import { EventController } from './services/EventController.js';
 import { config, validateConfig, getConfigSummary } from './config/index.js';
 import { logger } from './utils/Logger.js';
 import { errorService, ErrorContext, ErrorSeverity } from './services/ErrorService.js';
+import { VersionDisplay } from './utils/VersionDisplay.js';
 
 // ============================================================================
 // CONFIGURATION VALIDATION
@@ -54,6 +55,9 @@ localStorage.removeItem('rulesBoxDismissed');
 async function initialize() {
     try {
         logger.info('Starting application initialization...');
+
+        // Initialize version display
+        new VersionDisplay();
 
         // Email functionality now handled server-side via Vercel API
         // No client-side EmailJS initialization needed
