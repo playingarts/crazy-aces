@@ -184,7 +184,10 @@ export default async function handler(req, res) {
         if (!discountCode || !templateId) {
             console.error('Missing environment variables:', {
                 hasDiscountCode: !!discountCode,
-                hasTemplateId: !!templateId
+                hasTemplateId: !!templateId,
+                discountTier,
+                hasServiceId: !!process.env.EMAILJS_SERVICE_ID,
+                hasPublicKey: !!process.env.EMAILJS_PUBLIC_KEY
             });
             return res.status(500).json({
                 success: false,
@@ -193,26 +196,39 @@ export default async function handler(req, res) {
         }
 
         // Send email via EmailJS (server-side)
+        const emailPayload = {
+            service_id: process.env.EMAILJS_SERVICE_ID,
+            template_id: templateId,
+            user_id: process.env.EMAILJS_PUBLIC_KEY,
+            template_params: {
+                to_email: normalizedEmail,
+                discount_code: discountCode,
+                discount: discountPercent
+            }
+        };
+
+        console.log('Sending email to EmailJS:', {
+            service_id: emailPayload.service_id?.substring(0, 10) + '...',
+            template_id: emailPayload.template_id,
+            user_id: emailPayload.user_id?.substring(0, 10) + '...',
+            to_email: normalizedEmail
+        });
+
         const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                service_id: process.env.EMAILJS_SERVICE_ID,
-                template_id: templateId,
-                user_id: process.env.EMAILJS_PUBLIC_KEY,
-                template_params: {
-                    to_email: normalizedEmail,
-                    discount_code: discountCode,
-                    discount: discountPercent
-                }
-            })
+            body: JSON.stringify(emailPayload)
         });
 
         if (!emailResponse.ok) {
             const errorText = await emailResponse.text();
-            console.error('EmailJS error:', errorText);
+            console.error('EmailJS error response:', {
+                status: emailResponse.status,
+                statusText: emailResponse.statusText,
+                errorText
+            });
             return res.status(500).json({
                 success: false,
                 error: 'Failed to send email. Please try again later.'
