@@ -13,6 +13,7 @@
 
 import Redis from 'ioredis';
 import crypto from 'crypto';
+import { generateSessionToken, verifySessionToken } from './_lib/session.js';
 
 // Initialize Redis client
 const redis = process.env.KV_REST_API_REDIS_URL
@@ -25,48 +26,8 @@ const redis = process.env.KV_REST_API_REDIS_URL
     })
     : null;
 
-// Session secret for HMAC signing (must be set in Vercel env vars)
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-production';
-
 // Session timeout (1 hour)
 const SESSION_TIMEOUT = 3600; // seconds
-
-/**
- * Generate a cryptographically signed session token
- */
-function generateSessionToken(sessionId, winStreak = 0) {
-    const payload = JSON.stringify({ sessionId, winStreak, timestamp: Date.now() });
-    const signature = crypto
-        .createHmac('sha256', SESSION_SECRET)
-        .update(payload)
-        .digest('hex');
-
-    return Buffer.from(JSON.stringify({ payload, signature })).toString('base64');
-}
-
-/**
- * Verify and decode a session token
- */
-function verifySessionToken(token) {
-    try {
-        const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-        const { payload, signature } = decoded;
-
-        // Verify signature
-        const expectedSignature = crypto
-            .createHmac('sha256', SESSION_SECRET)
-            .update(payload)
-            .digest('hex');
-
-        if (signature !== expectedSignature) {
-            throw new Error('Invalid signature');
-        }
-
-        return JSON.parse(payload);
-    } catch (error) {
-        return null;
-    }
-}
 
 export default async function handler(req, res) {
     // CORS headers
@@ -233,6 +194,3 @@ export default async function handler(req, res) {
         });
     }
 }
-
-// Export helper functions for use in other API routes
-export { verifySessionToken };

@@ -20,7 +20,7 @@
  */
 
 import Redis from 'ioredis';
-import { verifySessionToken } from './start-game.js';
+import { verifySessionToken } from './_lib/session.js';
 
 // Initialize Redis client (uses KV_REST_API_REDIS_URL env var)
 const redis = process.env.KV_REST_API_REDIS_URL
@@ -97,6 +97,7 @@ export default async function handler(req, res) {
         const { sessionId, winStreak: serverWinStreak } = tokenData;
 
         // Additional validation: Get session from Redis to ensure it's still valid
+        let winStreak;
         if (redis) {
             const sessionDataStr = await redis.get(`session:${sessionId}`);
             if (!sessionDataStr) {
@@ -109,10 +110,10 @@ export default async function handler(req, res) {
             const sessionData = JSON.parse(sessionDataStr);
 
             // Use the win streak from Redis (most authoritative source)
-            var winStreak = sessionData.winStreak;
+            winStreak = sessionData.winStreak;
         } else {
             // Development fallback: use win streak from token
-            var winStreak = serverWinStreak;
+            winStreak = serverWinStreak;
         }
 
         // Strict email validation
