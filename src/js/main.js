@@ -1,45 +1,30 @@
 /**
  * Crazy Aces - Main Application Entry Point
- * Refactored to use modular architecture
+ * Refactored to use modular architecture with dependency injection
  */
 
-import { Game } from './services/Game.js';
+import { GameFactory } from './services/GameFactory.js';
 import { EventController } from './services/EventController.js';
-import { EMAIL_CONFIG } from './config/email.config.js';
+import { config, validateConfig, getConfigSummary } from './config/index.js';
+import { logger } from './utils/Logger.js';
+import { errorService, ErrorContext, ErrorSeverity } from './services/ErrorService.js';
 
 // ============================================================================
-// CONFIGURATION
+// CONFIGURATION VALIDATION
 // ============================================================================
 
-const CONFIG = {
-    GAME: {
-        INITIAL_HAND_SIZE: 7,
-        NUM_JOKERS: 2
-    },
-    ANIMATION: {
-        CARD_DROP_DURATION: 400,
-        CARD_FLY_DURATION: 250,
-        CARD_SHRINK_DURATION: 250,
-        HINT_SHAKE_DURATION: 600,
-        HAND_RESIZE_DURATION: 500
-    },
-    TIMING: {
-        COMPUTER_TURN_DELAY: 800,
-        HINT_INITIAL_DELAY: 5000,
-        HINT_REPEAT_DELAY: 5000,
-        STATUS_MESSAGE_SHORT: 1500,
-        STATUS_MESSAGE_LONG: 2000,
-        DRAW_MESSAGE_DELAY: 1200,
-        ANIMATION_DELAY: 400,
-        GAME_END_DELAY: 500
-    },
-    URLS: {
-        BASE_IMAGE: 'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/',
-        CARD_INFO_BASE: 'https://playingarts.com/one/',
-        BACKSIDE_IMAGE:
-            'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2'
-    }
-};
+// Validate configuration on startup
+const validation = validateConfig();
+if (!validation.valid) {
+    logger.error('Configuration validation failed:', validation.errors);
+    throw new Error(`Invalid configuration: ${validation.errors.join(', ')}`);
+}
+
+if (validation.warnings.length > 0) {
+    logger.warn('Configuration warnings:', validation.warnings);
+}
+
+logger.info('Configuration loaded successfully', getConfigSummary());
 
 // ============================================================================
 // GLOBAL STATE
@@ -68,25 +53,34 @@ localStorage.removeItem('rulesBoxDismissed');
  */
 async function initialize() {
     try {
+        logger.info('Starting application initialization...');
+
         // Initialize EmailJS
         if (typeof emailjs !== 'undefined') {
-            emailjs.init(EMAIL_CONFIG.PUBLIC_KEY);
+            emailjs.init(config.EMAIL.PUBLIC_KEY);
+            logger.info('EmailJS initialized');
+        } else {
+            logger.warn('EmailJS not available - discount features may not work');
         }
 
-        // Create game instance
-        game = new Game(CONFIG);
+        // Create game instance using factory
+        game = GameFactory.create(config);
+        logger.info('Game instance created');
 
         // Create event controller and setup listeners
         eventController = new EventController(game);
         eventController.setupEventListeners();
+        logger.info('Event listeners configured');
 
         // Initialize game
         await game.init();
+        logger.info('Game initialized successfully');
 
         // Show game container by adding .loaded class
         const gameContainer = document.querySelector('.game-container');
         if (gameContainer) {
             gameContainer.classList.add('loaded');
+            logger.debug('Game container shown');
         }
 
         // Hide loading screen
@@ -95,10 +89,19 @@ async function initialize() {
             loadingScreen.style.opacity = '0';
             setTimeout(() => {
                 loadingScreen.style.display = 'none';
+                logger.debug('Loading screen hidden');
             }, 300);
         }
+
+        logger.info('Application initialization complete');
     } catch (error) {
-        console.error('Error initializing application:', error);
+        // Use ErrorService for centralized error handling
+        await errorService.handle(error, ErrorContext.INITIALIZATION, {
+            severity: ErrorSeverity.CRITICAL,
+            metadata: { phase: 'initialization' }
+        });
+
+        // Show user-friendly error message
         alert('Error loading game. Please refresh the page.');
     }
 }

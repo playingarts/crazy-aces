@@ -1,20 +1,41 @@
 /**
  * Game - Main game controller
  * Coordinates GameState, GameEngine, and GameUI
+ *
+ * Uses dependency injection for better testability and flexibility
  */
 
 import { GameState } from './GameState.js';
 import { GameEngine } from './GameEngine.js';
 import { GameUI } from '../ui/GameUI.js';
 import { UIStateManager } from '../ui/UIStateManager.js';
+import { logger } from '../utils/Logger.js';
+import { errorService, ErrorContext, ErrorSeverity } from './ErrorService.js';
 
 export class Game {
-    constructor(config) {
+    /**
+     * @param {Object} config - Game configuration
+     * @param {Object} dependencies - Injectable dependencies for testability
+     * @param {GameState} dependencies.state - Game state manager
+     * @param {GameEngine} dependencies.engine - Game logic engine
+     * @param {GameUI} dependencies.ui - UI controller
+     * @param {UIStateManager} dependencies.uiState - UI state manager
+     * @param {Logger} dependencies.logger - Logger instance
+     * @param {ErrorService} dependencies.errorService - Error handler
+     */
+    constructor(config, dependencies = {}) {
         this.config = config;
-        this.state = new GameState();
-        this.engine = new GameEngine(this.state);
-        this.ui = new GameUI(config);
-        this.uiState = new UIStateManager();
+
+        // Use injected dependencies or create defaults
+        this.state = dependencies.state || new GameState();
+        this.engine = dependencies.engine || new GameEngine(this.state);
+        this.ui = dependencies.ui || new GameUI(config);
+        this.uiState = dependencies.uiState || new UIStateManager();
+        this.logger = dependencies.logger || logger;
+        this.errorService = dependencies.errorService || errorService;
+
+        // Set logger context for all game logs
+        this.logger.setContext({ component: 'Game' });
     }
 
     /**
@@ -39,19 +60,28 @@ export class Game {
                 try {
                     await this.ui.preloadImage(topCard.imageUrl);
                 } catch (err) {
-                    console.error('Failed to preload top card image:', topCard.imageUrl, err);
+                    await this.errorService.handle(err, ErrorContext.IMAGE_LOAD, {
+                        severity: ErrorSeverity.LOW,
+                        metadata: { image: topCard.imageUrl, card: 'topCard' }
+                    });
                 }
             }
             // Preload both player and computer hands
             try {
                 await this.ui.preloadHandImages(this.state.playerHand);
             } catch (err) {
-                console.error('Failed to preload player hand images:', err);
+                await this.errorService.handle(err, ErrorContext.IMAGE_LOAD, {
+                    severity: ErrorSeverity.LOW,
+                    metadata: { hand: 'player', count: this.state.playerHand.length }
+                });
             }
             try {
                 await this.ui.preloadHandImages(this.state.computerHand);
             } catch (err) {
-                console.error('Failed to preload computer hand images:', err);
+                await this.errorService.handle(err, ErrorContext.IMAGE_LOAD, {
+                    severity: ErrorSeverity.LOW,
+                    metadata: { hand: 'computer', count: this.state.computerHand.length }
+                });
             }
 
             // Render initial state
@@ -71,7 +101,10 @@ export class Game {
                 this.ui.startHintTimer(() => this.showHint());
             }
         } catch (error) {
-            console.error('Error initializing game:', error);
+            await this.errorService.handle(error, ErrorContext.INITIALIZATION, {
+                severity: ErrorSeverity.CRITICAL,
+                metadata: { phase: 'game-init' }
+            });
             this.ui.updateStatus('Error starting game: ' + (error?.message || error));
         }
     }
@@ -162,11 +195,13 @@ export class Game {
 
             // Handle Joker
             if (playedCard.isJoker) {
-                console.log('🃏 Player played Joker. Hand size:', this.state.playerHand.length);
+                this.logger.debug('Player played Joker', {
+                    handSize: this.state.playerHand.length
+                });
 
                 // Check for win BEFORE setting jokerWasPlayed flag
                 const winResult = this.engine.checkWinCondition();
-                console.log('🏆 Win check result:', winResult);
+                this.logger.debug('Win check result after Joker', { result: winResult });
 
                 if (winResult) {
                     // Player won with Joker as last card - end game immediately
