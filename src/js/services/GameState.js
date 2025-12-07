@@ -62,7 +62,7 @@ export class GameState {
         const specialCards = [];
         const nonSpecialCards = [];
 
-        this.deck.cards.forEach(card => {
+        this.deck.cards.forEach((card) => {
             if (card.isAce || card.isJoker) {
                 specialCards.push(card);
             } else {

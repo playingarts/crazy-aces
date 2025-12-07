@@ -97,7 +97,7 @@ export class Game {
             if (!this.state.playerMadeFirstMove) {
                 this.ui.updateStatus("Play a card matching the table card's suit or rank");
             } else {
-                this.ui.updateStatus("Your turn");
+                this.ui.updateStatus('Your turn');
             }
 
             // Start hint timer on first game

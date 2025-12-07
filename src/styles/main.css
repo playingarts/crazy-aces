@@ -662,7 +662,9 @@ body {
     background: linear-gradient(270deg, #a78bfa, #ec4899, #f59e0b, #ec4899, #a78bfa);
     background-size: 400% 400%;
     animation: jokerGlow 8s ease-in-out infinite;
-    box-shadow: 0 4px 20px rgba(167, 139, 250, 0.5), 0 0 30px rgba(236, 72, 153, 0.3);
+    box-shadow:
+        0 4px 20px rgba(167, 139, 250, 0.5),
+        0 0 30px rgba(236, 72, 153, 0.3);
     transition:
         width 0.3s ease,
         margin 0.3s ease,
@@ -673,23 +675,33 @@ body {
 @keyframes jokerGlow {
     0% {
         background-position: 0% 50%;
-        box-shadow: 0 4px 20px rgba(167, 139, 250, 0.5), 0 0 30px rgba(236, 72, 153, 0.3);
+        box-shadow:
+            0 4px 20px rgba(167, 139, 250, 0.5),
+            0 0 30px rgba(236, 72, 153, 0.3);
     }
     25% {
         background-position: 50% 50%;
-        box-shadow: 0 4px 20px rgba(236, 72, 153, 0.6), 0 0 35px rgba(245, 158, 11, 0.4);
+        box-shadow:
+            0 4px 20px rgba(236, 72, 153, 0.6),
+            0 0 35px rgba(245, 158, 11, 0.4);
     }
     50% {
         background-position: 100% 50%;
-        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5), 0 0 30px rgba(236, 72, 153, 0.3);
+        box-shadow:
+            0 4px 20px rgba(245, 158, 11, 0.5),
+            0 0 30px rgba(236, 72, 153, 0.3);
     }
     75% {
         background-position: 50% 50%;
-        box-shadow: 0 4px 20px rgba(236, 72, 153, 0.6), 0 0 35px rgba(167, 139, 250, 0.4);
+        box-shadow:
+            0 4px 20px rgba(236, 72, 153, 0.6),
+            0 0 35px rgba(167, 139, 250, 0.4);
     }
     100% {
         background-position: 0% 50%;
-        box-shadow: 0 4px 20px rgba(167, 139, 250, 0.5), 0 0 30px rgba(236, 72, 153, 0.3);
+        box-shadow:
+            0 4px 20px rgba(167, 139, 250, 0.5),
+            0 0 30px rgba(236, 72, 153, 0.3);
     }
 }
 
