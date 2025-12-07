@@ -6,6 +6,7 @@
 import { GameState } from './GameState.js';
 import { GameEngine } from './GameEngine.js';
 import { GameUI } from '../ui/GameUI.js';
+import { UIStateManager } from '../ui/UIStateManager.js';
 
 export class Game {
     constructor(config) {
@@ -13,6 +14,7 @@ export class Game {
         this.state = new GameState();
         this.engine = new GameEngine(this.state);
         this.ui = new GameUI(config);
+        this.uiState = new UIStateManager();
     }
 
     /**
@@ -23,44 +25,8 @@ export class Game {
             this.ui.clearAllTimeouts();
             this.ui.updateStatus('Loading cards...');
 
-            // Reset hand opacity and height styles (in case it was faded out from previous game)
-            const playerHandContainer = document.querySelector('.player-hand');
-            const playerHandSection = document.querySelector('.player-hand-section');
-            const opponentHandContainer = document.getElementById('opponentHandPreview');
-            const statusMessage = document.getElementById('statusMessage');
-
-            if (playerHandContainer) {
-                playerHandContainer.style.opacity = '1';
-                playerHandContainer.style.transition = '';
-                playerHandContainer.style.height = '';
-                playerHandContainer.style.minHeight = '';
-                playerHandContainer.style.display = '';
-                playerHandContainer.style.visibility = '';
-                playerHandContainer.style.pointerEvents = '';
-            }
-            if (playerHandSection) {
-                playerHandSection.style.display = '';
-                playerHandSection.style.opacity = '1';
-                playerHandSection.style.height = '';
-                playerHandSection.style.minHeight = '';
-                playerHandSection.style.visibility = '';
-                playerHandSection.style.pointerEvents = '';
-            }
-            if (opponentHandContainer) {
-                opponentHandContainer.style.display = '';
-                opponentHandContainer.style.opacity = '1';
-                opponentHandContainer.style.transition = '';
-                opponentHandContainer.style.height = '';
-                opponentHandContainer.style.minHeight = '';
-                opponentHandContainer.style.pointerEvents = '';
-            }
-            if (statusMessage) {
-                statusMessage.style.display = '';
-                statusMessage.style.height = '';
-                statusMessage.style.minHeight = '';
-                statusMessage.style.opacity = '';
-                statusMessage.style.pointerEvents = '';
-            }
+            // Reset all UI elements to default state
+            this.uiState.resetAllDisplays();
 
             // Initialize game state
             this.state.initializeGame(this.config.GAME.INITIAL_HAND_SIZE);
@@ -191,32 +157,7 @@ export class Game {
 
             // If player has no cards left, hide hand and status message instantly
             if (this.state.playerHand.length === 0) {
-                const playerHandContainer = document.querySelector('.player-hand');
-                const playerHandSection = document.querySelector('.player-hand-section');
-                const statusMessage = document.getElementById('statusMessage');
-
-                // Lock heights before hiding to prevent layout shift
-                if (playerHandContainer) {
-                    const height = playerHandContainer.offsetHeight;
-                    playerHandContainer.style.height = height + 'px';
-                    playerHandContainer.style.minHeight = height + 'px';
-                    playerHandContainer.style.opacity = '0';
-                    playerHandContainer.style.pointerEvents = 'none';
-                }
-                if (playerHandSection) {
-                    const height = playerHandSection.offsetHeight;
-                    playerHandSection.style.height = height + 'px';
-                    playerHandSection.style.minHeight = height + 'px';
-                    playerHandSection.style.opacity = '0';
-                    playerHandSection.style.pointerEvents = 'none';
-                }
-                if (statusMessage) {
-                    const height = statusMessage.offsetHeight;
-                    statusMessage.style.height = height + 'px';
-                    statusMessage.style.minHeight = height + 'px';
-                    statusMessage.style.opacity = '0';
-                    statusMessage.style.pointerEvents = 'none';
-                }
+                this.uiState.hidePlayerHandOnEmpty();
             }
 
             // Handle Joker
@@ -530,24 +471,7 @@ export class Game {
 
                 // If computer has no cards left, hide hand and status message instantly
                 if (this.state.computerHand.length === 0) {
-                    const opponentHandContainer = document.getElementById('opponentHandPreview');
-                    const statusMessage = document.getElementById('statusMessage');
-
-                    // Lock heights before hiding to prevent layout shift
-                    if (opponentHandContainer) {
-                        const height = opponentHandContainer.offsetHeight;
-                        opponentHandContainer.style.height = height + 'px';
-                        opponentHandContainer.style.minHeight = height + 'px';
-                        opponentHandContainer.style.opacity = '0';
-                        opponentHandContainer.style.pointerEvents = 'none';
-                    }
-                    if (statusMessage) {
-                        const height = statusMessage.offsetHeight;
-                        statusMessage.style.height = height + 'px';
-                        statusMessage.style.minHeight = height + 'px';
-                        statusMessage.style.opacity = '0';
-                        statusMessage.style.pointerEvents = 'none';
-                    }
+                    this.uiState.hideOpponentHand();
                 }
 
                 const card = result.card;

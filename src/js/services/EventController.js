@@ -3,6 +3,8 @@
  * Replaces global function pollution with proper event management
  */
 
+import { EMAIL_CONFIG } from '../config/email.config.js';
+
 export class EventController {
     constructor(game) {
         this.game = game;
@@ -291,22 +293,6 @@ export class EventController {
      */
     async sendDiscountEmail(email) {
         const discount = this.getDiscount();
-
-        // Email config (should match main.js)
-        const EMAIL_CONFIG = {
-            SERVICE_ID: 'service_ev80is9',
-            PUBLIC_KEY: 'nygYALzXMsCwmblfZ',
-            TEMPLATES: {
-                5: 'template_t0u5gkf',
-                10: 'template_t0u5gkf',
-                15: 'template_t0u5gkf'
-            },
-            DISCOUNT_CODES: {
-                5: 'A2F05DZGAME',
-                10: 'VPQ10VMGAME',
-                15: 'N2V15XWGAME'
-            }
-        };
 
         const discountCode = EMAIL_CONFIG.DISCOUNT_CODES[discount];
         const templateId = EMAIL_CONFIG.TEMPLATES[discount];

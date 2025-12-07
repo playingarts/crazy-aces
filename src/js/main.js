@@ -5,6 +5,7 @@
 
 import { Game } from './services/Game.js';
 import { EventController } from './services/EventController.js';
+import { EMAIL_CONFIG } from './config/email.config.js';
 
 // ============================================================================
 // CONFIGURATION
@@ -37,22 +38,6 @@ const CONFIG = {
         CARD_INFO_BASE: 'https://playingarts.com/one/',
         BACKSIDE_IMAGE:
             'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/_backside-evgeny-kiselev.jpg?2'
-    }
-};
-
-// Email configuration
-const EMAIL_CONFIG = {
-    SERVICE_ID: 'service_ev80is9',
-    PUBLIC_KEY: 'nygYALzXMsCwmblfZ',
-    TEMPLATES: {
-        5: 'template_t0u5gkf',
-        10: 'template_t0u5gkf',
-        15: 'template_t0u5gkf'
-    },
-    DISCOUNT_CODES: {
-        5: 'A2F05DZGAME',
-        10: 'VPQ10VMGAME',
-        15: 'N2V15XWGAME'
     }
 };
 
