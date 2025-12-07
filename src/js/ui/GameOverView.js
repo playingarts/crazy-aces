@@ -135,12 +135,21 @@ export class GameOverView {
     }
 
     /**
-     * Hide game over screen
+     * Hide game over screen with animation
      */
     hideGameOver() {
         if (this.elements.gameOver && this.elements.gameOverOverlay) {
+            // Add hiding class to trigger slide-down animation
+            this.elements.gameOver.classList.add('hiding');
+            this.elements.gameOverOverlay.classList.add('hiding');
             this.elements.gameOver.classList.remove('show');
             this.elements.gameOverOverlay.classList.remove('show');
+
+            // Wait for animation to complete, then remove hiding class
+            setTimeout(() => {
+                this.elements.gameOver.classList.remove('hiding');
+                this.elements.gameOverOverlay.classList.remove('hiding');
+            }, 300); // Match animation duration
         }
     }
 
