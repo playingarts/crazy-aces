@@ -56,11 +56,13 @@ async function initialize() {
         logger.info('Starting application initialization...');
 
         // Initialize EmailJS
-        if (typeof emailjs !== 'undefined') {
+        if (config.EMAIL.ENABLED && typeof emailjs !== 'undefined') {
             emailjs.init(config.EMAIL.PUBLIC_KEY);
             logger.info('EmailJS initialized');
+        } else if (!config.EMAIL.ENABLED) {
+            logger.warn('EmailJS not configured - discount features disabled');
         } else {
-            logger.warn('EmailJS not available - discount features may not work');
+            logger.warn('EmailJS library not loaded - discount features may not work');
         }
 
         // Create game instance using factory

@@ -9,8 +9,7 @@
 
 /**
  * Get email configuration from environment variables
- * @returns {Object} Email configuration object
- * @throws {Error} If required environment variables are missing
+ * @returns {Object} Email configuration object (or disabled config if env vars missing)
  */
 function getEmailConfig() {
     const requiredVars = [
@@ -27,10 +26,27 @@ function getEmailConfig() {
     const missing = requiredVars.filter((varName) => !import.meta.env[varName]);
 
     if (missing.length > 0) {
-        throw new Error(
-            `Missing required environment variables: ${missing.join(', ')}. ` +
-                'Please check your .env file and ensure all EmailJS configuration is set.'
+        console.warn(
+            `[Email Config] Missing environment variables: ${missing.join(', ')}. ` +
+                'Email features will be disabled. This is expected in development without .env file.'
         );
+
+        // Return disabled configuration - app will load but email features won't work
+        return {
+            SERVICE_ID: null,
+            PUBLIC_KEY: null,
+            TEMPLATES: {
+                5: null,
+                10: null,
+                15: null
+            },
+            DISCOUNT_CODES: {
+                5: null,
+                10: null,
+                15: null
+            },
+            ENABLED: false
+        };
     }
 
     return {
@@ -45,13 +61,14 @@ function getEmailConfig() {
             5: import.meta.env.VITE_DISCOUNT_CODE_5,
             10: import.meta.env.VITE_DISCOUNT_CODE_10,
             15: import.meta.env.VITE_DISCOUNT_CODE_15
-        }
+        },
+        ENABLED: true
     };
 }
 
 /**
  * Email configuration singleton
- * Validates environment variables on first access
+ * Returns disabled config if environment variables are missing (allows app to load)
  */
 export const EMAIL_CONFIG = getEmailConfig();
 
@@ -60,11 +77,5 @@ export const EMAIL_CONFIG = getEmailConfig();
  * @returns {boolean} True if all config is available
  */
 export function isEmailConfigured() {
-    try {
-        getEmailConfig();
-        return true;
-    } catch (error) {
-        console.error('Email configuration error:', error.message);
-        return false;
-    }
+    return EMAIL_CONFIG.ENABLED === true;
 }

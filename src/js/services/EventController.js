@@ -4,6 +4,7 @@
  */
 
 import { EMAIL_CONFIG } from '../config/email.config.js';
+import { logger } from '../utils/Logger.js';
 
 export class EventController {
     constructor(game) {
@@ -86,7 +87,7 @@ export class EventController {
                 break;
 
             default:
-                console.warn(`Unknown action: ${action}`);
+                logger.warn(`Unknown action: ${action}`);
         }
     }
 
@@ -253,7 +254,7 @@ export class EventController {
             const claimedList = JSON.parse(claimed);
             return claimedList.includes(email.toLowerCase());
         } catch (error) {
-            console.error('Error checking claimed emails:', error);
+            logger.error('Error checking claimed emails:', error);
             return false;
         }
     }
@@ -270,7 +271,7 @@ export class EventController {
             claimedList.push(email.toLowerCase());
             localStorage.setItem('claimedEmails', JSON.stringify(claimedList));
         } catch (error) {
-            console.error('Error saving claimed email:', error);
+            logger.error('Error saving claimed email:', error);
         }
     }
 
@@ -336,7 +337,7 @@ export class EventController {
                 this.game.state.resetWinStreak();
             }
         } catch (error) {
-            console.error('Error sending email:', error);
+            logger.error('Error sending email:', error);
             emailError.textContent = 'Failed to send email. Please try again or contact support.';
             emailError.classList.add('show');
         } finally {

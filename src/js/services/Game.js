@@ -212,7 +212,7 @@ export class Game {
                         try {
                             await this.ui.preloadImage(playedCard.imageUrl);
                         } catch (err) {
-                            console.error(
+                            this.logger.error(
                                 'Failed to preload Joker image:',
                                 playedCard.imageUrl,
                                 err
@@ -237,10 +237,10 @@ export class Game {
                     try {
                         await this.ui.preloadImage(playedCard.imageUrl);
                     } catch (err) {
-                        console.error('Failed to preload Joker image:', playedCard.imageUrl, err);
+                        this.logger.error('Failed to preload Joker image:', playedCard.imageUrl, err);
                     }
                 } else {
-                    console.error('Joker card has no imageUrl:', playedCard);
+                    this.logger.error('Joker card has no imageUrl:', playedCard);
                 }
                 this.render(true, 'bottom');
                 return;
@@ -264,7 +264,7 @@ export class Game {
                 this.ui.updateStatus('You played Ace - choose a suit');
 
                 // Preload all 4 Ace images (user will select which one to display)
-                console.log('🃏 Player played Ace - preloading all Ace images');
+                this.logger.debug('🃏 Player played Ace - preloading all Ace images');
                 await this.ui.preloadHandImages([playedCard]).catch(() => {});
 
                 // Show suit selector with already-chosen suits disabled
@@ -294,10 +294,10 @@ export class Game {
                 try {
                     await this.ui.preloadImage(playedCard.imageUrl);
                 } catch (err) {
-                    console.error('Failed to preload played card image:', playedCard.imageUrl, err);
+                    this.logger.error('Failed to preload played card image:', playedCard.imageUrl, err);
                 }
             } else {
-                console.error('Played card has no imageUrl:', playedCard);
+                this.logger.error('Played card has no imageUrl:', playedCard);
             }
 
             // Render with animation
@@ -317,7 +317,7 @@ export class Game {
             // Computer's turn (processing will be unlocked after computer completes)
             await this.executeComputerTurn();
         } catch (error) {
-            console.error('Error in handlePlayerCardClick:', error);
+            this.logger.error('Error in handlePlayerCardClick:', error);
             this.state.isComputerTurn = false;
             this.state.isProcessingMove = false; // Unlock processing on error
             this.ui.updateStatus('Error playing card. Please try again.');
@@ -393,7 +393,7 @@ export class Game {
                 this.ui.updateStatus('Your turn');
             }
         } catch (error) {
-            console.error('Error in handleSuitSelection:', error);
+            this.logger.error('Error in handleSuitSelection:', error);
             this.state.isComputerTurn = false; // CRITICAL FIX: Unlock turn on error
             this.state.isProcessingMove = false; // Unlock processing on error
             this.state.pendingEightCard = null; // Clear pending state
@@ -480,7 +480,7 @@ export class Game {
                 await this.executeComputerTurn();
             }
         } catch (error) {
-            console.error('Error in handleDrawCard:', error);
+            this.logger.error('Error in handleDrawCard:', error);
             this.state.isDrawing = false;
             this.state.isComputerTurn = false;
             this.state.isProcessingMove = false; // Unlock processing on error
@@ -520,14 +520,14 @@ export class Game {
                         try {
                             await this.ui.preloadImage(card.imageUrl);
                         } catch (err) {
-                            console.error(
+                            this.logger.error(
                                 'Failed to preload computer Joker image:',
                                 card.imageUrl,
                                 err
                             );
                         }
                     } else {
-                        console.error('Computer Joker card has no imageUrl:', card);
+                        this.logger.error('Computer Joker card has no imageUrl:', card);
                     }
                     this.render(true, 'top');
 
@@ -549,7 +549,7 @@ export class Game {
                 // Handle Ace with suit change
                 if (result.newSuit) {
                     // Preload all 4 Ace images before rendering
-                    console.log('🤖 Computer played Ace - preloading all Ace images');
+                    this.logger.debug('🤖 Computer played Ace - preloading all Ace images');
                     await this.ui.preloadHandImages([card]).catch(() => {});
 
                     const suitNames = {
@@ -571,14 +571,14 @@ export class Game {
                     try {
                         await this.ui.preloadCardOnDraw(result.card);
                     } catch (err) {
-                        console.error(
+                        this.logger.error(
                             'Failed to preload computer drawn card:',
                             result.card.imageUrl,
                             err
                         );
                     }
                 } else if (result.card) {
-                    console.error('Computer drawn card has no imageUrl:', result.card);
+                    this.logger.error('Computer drawn card has no imageUrl:', result.card);
                 }
 
                 this.ui.updateStatus('Computer drew a card');
@@ -602,14 +602,14 @@ export class Game {
                     try {
                         await this.ui.preloadImage(result.card.imageUrl);
                     } catch (err) {
-                        console.error(
+                        this.logger.error(
                             'Failed to preload computer card image:',
                             result.card.imageUrl,
                             err
                         );
                     }
                 } else {
-                    console.error('Computer card has no imageUrl:', result.card);
+                    this.logger.error('Computer card has no imageUrl:', result.card);
                 }
                 this.render(true, 'top');
             }
@@ -635,7 +635,7 @@ export class Game {
                 this.ui.startHintTimer(() => this.showHint());
             }
         } catch (error) {
-            console.error('Error in executeComputerTurn:', error);
+            this.logger.error('Error in executeComputerTurn:', error);
             this.state.isComputerTurn = false;
             this.state.isProcessingMove = false; // Unlock processing on error
             this.ui.updateStatus('Error in computer turn. Please try again.');
