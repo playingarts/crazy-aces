@@ -14,6 +14,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 function getGitInfo() {
+    // Try Vercel environment variables first (available during build on Vercel)
+    if (process.env.VERCEL_GIT_COMMIT_SHA) {
+        const fullHash = process.env.VERCEL_GIT_COMMIT_SHA;
+        const shortHash = fullHash.substring(0, 7);
+
+        return {
+            version: shortHash,
+            fullHash: fullHash,
+            date: new Date().toISOString().split('T')[0],
+            branch: process.env.VERCEL_GIT_COMMIT_REF || 'unknown',
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    // Try local git commands (for local builds)
     try {
         const hash = execSync('git rev-parse --short HEAD').toString().trim();
         const date = execSync('git log -1 --format=%cd --date=short').toString().trim();
