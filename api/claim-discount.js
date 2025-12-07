@@ -20,7 +20,11 @@
  */
 
 import Redis from 'ioredis';
+import { Resend } from 'resend';
 import { verifySessionToken } from './lib/session.js';
+
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Initialize Redis client (uses KV_REST_API_REDIS_URL env var)
 const redis = process.env.KV_REST_API_REDIS_URL
@@ -171,23 +175,13 @@ export default async function handler(req, res) {
         const discountCode = discountCodes[discountTier];
         const discountPercent = discountTier === 1 ? 5 : discountTier === 2 ? 10 : 15;
 
-        // Get EmailJS template based on discount tier
-        const templateIds = {
-            1: process.env.EMAILJS_TEMPLATE_5,
-            2: process.env.EMAILJS_TEMPLATE_10,
-            3: process.env.EMAILJS_TEMPLATE_15
-        };
-
-        const templateId = templateIds[discountTier];
-
         // Verify environment variables are set
-        if (!discountCode || !templateId) {
+        if (!discountCode || !process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
             console.error('Missing environment variables:', {
                 hasDiscountCode: !!discountCode,
-                hasTemplateId: !!templateId,
-                discountTier,
-                hasServiceId: !!process.env.EMAILJS_SERVICE_ID,
-                hasPublicKey: !!process.env.EMAILJS_PUBLIC_KEY
+                hasResendKey: !!process.env.RESEND_API_KEY,
+                hasEmailFrom: !!process.env.EMAIL_FROM,
+                discountTier
             });
             return res.status(500).json({
                 success: false,
@@ -195,44 +189,43 @@ export default async function handler(req, res) {
             });
         }
 
-        // Send email via EmailJS (server-side with private key in strict mode)
-        // In strict mode, need BOTH user_id (public key) AND accessToken (private key)
-        const emailPayload = {
-            service_id: process.env.EMAILJS_SERVICE_ID,
-            template_id: templateId,
-            user_id: process.env.EMAILJS_PUBLIC_KEY, // Public key required
-            accessToken: process.env.EMAILJS_PRIVATE_KEY, // Private key for strict mode auth
-            template_params: {
-                to_email: normalizedEmail,
-                discount_code: discountCode,
-                discount: discountPercent
-            }
-        };
-
-        console.log('Sending email to EmailJS (server-side strict mode):', {
-            service_id: emailPayload.service_id?.substring(0, 10) + '...',
-            template_id: emailPayload.template_id,
-            user_id: emailPayload.user_id?.substring(0, 10) + '...',
-            hasPrivateKey: !!process.env.EMAILJS_PRIVATE_KEY,
-            privateKeyPreview: process.env.EMAILJS_PRIVATE_KEY?.substring(0, 10) + '...',
-            to_email: normalizedEmail
-        });
-
-        const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(emailPayload)
-        });
-
-        if (!emailResponse.ok) {
-            const errorText = await emailResponse.text();
-            console.error('EmailJS error response:', {
-                status: emailResponse.status,
-                statusText: emailResponse.statusText,
-                errorText
+        // Send email via Resend
+        try {
+            console.log('Sending email via Resend:', {
+                to: normalizedEmail,
+                discountPercent,
+                discountCode: discountCode.substring(0, 5) + '...'
             });
+
+            const emailResult = await resend.emails.send({
+                from: process.env.EMAIL_FROM,
+                to: normalizedEmail,
+                subject: `Your ${discountPercent}% Discount Code from Playing Arts!`,
+                html: `
+                    <h2>Congratulations! 🎉</h2>
+                    <p>You've earned a <strong>${discountPercent}% discount</strong> by winning ${winStreak} game${winStreak > 1 ? 's' : ''} in a row at Crazy Aces!</p>
+
+                    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <p style="margin: 0; font-size: 14px; color: #666;">Your Discount Code:</p>
+                        <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #7B61FF; letter-spacing: 2px;">${discountCode}</p>
+                    </div>
+
+                    <p>Use this code at checkout to get ${discountPercent}% off any product at:</p>
+                    <p><a href="https://playingarts.com/shop" style="color: #7B61FF; text-decoration: none; font-weight: bold;">https://playingarts.com/shop</a></p>
+
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
+
+                    <p style="font-size: 12px; color: #999;">
+                        This discount is valid for one-time use. Happy shopping!<br />
+                        - The Playing Arts Team
+                    </p>
+                `
+            });
+
+            console.log('Email sent successfully:', { id: emailResult.data?.id });
+
+        } catch (error) {
+            console.error('Resend error:', error);
             return res.status(500).json({
                 success: false,
                 error: 'Failed to send email. Please try again later.'
