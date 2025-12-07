@@ -20,6 +20,7 @@ export class Game {
      * @param {GameEngine} dependencies.engine - Game logic engine
      * @param {GameUI} dependencies.ui - UI controller
      * @param {UIStateManager} dependencies.uiState - UI state manager
+     * @param {SessionService} dependencies.sessionService - Session tracking
      * @param {Logger} dependencies.logger - Logger instance
      * @param {ErrorService} dependencies.errorService - Error handler
      */
@@ -31,6 +32,7 @@ export class Game {
         this.engine = dependencies.engine || new GameEngine(this.state);
         this.ui = dependencies.ui || new GameUI(config);
         this.uiState = dependencies.uiState || new UIStateManager();
+        this.sessionService = dependencies.sessionService || null;
         this.logger = dependencies.logger || logger;
         this.errorService = dependencies.errorService || errorService;
 
@@ -82,6 +84,11 @@ export class Game {
                     severity: ErrorSeverity.LOW,
                     metadata: { hand: 'computer', count: this.state.computerHand.length }
                 });
+            }
+
+            // Start game session for server-side tracking
+            if (this.sessionService) {
+                await this.sessionService.startSession();
             }
 
             // Render initial state
@@ -646,8 +653,13 @@ export class Game {
      * Handle game end
      * @param {Object} winResult - Winner information
      */
-    handleGameEnd(winResult) {
+    async handleGameEnd(winResult) {
         const playerWon = winResult.winner === 'player';
+
+        // Update server-side session with game result
+        if (this.sessionService) {
+            await this.sessionService.updateSession(playerWon);
+        }
 
         // Note: hands and notification are already hidden when last card was played
 

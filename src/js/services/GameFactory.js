@@ -9,6 +9,7 @@ import { GameState } from './GameState.js';
 import { GameEngine } from './GameEngine.js';
 import { GameUI } from '../ui/GameUI.js';
 import { UIStateManager } from '../ui/UIStateManager.js';
+import { SessionService } from './SessionService.js';
 import { logger } from '../utils/Logger.js';
 import { errorService } from './ErrorService.js';
 
@@ -23,12 +24,14 @@ export class GameFactory {
         const engine = new GameEngine(state);
         const ui = new GameUI(config);
         const uiState = new UIStateManager();
+        const sessionService = new SessionService();
 
         return new Game(config, {
             state,
             engine,
             ui,
             uiState,
+            sessionService,
             logger,
             errorService
         });

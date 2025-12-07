@@ -5,27 +5,12 @@
 
 import { EMAIL_CONFIG } from '../config/email.config.js';
 import { logger } from '../utils/Logger.js';
-import { SessionService } from './SessionService.js';
 
 export class EventController {
     constructor(game) {
         this.game = game;
-        this.sessionService = new SessionService();
         this.boundHandleClick = this.handleClick.bind(this);
         this.boundHandleSubmit = this.handleSubmit.bind(this);
-
-        // Start a game session when controller is created
-        this.initializeSession();
-    }
-
-    /**
-     * Initialize game session
-     */
-    async initializeSession() {
-        const success = await this.sessionService.startSession();
-        if (!success) {
-            logger.warn('Failed to start game session');
-        }
     }
 
     /**
@@ -322,8 +307,8 @@ export class EventController {
                 ? 'http://localhost:3000/api/claim-discount'
                 : '/api/claim-discount';
 
-            // Get session token for server-side validation
-            const sessionToken = this.sessionService.getSessionToken();
+            // Get session token from game's SessionService for server-side validation
+            const sessionToken = this.game.sessionService?.getSessionToken();
 
             if (!sessionToken) {
                 throw new Error('No active game session. Please play a game first.');
