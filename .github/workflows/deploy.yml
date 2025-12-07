@@ -31,6 +31,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify secrets (debug)
+        run: |
+          echo "Checking if secrets are available (not showing values)..."
+          [ -n "$VITE_EMAILJS_SERVICE_ID" ] && echo "✓ VITE_EMAILJS_SERVICE_ID is set" || echo "✗ VITE_EMAILJS_SERVICE_ID is NOT set"
+          [ -n "$VITE_EMAILJS_PUBLIC_KEY" ] && echo "✓ VITE_EMAILJS_PUBLIC_KEY is set" || echo "✗ VITE_EMAILJS_PUBLIC_KEY is NOT set"
+          [ -n "$VITE_EMAILJS_TEMPLATE_5" ] && echo "✓ VITE_EMAILJS_TEMPLATE_5 is set" || echo "✗ VITE_EMAILJS_TEMPLATE_5 is NOT set"
+        env:
+          VITE_EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
+          VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
+          VITE_EMAILJS_TEMPLATE_5: ${{ secrets.VITE_EMAILJS_TEMPLATE_5 }}
+          VITE_EMAILJS_TEMPLATE_10: ${{ secrets.VITE_EMAILJS_TEMPLATE_10 }}
+          VITE_EMAILJS_TEMPLATE_15: ${{ secrets.VITE_EMAILJS_TEMPLATE_15 }}
+          VITE_DISCOUNT_CODE_5: ${{ secrets.VITE_DISCOUNT_CODE_5 }}
+          VITE_DISCOUNT_CODE_10: ${{ secrets.VITE_DISCOUNT_CODE_10 }}
+          VITE_DISCOUNT_CODE_15: ${{ secrets.VITE_DISCOUNT_CODE_15 }}
+
       - name: Build
         run: npm run build
         env:
