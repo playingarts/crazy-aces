@@ -24,17 +24,21 @@ export default async function handler(req, res) {
             template5: process.env.EMAILJS_TEMPLATE_5
         };
 
-        // Try sending a test email
+        // Try sending a test email with private key
         const testPayload = {
             service_id: process.env.EMAILJS_SERVICE_ID,
             template_id: process.env.EMAILJS_TEMPLATE_5,
             user_id: process.env.EMAILJS_PUBLIC_KEY,
+            accessToken: process.env.EMAILJS_PRIVATE_KEY,
             template_params: {
                 to_email: 'test@example.com',
                 discount_code: 'TEST123',
                 discount: 5
             }
         };
+
+        envCheck.hasPrivateKey = !!process.env.EMAILJS_PRIVATE_KEY;
+        envCheck.privateKeyPreview = process.env.EMAILJS_PRIVATE_KEY?.substring(0, 10);
 
         const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
