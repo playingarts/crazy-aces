@@ -94,7 +94,7 @@ export default async function handler(req, res) {
         // START NEW SESSION
         if (req.method === 'POST' && !req.body.sessionToken) {
             // Generate new session
-            const sessionId = crypto.randomBytes(32).hex();
+            const sessionId = crypto.randomBytes(32).toString('hex');
             const sessionData = {
                 id: sessionId,
                 winStreak: 0,
