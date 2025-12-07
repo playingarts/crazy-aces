@@ -195,13 +195,12 @@ export default async function handler(req, res) {
             });
         }
 
-        // Send email via EmailJS (server-side with private key)
-        // Note: Server-side requests require a private key, not the public key
+        // Send email via EmailJS (server-side with private key in strict mode)
+        // In strict mode, use accessToken instead of user_id
         const emailPayload = {
             service_id: process.env.EMAILJS_SERVICE_ID,
             template_id: templateId,
-            user_id: process.env.EMAILJS_PUBLIC_KEY, // Still need public key for identification
-            accessToken: process.env.EMAILJS_PRIVATE_KEY, // Private key for server-side auth
+            accessToken: process.env.EMAILJS_PRIVATE_KEY, // Private key for server-side in strict mode
             template_params: {
                 to_email: normalizedEmail,
                 discount_code: discountCode,
@@ -209,11 +208,11 @@ export default async function handler(req, res) {
             }
         };
 
-        console.log('Sending email to EmailJS (server-side):', {
+        console.log('Sending email to EmailJS (server-side strict mode):', {
             service_id: emailPayload.service_id?.substring(0, 10) + '...',
             template_id: emailPayload.template_id,
-            user_id: emailPayload.user_id?.substring(0, 10) + '...',
             hasPrivateKey: !!process.env.EMAILJS_PRIVATE_KEY,
+            privateKeyPreview: process.env.EMAILJS_PRIVATE_KEY?.substring(0, 10) + '...',
             to_email: normalizedEmail
         });
 
