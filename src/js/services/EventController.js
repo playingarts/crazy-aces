@@ -289,14 +289,10 @@ export class EventController {
     }
 
     /**
-     * Send discount email via EmailJS
+     * Send discount email via secure API
      * @param {string} email - Email address
      */
     async sendDiscountEmail(email) {
-        const discount = this.getDiscount();
-
-        const discountCode = EMAIL_CONFIG.DISCOUNT_CODES[discount];
-        const templateId = EMAIL_CONFIG.TEMPLATES[discount];
         const sendButton = document.getElementById('sendDiscountBtn');
         const emailError = document.getElementById('emailError');
 
@@ -306,20 +302,27 @@ export class EventController {
             sendButton.disabled = true;
             sendButton.textContent = 'Sending...';
 
-            const response = await emailjs.send(
-                EMAIL_CONFIG.SERVICE_ID,
-                templateId,
-                {
-                    to_email: email,
-                    discount_code: discountCode,
-                    discount_percent: discount,
-                    wins_count: this.game.state.winStreak
-                },
-                EMAIL_CONFIG.PUBLIC_KEY
-            );
+            // Determine API URL based on environment
+            const apiUrl = window.location.hostname === 'localhost'
+                ? 'http://localhost:3000/api/claim-discount'
+                : '/api/claim-discount';
 
-            if (response.status === 200) {
-                // Mark email as claimed
+            // Call secure backend API
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    winStreak: this.game.state.winStreak
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Mark email as claimed (client-side tracking for UX only)
                 this.markEmailAsClaimed(email);
 
                 // Hide email form and show success message
@@ -335,6 +338,10 @@ export class EventController {
                 // Mark discount as claimed and reset win streak
                 this.game.state.claimDiscount();
                 this.game.state.resetWinStreak();
+            } else {
+                // Show server error message
+                emailError.textContent = data.error || 'Failed to send email. Please try again.';
+                emailError.classList.add('show');
             }
         } catch (error) {
             logger.error('Error sending email:', error);

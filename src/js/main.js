@@ -55,15 +55,9 @@ async function initialize() {
     try {
         logger.info('Starting application initialization...');
 
-        // Initialize EmailJS
-        if (config.EMAIL.ENABLED && typeof emailjs !== 'undefined') {
-            emailjs.init(config.EMAIL.PUBLIC_KEY);
-            logger.info('EmailJS initialized');
-        } else if (!config.EMAIL.ENABLED) {
-            logger.warn('EmailJS not configured - discount features disabled');
-        } else {
-            logger.warn('EmailJS library not loaded - discount features may not work');
-        }
+        // Email functionality now handled server-side via Vercel API
+        // No client-side EmailJS initialization needed
+        logger.info('Email features enabled via secure backend API');
 
         // Create game instance using factory
         game = GameFactory.create(config);
