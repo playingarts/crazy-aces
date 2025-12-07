@@ -20,7 +20,7 @@
  */
 
 import Redis from 'ioredis';
-import { verifySessionToken } from './_lib/session.js';
+import { verifySessionToken } from './lib/session.js';
 
 // Initialize Redis client (uses KV_REST_API_REDIS_URL env var)
 const redis = process.env.KV_REST_API_REDIS_URL

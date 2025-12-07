@@ -13,7 +13,7 @@
 
 import Redis from 'ioredis';
 import crypto from 'crypto';
-import { generateSessionToken, verifySessionToken } from './_lib/session.js';
+import { generateSessionToken, verifySessionToken } from './lib/session.js';
 
 // Initialize Redis client
 const redis = process.env.KV_REST_API_REDIS_URL
