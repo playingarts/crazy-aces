@@ -235,24 +235,43 @@ export class DragDropHandler {
         // Reset card styling
         if (this.draggedCardElement && this.isDragging) {
             if (wasPlayed) {
-                // Card was dropped on pile - hide it temporarily while game validates
-                // Keep position/transforms in place so there's no flash
-                this.draggedCardElement.style.opacity = '0';
-                this.draggedCardElement.style.pointerEvents = 'none';
+                // Card was dropped on pile - remove from layout flow immediately
+                // This prevents the hand from flashing/resizing when the card is removed
 
-                // Clean up styles after a short delay
-                // By then, animateCardPlay() will have taken over (if valid)
-                // or the game will re-render the hand (if invalid)
+                // Get current position before converting to absolute
+                const rect = this.draggedCardElement.getBoundingClientRect();
+
+                // Convert to absolute positioning at the same visual location
+                // This removes it from the layout flow so hand can resize smoothly
+                this.draggedCardElement.style.position = 'absolute';
+                this.draggedCardElement.style.left = rect.left + 'px';
+                this.draggedCardElement.style.top = rect.top + 'px';
+                this.draggedCardElement.style.width = rect.width + 'px';
+                this.draggedCardElement.style.height = rect.height + 'px';
+                this.draggedCardElement.style.zIndex = '1000';
+                this.draggedCardElement.style.margin = '0';
+
+                // Make fully visible for animateCardPlay() to take over
+                // (animateCardPlay adds the flying animation class)
+                this.draggedCardElement.style.opacity = '1';
+                this.draggedCardElement.style.pointerEvents = 'none';
+                this.draggedCardElement.style.transition = 'none';
+
+                // Clean up after animation completes (250ms) + buffer
+                // By then either animateCardPlay() finished or hand was re-rendered
                 const elementToCleanup = this.draggedCardElement;
                 setTimeout(() => {
                     elementToCleanup.style.position = '';
                     elementToCleanup.style.left = '';
                     elementToCleanup.style.top = '';
+                    elementToCleanup.style.width = '';
+                    elementToCleanup.style.height = '';
                     elementToCleanup.style.zIndex = '';
+                    elementToCleanup.style.margin = '';
                     elementToCleanup.style.opacity = '';
                     elementToCleanup.style.pointerEvents = '';
                     elementToCleanup.style.transition = '';
-                }, 100);
+                }, 350);
             } else {
                 // Card was not played (drag cancelled) - reset immediately
                 this.draggedCardElement.style.position = '';
