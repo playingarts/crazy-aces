@@ -78,7 +78,7 @@ export class GameOverView {
             // Check if discount was already claimed
             if (discountClaimed) {
                 if (discountText) {
-                    const streakText = winStreak === 1 ? '1 win' : `${winStreak} wins in a row`;
+                    const streakText = `${winStreak} win${winStreak === 1 ? '' : 's'} in a row`;
                     discountText.textContent = `${streakText}! You already claimed your discount!`;
                 }
                 if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
@@ -145,7 +145,7 @@ export class GameOverView {
             } else if (discount > 0) {
                 // Player gets 5% Welcome Bonus for playing!
                 if (discountText) {
-                    discountText.textContent = '5% Welcome Bonus Unlocked! Thanks for playing!';
+                    discountText.textContent = '5% Welcome Bonus Unlocked!';
                 }
 
                 const claimPercent = document.getElementById('claimPercent');

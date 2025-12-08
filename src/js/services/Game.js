@@ -86,15 +86,15 @@ export class Game {
                 });
             }
 
-            // Start game session for server-side tracking
-            if (this.sessionService) {
-                await this.sessionService.startSession();
-            }
-
-            // Render initial state
+            // Render initial state (before session to avoid delay)
             this.render();
 
             this.ui.hideGameOver();
+
+            // Start game session for server-side tracking (non-blocking)
+            if (this.sessionService) {
+                this.sessionService.startSession();
+            }
 
             // Show different message for first game vs subsequent games
             if (!this.state.playerMadeFirstMove) {
@@ -663,7 +663,12 @@ export class Game {
 
         // Note: hands and notification are already hidden when last card was played
 
-        this.ui.showGameOver(playerWon, winResult.winStreak || 0, this.state.discountClaimed);
+        this.ui.showGameOver(
+            playerWon,
+            winResult.winStreak || 0,
+            winResult.gamesPlayed || 0,
+            this.state.discountClaimed
+        );
 
         if (playerWon) {
             this.ui.updateStatus(

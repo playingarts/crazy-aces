@@ -127,7 +127,7 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    width: 300px;
+    width: 340px;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     padding: 20px;
@@ -1703,9 +1703,15 @@ body {
         font-size: 14px;
     }
 
-    .send-email-btn,
+    .send-email-btn {
+        flex: 2;
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
     .cancel-email-btn {
-        padding: 12px 20px;
+        flex: 1;
+        padding: 12px 10px;
         font-size: 14px;
     }
 

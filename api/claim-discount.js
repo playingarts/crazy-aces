@@ -177,26 +177,27 @@ export default async function handler(req, res) {
             }
         }
 
-        // Validate win streak (must have at least 1 win)
-        if (winStreak < 1) {
-            return res.status(400).json({
-                success: false,
-                error: 'You must win at least one game to claim a discount'
-            });
+        // NEW SYSTEM: Calculate discount based on win streak
+        // - Play 1 game (win or lose) = 5% Welcome Bonus
+        // - WIN 1 game = 10%
+        // - WIN 2+ games in a row = 15%
+        let discountPercent;
+        if (winStreak >= 2) {
+            discountPercent = 15; // 2+ consecutive wins
+        } else if (winStreak >= 1) {
+            discountPercent = 10; // 1 win
+        } else {
+            discountPercent = 5; // Played at least 1 game (session exists = game was played)
         }
-
-        // Map win streak to discount tier (3+ wins = 15% discount)
-        const discountTier = Math.min(winStreak, 3);
 
         // Get discount code from environment (server-side only!)
         const discountCodes = {
-            1: process.env.DISCOUNT_CODE_5,
-            2: process.env.DISCOUNT_CODE_10,
-            3: process.env.DISCOUNT_CODE_15
+            5: process.env.DISCOUNT_CODE_5,
+            10: process.env.DISCOUNT_CODE_10,
+            15: process.env.DISCOUNT_CODE_15
         };
 
-        const discountCode = discountCodes[discountTier];
-        const discountPercent = discountTier === 1 ? 5 : discountTier === 2 ? 10 : 15;
+        const discountCode = discountCodes[discountPercent];
 
         // Verify environment variables are set
         if (!discountCode || !process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
@@ -204,7 +205,7 @@ export default async function handler(req, res) {
                 hasDiscountCode: !!discountCode,
                 hasResendKey: !!process.env.RESEND_API_KEY,
                 hasEmailFrom: !!process.env.EMAIL_FROM,
-                discountTier
+                discountPercent
             });
             return res.status(500).json({
                 success: false,
@@ -227,13 +228,29 @@ export default async function handler(req, res) {
             const safeWinStreak = escapeHtml(String(winStreak));
             const safeDiscountCode = escapeHtml(discountCode);
 
+            // Determine bonus tier name for email
+            let bonusName = 'Welcome Bonus';
+            if (discountPercent === 15) {
+                bonusName = 'Champion Bonus';
+            } else if (discountPercent === 10) {
+                bonusName = 'Winner Bonus';
+            }
+
+            // Determine achievement text
+            let achievementText = 'playing Crazy Aces';
+            if (winStreak >= 2) {
+                achievementText = `winning ${safeWinStreak} games in a row`;
+            } else if (winStreak >= 1) {
+                achievementText = 'winning at Crazy Aces';
+            }
+
             const emailResult = await resend.emails.send({
                 from: process.env.EMAIL_FROM,
                 to: normalizedEmail,
-                subject: `Your ${safeDiscountPercent}% Discount Code from Playing Arts!`,
+                subject: `Your ${safeDiscountPercent}% ${bonusName} from Playing Arts!`,
                 html: `
                     <h2>Congratulations! 🎉</h2>
-                    <p>You've earned a <strong>${safeDiscountPercent}% discount</strong> by winning ${safeWinStreak} game${winStreak > 1 ? 's' : ''} in a row at Crazy Aces!</p>
+                    <p>You've earned a <strong>${safeDiscountPercent}% ${bonusName}</strong> by ${achievementText} at Crazy Aces!</p>
 
                     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
                         <p style="margin: 0; font-size: 14px; color: #666;">Your Discount Code:</p>

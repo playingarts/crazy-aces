@@ -9,6 +9,7 @@ export class GameState {
     constructor() {
         // Initialize persistent values (not reset between games)
         this.winStreak = 0;
+        this.gamesPlayed = 0; // Track total games played (for 5% base reward)
         this.discountClaimed = false;
         this.playerMadeFirstMove = false; // Track if player made first move (persists across games, resets on page refresh)
 
@@ -227,6 +228,20 @@ export class GameState {
      */
     resetWinStreak() {
         this.winStreak = 0;
+    }
+
+    /**
+     * Increment games played counter
+     */
+    incrementGamesPlayed() {
+        this.gamesPlayed++;
+    }
+
+    /**
+     * Reset games played counter (when discount is claimed)
+     */
+    resetGamesPlayed() {
+        this.gamesPlayed = 0;
     }
 
     /**

@@ -156,14 +156,24 @@ export class GameEngine {
     checkWinCondition() {
         if (this.state.playerWon) {
             this.state.gameOver = true;
+            this.state.incrementGamesPlayed(); // Track game completion
             this.state.incrementWinStreak();
-            return { winner: 'player', winStreak: this.state.winStreak };
+            return {
+                winner: 'player',
+                winStreak: this.state.winStreak,
+                gamesPlayed: this.state.gamesPlayed
+            };
         }
 
         if (this.state.computerWon) {
             this.state.gameOver = true;
+            this.state.incrementGamesPlayed(); // Track game completion (even on loss)
             this.state.resetWinStreak();
-            return { winner: 'computer' };
+            return {
+                winner: 'computer',
+                winStreak: 0,
+                gamesPlayed: this.state.gamesPlayed
+            };
         }
 
         return null;

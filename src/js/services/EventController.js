@@ -357,7 +357,7 @@ export class EventController {
         } finally {
             if (sendButton) {
                 sendButton.disabled = false;
-                sendButton.textContent = 'Send Discount Code';
+                sendButton.textContent = 'Send Discount';
             }
         }
     }
