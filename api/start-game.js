@@ -14,6 +14,8 @@
 import Redis from 'ioredis';
 import crypto from 'crypto';
 import { generateSessionToken, verifySessionToken } from './lib/session.js';
+import { checkRateLimit, getClientIP } from './lib/rateLimit.js';
+import { setSecurityHeaders } from './lib/securityHeaders.js';
 
 // Initialize Redis client
 const redis = process.env.KV_REST_API_REDIS_URL
@@ -30,6 +32,9 @@ const redis = process.env.KV_REST_API_REDIS_URL
 const SESSION_TIMEOUT = 3600; // seconds
 
 export default async function handler(req, res) {
+    // Security headers (applied to all responses)
+    setSecurityHeaders(res);
+
     // CORS headers
     const allowedOrigins = [
         'http://localhost:3000',
@@ -52,8 +57,26 @@ export default async function handler(req, res) {
     }
 
     try {
+        const clientIP = getClientIP(req);
+
         // START NEW SESSION
         if (req.method === 'POST' && !req.body.sessionToken) {
+            // Rate limit: 5 new sessions per IP per hour
+            const sessionCreateLimit = await checkRateLimit(
+                redis,
+                `ratelimit:session:create:${clientIP}`,
+                5,
+                3600 // 1 hour
+            );
+
+            if (!sessionCreateLimit.allowed) {
+                return res.status(429).json({
+                    success: false,
+                    error: 'Too many session requests. Please try again later.',
+                    retryAfter: Math.ceil((sessionCreateLimit.resetAt - Date.now()) / 1000)
+                });
+            }
+
             // Generate new session
             const sessionId = crypto.randomBytes(32).toString('hex');
             const sessionData = {
@@ -82,6 +105,22 @@ export default async function handler(req, res) {
 
         // UPDATE SESSION (record win/loss)
         if (req.method === 'POST' && req.body.sessionToken) {
+            // Rate limit: 30 session updates per IP per hour (generous for legitimate gameplay)
+            const sessionUpdateLimit = await checkRateLimit(
+                redis,
+                `ratelimit:session:update:${clientIP}`,
+                30,
+                3600 // 1 hour
+            );
+
+            if (!sessionUpdateLimit.allowed) {
+                return res.status(429).json({
+                    success: false,
+                    error: 'Too many game requests. Please slow down.',
+                    retryAfter: Math.ceil((sessionUpdateLimit.resetAt - Date.now()) / 1000)
+                });
+            }
+
             const { sessionToken, won } = req.body;
 
             // Verify token

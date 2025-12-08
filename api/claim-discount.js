@@ -22,6 +22,10 @@
 import Redis from 'ioredis';
 import { Resend } from 'resend';
 import { verifySessionToken } from './lib/session.js';
+import { checkRateLimit, getClientIP } from './lib/rateLimit.js';
+import { escapeHtml } from './lib/htmlEscape.js';
+import { validateEmail, hashEmail } from './lib/emailValidation.js';
+import { setSecurityHeaders } from './lib/securityHeaders.js';
 
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -41,6 +45,9 @@ const redis = process.env.KV_REST_API_REDIS_URL
 const claimedEmails = new Map();
 
 export default async function handler(req, res) {
+    // Security headers (applied to all responses)
+    setSecurityHeaders(res);
+
     // CORS headers
     const allowedOrigins = [
         'http://localhost:3000',
@@ -71,15 +78,27 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { email, sessionToken } = req.body;
+        // Rate limiting: Prevent spam and abuse
+        const clientIP = getClientIP(req);
 
-        // Validate input
-        if (!email) {
-            return res.status(400).json({
+        // IP-based rate limit: 3 discount claims per IP per hour
+        const ipRateLimit = await checkRateLimit(
+            redis,
+            `ratelimit:claim:ip:${clientIP}`,
+            3,
+            3600 // 1 hour
+        );
+
+        if (!ipRateLimit.allowed) {
+            const resetDate = new Date(ipRateLimit.resetAt);
+            return res.status(429).json({
                 success: false,
-                error: 'Email is required'
+                error: 'Too many discount requests. Please try again later.',
+                retryAfter: Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000)
             });
         }
+
+        const { email, sessionToken } = req.body;
 
         // Validate session token
         if (!sessionToken) {
@@ -120,20 +139,24 @@ export default async function handler(req, res) {
             winStreak = serverWinStreak;
         }
 
-        // Strict email validation
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(email)) {
+        // Comprehensive email validation (blocks disposables, normalizes Gmail)
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.valid) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid email address'
+                error: emailValidation.error
             });
         }
 
-        // Normalize email
-        const normalizedEmail = email.toLowerCase().trim();
+        // Use normalized email (prevents Gmail dot/plus tricks and duplicates)
+        const normalizedEmail = emailValidation.normalized;
+
+        // Hash email for privacy protection in Redis (prevents email exposure if Redis is compromised)
+        const emailHash = hashEmail(normalizedEmail);
 
         // Check if already claimed (using Redis in production, Map in dev)
-        const claimKey = `claim:${normalizedEmail}`;
+        // Use hashed email in Redis key for privacy
+        const claimKey = `claim:${emailHash}`;
 
         if (redis) {
             // Production: Check Redis
@@ -191,31 +214,33 @@ export default async function handler(req, res) {
 
         // Send email via Resend
         try {
-            console.log('Resend configuration:', {
-                hasApiKey: !!process.env.RESEND_API_KEY,
-                apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 8),
-                from: process.env.EMAIL_FROM
-            });
-            console.log('Sending email via Resend:', {
-                to: normalizedEmail,
-                discountPercent,
-                discountCode: discountCode.substring(0, 5) + '...'
-            });
+            // Log only non-sensitive information
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('[DEV] Preparing to send discount email:', {
+                    discountPercent,
+                    hasValidConfig: !!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM)
+                });
+            }
+
+            // Escape all dynamic content to prevent HTML injection
+            const safeDiscountPercent = escapeHtml(String(discountPercent));
+            const safeWinStreak = escapeHtml(String(winStreak));
+            const safeDiscountCode = escapeHtml(discountCode);
 
             const emailResult = await resend.emails.send({
                 from: process.env.EMAIL_FROM,
                 to: normalizedEmail,
-                subject: `Your ${discountPercent}% Discount Code from Playing Arts!`,
+                subject: `Your ${safeDiscountPercent}% Discount Code from Playing Arts!`,
                 html: `
                     <h2>Congratulations! 🎉</h2>
-                    <p>You've earned a <strong>${discountPercent}% discount</strong> by winning ${winStreak} game${winStreak > 1 ? 's' : ''} in a row at Crazy Aces!</p>
+                    <p>You've earned a <strong>${safeDiscountPercent}% discount</strong> by winning ${safeWinStreak} game${winStreak > 1 ? 's' : ''} in a row at Crazy Aces!</p>
 
                     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
                         <p style="margin: 0; font-size: 14px; color: #666;">Your Discount Code:</p>
-                        <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #7B61FF; letter-spacing: 2px;">${discountCode}</p>
+                        <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #7B61FF; letter-spacing: 2px;">${safeDiscountCode}</p>
                     </div>
 
-                    <p>Use this code at checkout to get ${discountPercent}% off any product at:</p>
+                    <p>Use this code at checkout to get ${safeDiscountPercent}% off any product at:</p>
                     <p><a href="https://playingarts.com/shop" style="color: #7B61FF; text-decoration: none; font-weight: bold;">https://playingarts.com/shop</a></p>
 
                     <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
@@ -227,30 +252,38 @@ export default async function handler(req, res) {
                 `
             });
 
-            console.log('Resend API response:', JSON.stringify(emailResult, null, 2));
-
             // Check if Resend returned an error
             if (emailResult.error) {
-                console.error('Resend API error:', emailResult.error);
-                return res.status(500).json({
-                    success: false,
-                    error: 'Failed to send email. Please try again later.',
-                    details: emailResult.error
+                console.error('[ERROR] Email send failed:', {
+                    errorType: emailResult.error?.name || 'Unknown',
+                    timestamp: new Date().toISOString()
                 });
-            }
-
-            if (!emailResult.data?.id) {
-                console.error('Resend returned no email ID:', emailResult);
                 return res.status(500).json({
                     success: false,
                     error: 'Failed to send email. Please try again later.'
                 });
             }
 
-            console.log('Email sent successfully:', { id: emailResult.data.id });
+            if (!emailResult.data?.id) {
+                console.error('[ERROR] Email send failed: No email ID returned');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to send email. Please try again later.'
+                });
+            }
+
+            // Log success without sensitive data
+            console.log('[SUCCESS] Discount email sent:', {
+                emailId: emailResult.data.id,
+                discountPercent,
+                timestamp: new Date().toISOString()
+            });
 
         } catch (error) {
-            console.error('Resend error:', error);
+            console.error('[ERROR] Email service exception:', {
+                errorType: error?.name || 'Unknown',
+                timestamp: new Date().toISOString()
+            });
             return res.status(500).json({
                 success: false,
                 error: 'Failed to send email. Please try again later.'
@@ -268,6 +301,10 @@ export default async function handler(req, res) {
         if (redis) {
             // Production: Store in Redis (never expires to prevent re-claiming)
             await redis.set(claimKey, JSON.stringify(claimData));
+
+            // Invalidate session after successful claim (defense in depth)
+            // This prevents the same session from being used to claim again
+            await redis.del(`session:${sessionId}`);
         } else {
             // Development: Store in Map
             claimedEmails.set(normalizedEmail, claimData);
@@ -280,7 +317,10 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error('Claim discount error:', error);
+        console.error('[ERROR] Discount claim failed:', {
+            errorType: error?.name || 'Unknown',
+            timestamp: new Date().toISOString()
+        });
         return res.status(500).json({
             success: false,
             error: 'Internal server error'
