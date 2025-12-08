@@ -232,23 +232,20 @@ export class DragDropHandler {
             }
         }
 
-        // Reset card styling only if not played (prevents flash)
-        // If played, hide it immediately to prevent stuck cards
+        // Reset card styling - always reset to normal position
+        // The game logic + animation will handle hiding the card if the move is valid
         if (this.draggedCardElement && this.isDragging) {
-            if (wasPlayed) {
-                // Hide immediately when played successfully
-                this.draggedCardElement.style.opacity = '0';
-                this.draggedCardElement.style.visibility = 'hidden';
-            } else {
-                // Reset to normal if not played
-                this.draggedCardElement.style.position = '';
-                this.draggedCardElement.style.left = '';
-                this.draggedCardElement.style.top = '';
-                this.draggedCardElement.style.zIndex = '';
-                this.draggedCardElement.style.opacity = '';
-                this.draggedCardElement.style.pointerEvents = '';
-                this.draggedCardElement.style.transition = '';
-            }
+            // Always reset to normal position (don't hide prematurely)
+            // This allows the game to validate the move first
+            // If valid, animateCardPlay() will handle the exit animation
+            // If invalid, the card stays visible in the hand
+            this.draggedCardElement.style.position = '';
+            this.draggedCardElement.style.left = '';
+            this.draggedCardElement.style.top = '';
+            this.draggedCardElement.style.zIndex = '';
+            this.draggedCardElement.style.opacity = '';
+            this.draggedCardElement.style.pointerEvents = '';
+            this.draggedCardElement.style.transition = '';
         }
 
         this.draggedCardIndex = null;
