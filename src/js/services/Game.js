@@ -656,13 +656,9 @@ export class Game {
     async handleGameEnd(winResult) {
         const playerWon = winResult.winner === 'player';
 
-        // Update server-side session with game result
-        if (this.sessionService) {
-            await this.sessionService.updateSession(playerWon);
-        }
-
         // Note: hands and notification are already hidden when last card was played
 
+        // Show popup immediately
         this.ui.showGameOver(
             playerWon,
             winResult.winStreak || 0,
@@ -676,6 +672,11 @@ export class Game {
             );
         } else {
             this.ui.updateStatus('Computer won!');
+        }
+
+        // Update server-side session with game result (non-blocking)
+        if (this.sessionService) {
+            this.sessionService.updateSession(playerWon);
         }
     }
 
