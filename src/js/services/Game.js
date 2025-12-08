@@ -247,7 +247,7 @@ export class Game {
                 this.state.jokerWasPlayed = true;
                 this.state.isComputerTurn = false; // Keep turn unlocked
                 this.state.isProcessingMove = false; // Unlock processing so player can play another card
-                this.ui.updateStatus('You played Joker - play another card to define the suit');
+                this.ui.updateStatus('Joker: Play ANY card next!');
 
                 // Preload Joker image before rendering
                 if (playedCard.imageUrl) {

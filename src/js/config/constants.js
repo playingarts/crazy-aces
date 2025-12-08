@@ -25,7 +25,7 @@ export const GAME_CONFIG = {
         STATUS_MESSAGE_LONG: 2000,
         DRAW_MESSAGE: 1200,
         ANIMATION_DELAY: 400,
-        GAME_END_DELAY: 500
+        GAME_END_DELAY: 300
     },
 
     // URLs

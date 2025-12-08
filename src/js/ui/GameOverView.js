@@ -124,7 +124,7 @@ export class GameOverView {
             const discount = this.getDiscountFromStreak(0, gamesPlayed);
 
             if (resultText) {
-                resultText.textContent = 'You Lost!';
+                resultText.textContent = 'So close!';
                 resultText.className = 'result-text lose';
             }
 
