@@ -228,12 +228,15 @@ export default async function handler(req, res) {
             const safeWinStreak = escapeHtml(String(winStreak));
             const safeDiscountCode = escapeHtml(discountCode);
 
-            // Determine bonus tier name for email
+            // Determine bonus tier name and greeting for email
             let bonusName = 'Welcome Bonus';
+            let greeting = 'Welcome, Card Collector! 🎉';
             if (discountPercent === 15) {
                 bonusName = 'Champion Bonus';
+                greeting = 'Champion Status Unlocked! 🏆';
             } else if (discountPercent === 10) {
                 bonusName = 'Winner Bonus';
+                greeting = "You're a Winner! 🏆";
             }
 
             // Determine achievement text
@@ -247,25 +250,99 @@ export default async function handler(req, res) {
             const emailResult = await resend.emails.send({
                 from: process.env.EMAIL_FROM,
                 to: normalizedEmail,
-                subject: `Your ${safeDiscountPercent}% ${bonusName} from Playing Arts!`,
+                subject: `Your ${safeDiscountPercent}% ${bonusName} Awaits - Playing Arts`,
                 html: `
-                    <h2>Congratulations! 🎉</h2>
-                    <p>You've earned a <strong>${safeDiscountPercent}% ${bonusName}</strong> by ${achievementText} at Crazy Aces!</p>
-
-                    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-                        <p style="margin: 0; font-size: 14px; color: #666;">Your Discount Code:</p>
-                        <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #7B61FF; letter-spacing: 2px;">${safeDiscountCode}</p>
-                    </div>
-
-                    <p>Use this code at checkout to get ${safeDiscountPercent}% off any product at:</p>
-                    <p><a href="https://playingarts.com/shop" style="color: #7B61FF; text-decoration: none; font-weight: bold;">https://playingarts.com/shop</a></p>
-
-                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
-
-                    <p style="font-size: 12px; color: #999;">
-                        This discount is valid for one-time use. Happy shopping!<br />
-                        - The Playing Arts Team
-                    </p>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Discount Code - Playing Arts</title>
+    <style>
+        body { margin:0; padding:0; background:#fff; }
+        table { border-collapse:collapse; }
+        @media (max-width: 600px) {
+            .container { width: 100% !important; padding: 15px !important; }
+            h2 { font-size: 24px !important; }
+            .discount-code { font-size: 28px !important; letter-spacing: 1px !important; }
+            .button-cell a { padding: 10px 20px !important; font-size: 14px !important; }
+        }
+    </style>
+</head>
+<body>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+            <td class="container" style="padding:40px 20px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px; margin:0 auto;">
+                    <tr>
+                        <td style="padding:0 0 20px 0;">
+                            <h2 style="margin:0; font-size:28px; font-weight:bold; line-height:1.3; color:#000; font-family:'Segoe UI', Arial, sans-serif;">
+                                ${greeting}
+                            </h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 0 25px 0;">
+                            <p style="margin:0; font-size:16px; line-height:1.6; color:#333; font-family:'Segoe UI', Arial, sans-serif;">
+                                You've earned a <strong>${safeDiscountPercent}% ${bonusName}</strong> for ${achievementText}!
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 0 25px 0;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f5f5; border-radius:8px;">
+                                <tr>
+                                    <td style="text-align:center; padding:20px;">
+                                        <p style="margin:0 0 12px 0; font-size:13px; color:#666; font-family:'Segoe UI', Arial, sans-serif; text-transform:uppercase; letter-spacing:1px;">
+                                            Your Discount Code
+                                        </p>
+                                        <p class="discount-code" style="margin:0; font-size:32px; font-weight:bold; color:#7B61FF; letter-spacing:2px; word-break:break-all; font-family:monospace;">
+                                            ${safeDiscountCode}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 0 25px 0; text-align:center;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;">
+                                <tr>
+                                    <td class="button-cell" style="background:#7B61FF; border-radius:6px; text-align:center;">
+                                        <a href="https://playingarts.com/shop" style="display:block; padding:12px 28px; color:white; text-decoration:none; font-weight:bold; font-size:16px; font-family:'Segoe UI', Arial, sans-serif; line-height:1.4;">
+                                            Shop Now
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 0 30px 0; text-align:center;">
+                            <p style="margin:0; font-size:14px; line-height:1.5; color:#666; font-family:'Segoe UI', Arial, sans-serif;">
+                                Use code at checkout for ${safeDiscountPercent}% off your order.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:30px 0;">
+                            <div style="height:1px; background:#e0e0e0; width:100%;"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;">
+                            <p style="margin:0; font-size:14px; line-height:1.5; color:#666; font-family:'Segoe UI', Arial, sans-serif;">
+                                Happy collecting,<br>
+                                <strong>Playing Arts</strong>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
                 `
             });
 
