@@ -232,20 +232,37 @@ export class DragDropHandler {
             }
         }
 
-        // Reset card styling - always reset to normal position
-        // The game logic + animation will handle hiding the card if the move is valid
+        // Reset card styling
         if (this.draggedCardElement && this.isDragging) {
-            // Always reset to normal position (don't hide prematurely)
-            // This allows the game to validate the move first
-            // If valid, animateCardPlay() will handle the exit animation
-            // If invalid, the card stays visible in the hand
-            this.draggedCardElement.style.position = '';
-            this.draggedCardElement.style.left = '';
-            this.draggedCardElement.style.top = '';
-            this.draggedCardElement.style.zIndex = '';
-            this.draggedCardElement.style.opacity = '';
-            this.draggedCardElement.style.pointerEvents = '';
-            this.draggedCardElement.style.transition = '';
+            if (wasPlayed) {
+                // Card was dropped on pile - hide it temporarily while game validates
+                // Keep position/transforms in place so there's no flash
+                this.draggedCardElement.style.opacity = '0';
+                this.draggedCardElement.style.pointerEvents = 'none';
+
+                // Clean up styles after a short delay
+                // By then, animateCardPlay() will have taken over (if valid)
+                // or the game will re-render the hand (if invalid)
+                const elementToCleanup = this.draggedCardElement;
+                setTimeout(() => {
+                    elementToCleanup.style.position = '';
+                    elementToCleanup.style.left = '';
+                    elementToCleanup.style.top = '';
+                    elementToCleanup.style.zIndex = '';
+                    elementToCleanup.style.opacity = '';
+                    elementToCleanup.style.pointerEvents = '';
+                    elementToCleanup.style.transition = '';
+                }, 100);
+            } else {
+                // Card was not played (drag cancelled) - reset immediately
+                this.draggedCardElement.style.position = '';
+                this.draggedCardElement.style.left = '';
+                this.draggedCardElement.style.top = '';
+                this.draggedCardElement.style.zIndex = '';
+                this.draggedCardElement.style.opacity = '';
+                this.draggedCardElement.style.pointerEvents = '';
+                this.draggedCardElement.style.transition = '';
+            }
         }
 
         this.draggedCardIndex = null;
