@@ -93,9 +93,6 @@ async function initialize() {
             }, 300);
         }
 
-        // Setup debug buttons
-        setupDebugButtons();
-
         logger.info('Application initialization complete');
     } catch (error) {
         // Use ErrorService for centralized error handling
@@ -106,88 +103,6 @@ async function initialize() {
 
         // Show user-friendly error message
         alert('Error loading game. Please refresh the page.');
-    }
-}
-
-/**
- * Setup debug buttons for testing
- */
-function setupDebugButtons() {
-    const debugWinBtn = document.getElementById('debugWin');
-    const debugLoseBtn = document.getElementById('debugLose');
-
-    console.log('Setting up debug buttons...', { debugWinBtn, debugLoseBtn, game });
-
-    if (debugWinBtn) {
-        debugWinBtn.addEventListener('click', () => {
-            console.log('WIN button clicked!', { game, gameOver: game?.state?.gameOver });
-
-            if (!game) {
-                console.error('Game instance not available!');
-                return;
-            }
-
-            if (game.state.gameOver) {
-                console.log('Game is already over, ignoring click');
-                return;
-            }
-
-            console.log('Triggering instant win...');
-
-            // Empty PLAYER's hand to trigger instant WIN (player hand empty = player wins)
-            game.state.playerHand = [];
-
-            // Update UI
-            game.ui.renderPlayerHand(game.state.playerHand, game.handlePlayerCardClick.bind(game));
-            game.ui.renderComputerHand(game.state.computerHand.length);
-
-            // Trigger game end
-            const winResult = game.engine.checkWinCondition();
-            console.log('Win result:', winResult);
-
-            if (winResult) {
-                game.handleGameEnd(winResult);
-            }
-        });
-        console.log('WIN button listener attached');
-    } else {
-        console.error('WIN button not found!');
-    }
-
-    if (debugLoseBtn) {
-        debugLoseBtn.addEventListener('click', () => {
-            console.log('LOSE button clicked!', { game, gameOver: game?.state?.gameOver });
-
-            if (!game) {
-                console.error('Game instance not available!');
-                return;
-            }
-
-            if (game.state.gameOver) {
-                console.log('Game is already over, ignoring click');
-                return;
-            }
-
-            console.log('Triggering instant loss...');
-
-            // Empty COMPUTER's hand to trigger instant LOSS (computer hand empty = computer wins = player loses)
-            game.state.computerHand = [];
-
-            // Update UI
-            game.ui.renderPlayerHand(game.state.playerHand, game.handlePlayerCardClick.bind(game));
-            game.ui.renderComputerHand(game.state.computerHand.length);
-
-            // Trigger game end
-            const winResult = game.engine.checkWinCondition();
-            console.log('Lose result:', winResult);
-
-            if (winResult) {
-                game.handleGameEnd(winResult);
-            }
-        });
-        console.log('LOSE button listener attached');
-    } else {
-        console.error('LOSE button not found!');
     }
 }
 

@@ -105,24 +105,6 @@ body {
     opacity: 1;
 }
 
-/* Version Display */
-.version-display {
-    position: fixed;
-    bottom: 12px;
-    left: 12px;
-    z-index: 997;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 9px;
-    color: rgba(255, 255, 255, 0.2);
-    pointer-events: none;
-    user-select: none;
-    transition: opacity 0.3s ease;
-}
-
-.version-display:hover {
-    opacity: 0.8;
-}
-
 .rules-box {
     position: fixed;
     top: 20px;
@@ -1718,50 +1700,4 @@ body {
     .discount-sent-message {
         font-size: 13px;
     }
-}
-
-/* Debug Buttons */
-.debug-buttons {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    gap: 8px;
-    z-index: 10000;
-}
-
-.debug-btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s ease, opacity 0.2s ease;
-    text-transform: lowercase;
-}
-
-.debug-btn:hover {
-    transform: scale(1.05);
-}
-
-.debug-btn:active {
-    transform: scale(0.95);
-}
-
-.debug-btn.win {
-    background: #4CAF50;
-}
-
-.debug-btn.win:hover {
-    background: #45a049;
-}
-
-.debug-btn.lose {
-    background: #f44336;
-}
-
-.debug-btn.lose:hover {
-    background: #da190b;
 }
