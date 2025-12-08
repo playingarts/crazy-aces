@@ -61,11 +61,11 @@ export default async function handler(req, res) {
 
         // START NEW SESSION
         if (req.method === 'POST' && !req.body.sessionToken) {
-            // Rate limit: 5 new sessions per IP per hour
+            // Rate limit: 30 new sessions per IP per hour
             const sessionCreateLimit = await checkRateLimit(
                 redis,
                 `ratelimit:session:create:${clientIP}`,
-                5,
+                30,
                 3600 // 1 hour
             );
 
