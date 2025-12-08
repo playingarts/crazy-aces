@@ -1262,7 +1262,7 @@ body {
 }
 
 .discount-info .discount-note a {
-    color: #999;
+    color: #7b61ff;
     text-decoration: none;
 }
 
@@ -1660,7 +1660,7 @@ body {
     }
 
     .discount-section {
-        padding: 20px 30px 20px 30px;
+        padding: 20px 20px;
         margin: 0;
     }
 
