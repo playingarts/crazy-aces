@@ -112,8 +112,8 @@ body {
     left: 12px;
     z-index: 997;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.2);
     pointer-events: none;
     user-select: none;
     transition: opacity 0.3s ease;
@@ -1153,13 +1153,6 @@ body {
     text-align: left;
     line-height: 1.6;
     margin-bottom: 15px;
-    font-weight: bold;
-}
-
-.discount-text strong {
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.5);
-    font-weight: bold;
 }
 
 .discount-buttons-container {
@@ -1244,20 +1237,37 @@ body {
 }
 
 .discount-info {
-    color: rgba(255, 255, 255, 0.5);
+    color: #999;
     font-size: 15px;
     line-height: 1.6;
     margin: 0;
-    padding-left: 18px;
     text-align: left;
 }
 
-.discount-info li {
+.discount-info > div {
     margin-bottom: 4px;
 }
 
-.discount-info a {
-    color: rgba(255, 255, 255, 0.5);
+.discount-info .milestone-icon {
+    margin-right: 6px;
+}
+
+.discount-info .milestone-icon.unchecked {
+    opacity: 0.5;
+}
+
+.discount-info .discount-note {
+    margin-top: 12px;
+    margin-bottom: 4px;
+}
+
+.discount-info .discount-note a {
+    color: #999;
+    text-decoration: none;
+}
+
+.discount-info .discount-note a:hover {
+    text-decoration: underline;
 }
 
 /* Email Form Inline */
@@ -1662,11 +1672,11 @@ body {
     .discount-info {
         font-size: 13px;
         line-height: 1.5;
-        padding-left: 15px;
         margin-bottom: 0;
+        color: #999;
     }
 
-    .discount-info li {
+    .discount-info > div {
         margin-bottom: 3px;
     }
 
@@ -1702,4 +1712,50 @@ body {
     .discount-sent-message {
         font-size: 13px;
     }
+}
+
+/* Debug Buttons */
+.debug-buttons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+    z-index: 10000;
+}
+
+.debug-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.2s ease;
+    text-transform: lowercase;
+}
+
+.debug-btn:hover {
+    transform: scale(1.05);
+}
+
+.debug-btn:active {
+    transform: scale(0.95);
+}
+
+.debug-btn.win {
+    background: #4CAF50;
+}
+
+.debug-btn.win:hover {
+    background: #45a049;
+}
+
+.debug-btn.lose {
+    background: #f44336;
+}
+
+.debug-btn.lose:hover {
+    background: #da190b;
 }

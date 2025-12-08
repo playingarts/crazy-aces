@@ -13,9 +13,10 @@ export class GameOverView {
      * Show game over screen with advanced UI states
      * @param {boolean} playerWon - Whether player won
      * @param {number} winStreak - Current win streak
+     * @param {number} gamesPlayed - Total games played in session
      * @param {boolean} discountClaimed - Whether discount was already claimed
      */
-    showGameOver(playerWon, winStreak, discountClaimed = false) {
+    showGameOver(playerWon, winStreak, gamesPlayed = 0, discountClaimed = false) {
         if (!this.elements.gameOver || !this.elements.gameOverOverlay) return;
 
         const resultText = document.getElementById('resultText');
@@ -27,6 +28,9 @@ export class GameOverView {
         const emailFormInline = document.getElementById('emailFormInline');
         const discountButtonsContainer = document.getElementById('discountButtonsContainer');
         const discountInfo = document.getElementById('discountInfo');
+
+        // Update milestone checkboxes
+        this.updateMilestones(winStreak, gamesPlayed);
 
         // Hide all elements first
         if (discountSection) discountSection.style.display = 'none';
@@ -56,7 +60,7 @@ export class GameOverView {
         }
 
         if (playerWon) {
-            const discount = this.getDiscountFromStreak(winStreak);
+            const discount = this.getDiscountFromStreak(winStreak, gamesPlayed);
 
             if (resultText) {
                 resultText.textContent = 'You Win!';
@@ -75,14 +79,22 @@ export class GameOverView {
             if (discountClaimed) {
                 if (discountText) {
                     const streakText = winStreak === 1 ? '1 win' : `${winStreak} wins in a row`;
-                    discountText.innerHTML = `${streakText}! <strong>You already claimed your discount!</strong>`;
+                    discountText.textContent = `${streakText}! You already claimed your discount!`;
                 }
                 if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
             } else {
                 // Show discount section with discount and claim button
                 if (discountText) {
-                    const streakText = winStreak === 1 ? '1 win' : `${winStreak} wins in a row`;
-                    discountText.innerHTML = `${streakText} - ${discount}% Discount Unlocked!`;
+                    // New messaging based on discount tier
+                    let message = '';
+                    if (discount === 15) {
+                        message = '15% Champion Bonus Unlocked!';
+                    } else if (discount === 10) {
+                        message = '10% Winner Bonus Unlocked!';
+                    } else {
+                        message = '5% Welcome Bonus Unlocked!';
+                    }
+                    discountText.textContent = message;
                 }
 
                 const claimPercent = document.getElementById('claimPercent');
@@ -108,7 +120,9 @@ export class GameOverView {
             // Launch confetti through animation controller
             this.animationController.launchConfetti();
         } else {
-            // Player lost
+            // Player lost - but still gets 5% Welcome Bonus if they played!
+            const discount = this.getDiscountFromStreak(0, gamesPlayed);
+
             if (resultText) {
                 resultText.textContent = 'You Lost!';
                 resultText.className = 'result-text lose';
@@ -122,11 +136,33 @@ export class GameOverView {
             // Show Play More button
             if (playMoreBtn) playMoreBtn.style.display = 'block';
 
-            // Show discount section with "You lost the streak" message
-            if (discountText) {
-                discountText.innerHTML = `<strong>You lost the streak!</strong>`;
+            // Check if discount was already claimed
+            if (discountClaimed) {
+                if (discountText) {
+                    discountText.textContent = 'You already claimed your discount!';
+                }
+                if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
+            } else if (discount > 0) {
+                // Player gets 5% Welcome Bonus for playing!
+                if (discountText) {
+                    discountText.textContent = '5% Welcome Bonus Unlocked! Thanks for playing!';
+                }
+
+                const claimPercent = document.getElementById('claimPercent');
+                if (claimPercent) claimPercent.textContent = discount;
+
+                // Hide "Play more to get X%" button on loss - milestones show the path
+                const playMoreBtnSmall = document.getElementById('playMoreBtnSmall');
+                if (playMoreBtnSmall) playMoreBtnSmall.style.display = 'none';
+
+                if (discountButtonsContainer) discountButtonsContainer.style.display = 'flex';
+            } else {
+                // No games played yet (shouldn't happen)
+                if (discountText) {
+                    discountText.textContent = 'You lost the streak!';
+                }
+                if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
             }
-            if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
             if (discountSection) discountSection.style.display = 'block';
         }
 
@@ -154,14 +190,59 @@ export class GameOverView {
     }
 
     /**
-     * Calculate discount from win streak
-     * @param {number} winStreak - Current win streak
+     * Calculate discount from win streak and games played
+     * New system:
+     * - Play 1 game (win or lose) = 5% Welcome Bonus
+     * - WIN 1 game = 10%
+     * - WIN 2 games in a row = 15%
+     *
+     * @param {number} winStreak - Current consecutive win streak
+     * @param {number} gamesPlayed - Total games played in this session
      * @returns {number} Discount percentage
      */
-    getDiscountFromStreak(winStreak) {
-        if (winStreak === 1) return 5;
-        if (winStreak === 2) return 10;
-        if (winStreak >= 3) return 15;
+    getDiscountFromStreak(winStreak, gamesPlayed = 0) {
+        // Highest discount tier wins
+        if (winStreak >= 2) return 15; // 2+ consecutive wins
+        if (winStreak >= 1) return 10; // 1 win
+        if (gamesPlayed >= 1) return 5; // Played at least 1 game (even if lost)
         return 0;
+    }
+
+    /**
+     * Update milestone checkboxes based on progress
+     * @param {number} winStreak - Current consecutive win streak
+     * @param {number} gamesPlayed - Total games played in this session
+     */
+    updateMilestones(winStreak, gamesPlayed) {
+        const milestone1 = document.getElementById('milestone1');
+        const milestone2 = document.getElementById('milestone2');
+        const milestone3 = document.getElementById('milestone3');
+
+        // Milestone 1: Play 1 game (always completed after first game)
+        if (milestone1) {
+            if (gamesPlayed >= 1) {
+                milestone1.innerHTML = '<span class="milestone-icon">✅</span> Play 1 game → 5% Welcome Bonus';
+            } else {
+                milestone1.innerHTML = '<span class="milestone-icon unchecked">⬜</span> Play 1 game → 5% Welcome Bonus';
+            }
+        }
+
+        // Milestone 2: Win 1 game
+        if (milestone2) {
+            if (winStreak >= 1) {
+                milestone2.innerHTML = '<span class="milestone-icon">✅</span> Win 1 game → 10% Winner Bonus';
+            } else {
+                milestone2.innerHTML = '<span class="milestone-icon unchecked">⬜</span> Win 1 game → 10% Winner Bonus';
+            }
+        }
+
+        // Milestone 3: Win 2+ games in a row
+        if (milestone3) {
+            if (winStreak >= 2) {
+                milestone3.innerHTML = '<span class="milestone-icon">✅</span> Win 2+ games in a row → 15% Champion Bonus';
+            } else {
+                milestone3.innerHTML = '<span class="milestone-icon unchecked">⬜</span> Win 2+ games in a row → 15% Champion Bonus';
+            }
+        }
     }
 }

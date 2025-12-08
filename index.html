@@ -162,11 +162,12 @@
         <!-- Discount section combined with wins info (shown on win) -->
         <div class="discount-section" id="discountSection" style="display: none;">
             <div class="discount-text" id="discountText"></div>
-            <ul class="discount-info" id="discountInfo">
-                <li>1 win = 5% off, 2 wins in a row = 10% off, 3+ wins in a row = 15% off</li>
-                <li>Lose once and your streak resets. You can only claim one discount!</li>
-                <li>Use discount to get any product at: <a href="https://playingarts.com/shop" target="_blank" style="color: #7B61FF; text-decoration: none;">https://playingarts.com/shop</a></li>
-            </ul>
+            <div class="discount-info" id="discountInfo">
+                <div id="milestone1"><span class="milestone-icon unchecked">⬜</span> Play 1 game → 5% Welcome Bonus</div>
+                <div id="milestone2"><span class="milestone-icon unchecked">⬜</span> Win 1 game → 10% Winner Bonus</div>
+                <div id="milestone3"><span class="milestone-icon unchecked">⬜</span> Win 2+ games in a row → 15% Champion Bonus</div>
+                <div class="discount-note">You can claim your discount anytime! Use it at: <a href="https://playingarts.com/shop" target="_blank">playingarts.com/shop</a></div>
+            </div>
 
             <!-- Claim buttons container (shown initially) -->
             <div class="discount-buttons-container" id="discountButtonsContainer" style="display: flex;">
@@ -190,6 +191,12 @@
                 </form>
             </div>
         </div>
+    </div>
+
+    <!-- Debug buttons (bottom right corner) -->
+    <div class="debug-buttons" id="debugButtons">
+        <button id="debugWin" class="debug-btn win">win</button>
+        <button id="debugLose" class="debug-btn lose">lose</button>
     </div>
 
     <script type="module" src="src/js/main.js"></script>
