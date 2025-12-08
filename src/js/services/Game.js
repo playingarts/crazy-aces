@@ -173,6 +173,16 @@ export class Game {
                 this.state.isComputerTurn = false;
                 this.state.isProcessingMove = false;
                 this.ui.updateStatus(validation.reason);
+
+                // Apply shake animation to the invalid card
+                const cardEl = this.ui.elements.playerHand.querySelector(`[data-card-index="${cardIndex}"]`);
+                if (cardEl) {
+                    cardEl.classList.remove('invalid-shake');
+                    // Force reflow to restart animation
+                    void cardEl.offsetWidth;
+                    cardEl.classList.add('invalid-shake');
+                    setTimeout(() => cardEl.classList.remove('invalid-shake'), 400);
+                }
                 return;
             }
 
