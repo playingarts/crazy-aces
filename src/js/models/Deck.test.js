@@ -175,4 +175,187 @@ describe('Deck', () => {
             expect(deck.size).toBe(44);
         });
     });
+
+    // === EDGE CASE TESTS ===
+
+    describe('draw - edge cases', () => {
+        it('should draw exactly all 54 cards', () => {
+            const deck = new Deck();
+            const cards = deck.draw(54);
+
+            expect(cards.length).toBe(54);
+            expect(deck.size).toBe(0);
+            expect(deck.isEmpty).toBe(true);
+        });
+
+        it('should draw 0 cards and return empty array', () => {
+            const deck = new Deck();
+            const cards = deck.draw(0);
+
+            expect(cards.length).toBe(0);
+            expect(deck.size).toBe(54);
+        });
+
+        it('should throw when drawing 1 more than deck size', () => {
+            const deck = new Deck();
+            deck.draw(54); // Empty the deck
+
+            expect(() => deck.draw(1)).toThrow('Cannot draw 1 cards, only 0 remaining');
+        });
+
+        it('should handle drawing with exactly 1 card left', () => {
+            const deck = new Deck();
+            deck.draw(53); // Leave 1 card
+
+            expect(deck.size).toBe(1);
+
+            const cards = deck.draw(1);
+            expect(cards.length).toBe(1);
+            expect(deck.isEmpty).toBe(true);
+        });
+    });
+
+    describe('drawNonSpecial - edge cases', () => {
+        it('should throw when only Aces and Jokers remain', () => {
+            const deck = new Deck();
+            // Keep only special cards
+            deck.cards = deck.cards.filter((card) => card.isAce || card.isJoker);
+
+            expect(() => deck.drawNonSpecial()).toThrow('No non-special cards available');
+        });
+
+        it('should work when exactly one non-special card remains', () => {
+            const deck = new Deck();
+            // Keep one 5 of spades plus special cards
+            deck.cards = deck.cards.filter(
+                (card) => card.isAce || card.isJoker || (card.rank === '5' && card.suit === '♠')
+            );
+
+            const card = deck.drawNonSpecial();
+            expect(card.rank).toBe('5');
+            expect(card.suit).toBe('♠');
+        });
+    });
+
+    describe('swapCard - edge cases', () => {
+        it('should return false when card to remove is not in deck', () => {
+            const deck = new Deck();
+            const fakeCard = { rank: 'X', suit: 'Y' };
+            const newCard = { rank: 'A', suit: '♠' };
+
+            const result = deck.swapCard(fakeCard, newCard);
+            expect(result).toBe(false);
+        });
+
+        it('should swap first matching card only', () => {
+            const deck = new Deck();
+            const cardToFind = deck.cards[0];
+            const newCard = { rank: 'X', suit: 'X', artist: 'Test' };
+
+            const result = deck.swapCard(cardToFind, newCard);
+            expect(result).toBe(true);
+            expect(deck.cards[0]).toBe(newCard);
+        });
+    });
+
+    describe('removeCard - edge cases', () => {
+        it('should return null when card is not in deck', () => {
+            const deck = new Deck();
+            const fakeCard = { rank: 'X', suit: 'Y', artist: 'Fake' };
+
+            const result = deck.removeCard(fakeCard);
+            expect(result).toBeNull();
+        });
+
+        it('should require matching artist to remove card', () => {
+            const deck = new Deck();
+            const realCard = deck.cards[0];
+            const cardWithWrongArtist = { rank: realCard.rank, suit: realCard.suit, artist: 'Wrong' };
+
+            const result = deck.removeCard(cardWithWrongArtist);
+            expect(result).toBeNull();
+            expect(deck.size).toBe(54); // Card not removed
+        });
+    });
+
+    describe('findMatchingCard - edge cases', () => {
+        it('should return undefined for non-matching criteria', () => {
+            const deck = new Deck();
+
+            const result = deck.findMatchingCard({ suit: 'INVALID', rank: 'INVALID' });
+            expect(result).toBeUndefined();
+        });
+
+        it('should match by suit only when rank differs', () => {
+            const deck = new Deck();
+            const match = deck.findMatchingCard({ suit: '♠', rank: 'NONEXISTENT' });
+
+            expect(match).toBeDefined();
+            expect(match.suit).toBe('♠');
+        });
+
+        it('should match by rank only when suit differs', () => {
+            const deck = new Deck();
+            const match = deck.findMatchingCard({ suit: 'NONEXISTENT', rank: 'K' });
+
+            expect(match).toBeDefined();
+            expect(match.rank).toBe('K');
+        });
+    });
+
+    describe('addCard - edge cases', () => {
+        it('should add card to empty deck', () => {
+            const deck = new Deck();
+            deck.cards = []; // Empty the deck
+
+            const card = { rank: '5', suit: '♠', artist: 'Test' };
+            deck.addCard(card);
+
+            expect(deck.size).toBe(1);
+            expect(deck.cards[0]).toBe(card);
+        });
+
+        it('should add card to end of deck', () => {
+            const deck = new Deck();
+            const card = { rank: 'X', suit: 'X', artist: 'Test' };
+
+            deck.addCard(card);
+
+            expect(deck.size).toBe(55);
+            expect(deck.cards[54]).toBe(card);
+        });
+    });
+
+    describe('reset', () => {
+        it('should restore deck to full 54 cards after being emptied', () => {
+            const deck = new Deck();
+            deck.draw(54);
+
+            expect(deck.isEmpty).toBe(true);
+
+            deck.reset();
+
+            expect(deck.size).toBe(54);
+            expect(deck.isEmpty).toBe(false);
+        });
+
+        it('should return deck instance for chaining', () => {
+            const deck = new Deck();
+            const result = deck.reset();
+
+            expect(result).toBe(deck);
+        });
+    });
+
+    describe('getCards', () => {
+        it('should return a copy, not the original array', () => {
+            const deck = new Deck();
+            const copy = deck.getCards();
+
+            copy.pop(); // Modify the copy
+
+            expect(deck.size).toBe(54); // Original unaffected
+            expect(copy.length).toBe(53);
+        });
+    });
 });
