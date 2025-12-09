@@ -14,7 +14,10 @@
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "format": "prettier --write \"src/**/*.{js,json,css,html}\"",
-    "format:check": "prettier --check \"src/**/*.{js,json,css,html}\""
+    "format:check": "prettier --check \"src/**/*.{js,json,css,html}\"",
+    "agents": "node orchestrator.js",
+    "agents:check": "node orchestrator.js --agents=security,testing --task='Pre-deploy check'",
+    "agents:auto": "node orchestrator.js --auto"
   },
   "keywords": [
     "card-game",
@@ -37,6 +40,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@upstash/redis": "^1.35.7",
     "@vercel/kv": "^3.0.0",
     "ioredis": "^5.8.2",

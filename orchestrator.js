@@ -1,0 +1,554 @@
+#!/usr/bin/env node
+/**
+ * Crazy Aces Agent Orchestrator
+ *
+ * Spawns multiple Claude agents in parallel using the Anthropic API.
+ * Supports autonomous mode that loops until task is complete.
+ *
+ * Usage:
+ *   node orchestrator.js --agents=ux,security --task="Review the latest changes"
+ *   node orchestrator.js --agents=all --task="Full project review"
+ *   node orchestrator.js --auto --task="Review and fix security issues"
+ *
+ * Environment:
+ *   ANTHROPIC_API_KEY - Required
+ */
+
+import Anthropic from '@anthropic-ai/sdk';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Configuration
+const CONFIG = {
+  commandsDir: path.join(__dirname, '.claude', 'commands'),
+  reportsDir: path.join(__dirname, '.claude', 'reports'),
+  logsDir: path.join(__dirname, '.claude', 'logs'),
+  model: 'claude-sonnet-4-20250514',
+  maxTokens: 4096,
+  availableAgents: ['security', 'testing', 'ux', 'architecture', 'game-design'],
+  coreAgents: ['security', 'testing'],  // Essential for maintenance
+  maxIterations: 5
+};
+
+// Colors for terminal output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  red: '\x1b[31m'
+};
+
+function log(color, symbol, message) {
+  console.log(`${colors[color]}${symbol}${colors.reset} ${message}`);
+}
+
+function logSection(title) {
+  console.log(`\n${colors.bright}${colors.blue}═══ ${title} ═══${colors.reset}\n`);
+}
+
+class AgentOrchestrator {
+  constructor() {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is required');
+    }
+    this.client = new Anthropic();
+    this.totalTokens = 0;
+    this.totalCost = 0;
+  }
+
+  /**
+   * Load agent prompt from .claude/commands/{agent}.md
+   */
+  async loadAgentPrompt(agentName) {
+    const filePath = path.join(CONFIG.commandsDir, `${agentName}.md`);
+    try {
+      let content = await fs.readFile(filePath, 'utf-8');
+      content = content.replace(/## Saving Reports[\s\S]*?(?=##|Now |$)/g, '');
+      content = content.replace(/Now (analyze|perform|review)[\s\S]*$/g, '');
+      return content.trim();
+    } catch (error) {
+      throw new Error(`Agent prompt not found: ${filePath}`);
+    }
+  }
+
+  /**
+   * Load project context (key files for agents to reference)
+   */
+  async loadProjectContext() {
+    const contextFiles = [
+      'package.json',
+      'src/js/services/Game.js',
+      'src/js/services/GameState.js',
+      'api/claim-discount.js'
+    ];
+
+    let context = '## Project Context\n\n';
+
+    for (const file of contextFiles) {
+      try {
+        const filePath = path.join(__dirname, file);
+        const content = await fs.readFile(filePath, 'utf-8');
+        const truncated = content.length > 2000
+          ? content.substring(0, 2000) + '\n... (truncated)'
+          : content;
+        context += `### ${file}\n\`\`\`javascript\n${truncated}\n\`\`\`\n\n`;
+      } catch {
+        // Skip files that don't exist
+      }
+    }
+
+    return context;
+  }
+
+  /**
+   * Spawn a single agent with a task
+   */
+  async spawnAgent(agentName, task, context = '') {
+    const startTime = Date.now();
+    log('cyan', '  ▶', `Running ${agentName} agent...`);
+
+    try {
+      const systemPrompt = await this.loadAgentPrompt(agentName);
+
+      const message = await this.client.messages.create({
+        model: CONFIG.model,
+        max_tokens: CONFIG.maxTokens,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: `${context}\n\n## Task\n${task}`
+        }]
+      });
+
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      const result = message.content[0].text;
+      const tokens = (message.usage?.input_tokens || 0) + (message.usage?.output_tokens || 0);
+      this.totalTokens += tokens;
+
+      log('green', '  ✓', `${agentName} complete (${duration}s, ${tokens} tokens)`);
+
+      return {
+        agent: agentName,
+        result,
+        duration: parseFloat(duration),
+        tokens: message.usage,
+        timestamp: new Date().toISOString(),
+        success: true
+      };
+    } catch (error) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      log('red', '  ✗', `${agentName} failed: ${error.message}`);
+
+      return {
+        agent: agentName,
+        result: null,
+        error: error.message,
+        duration: parseFloat(duration),
+        timestamp: new Date().toISOString(),
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Save agent report to .claude/reports/
+   */
+  async saveReport(agentName, result) {
+    const reportPath = path.join(CONFIG.reportsDir, `${agentName}-report.md`);
+
+    const report = `# ${this.formatAgentName(agentName)} Report
+
+**Date:** ${new Date().toISOString().split('T')[0]}
+**Generated by:** Orchestrator
+**Status:** Complete
+
+---
+
+${result.result}
+`;
+
+    await fs.writeFile(reportPath, report, 'utf-8');
+    return reportPath;
+  }
+
+  formatAgentName(name) {
+    return name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+
+  /**
+   * Save agent log for real-time watching
+   */
+  async saveLog(agentName, task, result) {
+    const logPath = path.join(CONFIG.logsDir, `${agentName}.log`);
+    const timestamp = new Date().toISOString();
+
+    const logEntry = `
+════════════════════════════════════════════════════════════════
+${this.formatAgentName(agentName)} Agent
+Time: ${timestamp}
+Task: ${task}
+════════════════════════════════════════════════════════════════
+
+${result}
+
+`;
+    await fs.appendFile(logPath, logEntry, 'utf-8');
+  }
+
+  /**
+   * Clear agent logs at start of orchestration
+   */
+  async clearLogs() {
+    for (const agent of CONFIG.availableAgents) {
+      const logPath = path.join(CONFIG.logsDir, `${agent}.log`);
+      try {
+        await fs.writeFile(logPath, `# ${this.formatAgentName(agent)} Agent Log\n# Watching for activity...\n\n`, 'utf-8');
+      } catch {
+        // Ignore errors
+      }
+    }
+  }
+
+  /**
+   * Coordinator: Analyzes reports and decides next steps
+   */
+  async coordinate(task, reports, iteration) {
+    log('magenta', '🧠', 'Coordinator analyzing reports...');
+
+    const reportsContext = reports.map(r =>
+      `### ${r.agent} Report:\n${r.result}`
+    ).join('\n\n---\n\n');
+
+    const coordinatorPrompt = `You are the Team Lead coordinating a multi-agent review of the Crazy Aces game project.
+
+## Original Task
+${task}
+
+## Agent Reports (Iteration ${iteration})
+${reportsContext}
+
+## Your Job
+Analyze the reports and decide the next action. You must respond with a JSON object:
+
+\`\`\`json
+{
+  "status": "continue" | "complete",
+  "summary": "Brief summary of findings so far",
+  "next_agents": ["agent1", "agent2"],
+  "next_task": "Specific task for next agents",
+  "final_report": "Only if status=complete: Final summary for the user"
+}
+\`\`\`
+
+Rules:
+- If agents found issues that need verification, status="continue" and assign follow-up
+- If task is complete and no more work needed, status="complete"
+- Available agents: ${CONFIG.availableAgents.join(', ')}
+- Max ${CONFIG.maxIterations} iterations allowed (current: ${iteration})
+- Be efficient - don't run agents unnecessarily
+
+Respond ONLY with the JSON object, no other text.`;
+
+    try {
+      const message = await this.client.messages.create({
+        model: CONFIG.model,
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: coordinatorPrompt
+        }]
+      });
+
+      const tokens = (message.usage?.input_tokens || 0) + (message.usage?.output_tokens || 0);
+      this.totalTokens += tokens;
+
+      const responseText = message.content[0].text;
+
+      // Extract JSON from response
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) ||
+                        responseText.match(/\{[\s\S]*\}/);
+
+      if (!jsonMatch) {
+        throw new Error('Could not parse coordinator response');
+      }
+
+      const decision = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+
+      log('magenta', '🧠', `Decision: ${decision.status}`);
+      if (decision.summary) {
+        log('dim', '  ', decision.summary);
+      }
+
+      return decision;
+    } catch (error) {
+      log('red', '✗', `Coordinator error: ${error.message}`);
+      return {
+        status: 'complete',
+        final_report: 'Orchestration ended due to coordinator error.',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Run multiple agents in parallel
+   */
+  async runAgents(agentNames, task, context) {
+    const results = await Promise.all(
+      agentNames.map(agent => this.spawnAgent(agent, task, context))
+    );
+
+    // Save reports and logs
+    for (const result of results) {
+      if (result.success) {
+        await this.saveReport(result.agent, result);
+        await this.saveLog(result.agent, task, result.result);
+      }
+    }
+
+    return results.filter(r => r.success);
+  }
+
+  /**
+   * Standard orchestration (non-autonomous)
+   */
+  async orchestrate(agentNames, task) {
+    logSection('AGENT ORCHESTRATION');
+    log('bright', '📋', `Task: ${task}`);
+    log('bright', '🤖', `Agents: ${agentNames.join(', ')}\n`);
+
+    await this.clearLogs();
+    const context = await this.loadProjectContext();
+    const results = await this.runAgents(agentNames, task, context);
+
+    this.printSummary(results);
+    return results;
+  }
+
+  /**
+   * Autonomous orchestration with coordinator loop
+   */
+  async orchestrateAuto(task) {
+    logSection('AUTONOMOUS ORCHESTRATION');
+    log('bright', '📋', `Task: ${task}`);
+    log('bright', '🔄', `Max iterations: ${CONFIG.maxIterations}\n`);
+
+    await this.clearLogs();
+    log('dim', '📁', `Logs: .claude/logs/{agent}.log (use tail -f to watch)\n`);
+
+    const context = await this.loadProjectContext();
+    let iteration = 1;
+    let allReports = [];
+
+    // Initial agent selection based on task
+    let nextAgents = this.selectInitialAgents(task);
+    let nextTask = task;
+
+    while (iteration <= CONFIG.maxIterations) {
+      logSection(`ITERATION ${iteration}`);
+
+      // Run agents
+      log('bright', '🤖', `Running: ${nextAgents.join(', ')}`);
+      const results = await this.runAgents(nextAgents, nextTask, context);
+      allReports = [...allReports, ...results];
+
+      if (results.length === 0) {
+        log('red', '✗', 'No successful agent runs. Stopping.');
+        break;
+      }
+
+      // Coordinator decides next steps
+      const decision = await this.coordinate(task, results, iteration);
+
+      if (decision.status === 'complete') {
+        logSection('COMPLETE');
+        console.log(decision.final_report || decision.summary);
+        break;
+      }
+
+      // Prepare next iteration
+      nextAgents = decision.next_agents || [];
+      nextTask = decision.next_task || task;
+
+      if (nextAgents.length === 0) {
+        log('yellow', '⚠', 'No next agents specified. Stopping.');
+        break;
+      }
+
+      iteration++;
+    }
+
+    if (iteration > CONFIG.maxIterations) {
+      log('yellow', '⚠', `Max iterations (${CONFIG.maxIterations}) reached.`);
+    }
+
+    this.printSummary(allReports);
+    return allReports;
+  }
+
+  /**
+   * Select initial agents based on task keywords
+   */
+  selectInitialAgents(task) {
+    const taskLower = task.toLowerCase();
+    const agents = [];
+
+    if (taskLower.includes('security') || taskLower.includes('vulnerab') || taskLower.includes('exploit')) {
+      agents.push('security');
+    }
+    if (taskLower.includes('architect') || taskLower.includes('refactor') || taskLower.includes('code quality')) {
+      agents.push('architecture');
+    }
+    if (taskLower.includes('ux') || taskLower.includes('ui') || taskLower.includes('user') || taskLower.includes('feel')) {
+      agents.push('ux');
+    }
+    if (taskLower.includes('test') || taskLower.includes('bug') || taskLower.includes('qa')) {
+      agents.push('testing');
+    }
+    if (taskLower.includes('game') || taskLower.includes('balance') || taskLower.includes('mechanic')) {
+      agents.push('game-design');
+    }
+    if (taskLower.includes('review') || taskLower.includes('audit') || taskLower.includes('full')) {
+      return ['architecture', 'security', 'ux'];
+    }
+
+    // Default to architecture + ux if no matches
+    return agents.length > 0 ? agents : ['architecture', 'ux'];
+  }
+
+  /**
+   * Print final summary
+   */
+  printSummary(results) {
+    logSection('SUMMARY');
+
+    const successful = results.filter(r => r.success);
+    const totalDuration = results.reduce((sum, r) => sum + (r.duration || 0), 0);
+    const estimatedCost = (this.totalTokens / 1000000) * 3; // ~$3/M tokens for Sonnet
+
+    console.log(`   Agents run: ${successful.length}`);
+    console.log(`   Total time: ${totalDuration.toFixed(1)}s`);
+    console.log(`   Tokens used: ${this.totalTokens.toLocaleString()}`);
+    console.log(`   Est. cost: $${estimatedCost.toFixed(3)}`);
+    console.log(`\n   Reports saved to: .claude/reports/`);
+    console.log('');
+  }
+}
+
+/**
+ * Parse command line arguments
+ */
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const parsed = {
+    agents: [],
+    task: '',
+    auto: false,
+    help: false
+  };
+
+  for (const arg of args) {
+    if (arg === '--help' || arg === '-h') {
+      parsed.help = true;
+    } else if (arg === '--auto' || arg === '-a') {
+      parsed.auto = true;
+    } else if (arg.startsWith('--agents=') || arg.startsWith('--agent=')) {
+      const value = arg.split('=')[1];
+      if (value === 'all') {
+        parsed.agents = [...CONFIG.availableAgents];
+      } else {
+        parsed.agents = value.split(',').map(a => a.trim());
+      }
+    } else if (arg.startsWith('--task=')) {
+      parsed.task = arg.split('=').slice(1).join('=');
+    }
+  }
+
+  return parsed;
+}
+
+function showHelp() {
+  console.log(`
+${colors.bright}Crazy Aces Agent Orchestrator${colors.reset}
+
+Spawns Claude agents to analyze your project. Supports autonomous mode.
+
+${colors.yellow}Usage:${colors.reset}
+  node orchestrator.js --agents=<agents> --task="<task>"
+  node orchestrator.js --auto --task="<task>"
+
+${colors.yellow}Options:${colors.reset}
+  --agents=<list>   Comma-separated agents, or "all"
+  --task="<task>"   Task description
+  --auto, -a        Autonomous mode (coordinator decides agents & loops)
+  --help, -h        Show this help
+
+${colors.yellow}Available Agents:${colors.reset}
+  ${CONFIG.availableAgents.join(', ')}
+
+${colors.yellow}Examples:${colors.reset}
+  ${colors.dim}# Run specific agents${colors.reset}
+  node orchestrator.js --agents=ux,security --task="Review recent changes"
+
+  ${colors.dim}# Run all agents${colors.reset}
+  node orchestrator.js --agents=all --task="Full project audit"
+
+  ${colors.dim}# Autonomous mode - coordinator decides${colors.reset}
+  node orchestrator.js --auto --task="Find and report security issues"
+  node orchestrator.js --auto --task="Review code quality and UX"
+
+${colors.yellow}Environment:${colors.reset}
+  ANTHROPIC_API_KEY   Required
+`);
+}
+
+// Main execution
+async function main() {
+  const args = parseArgs();
+
+  if (args.help) {
+    showHelp();
+    process.exit(0);
+  }
+
+  if (!args.task) {
+    log('red', '✗', 'No task specified. Use --task="Your task description"');
+    process.exit(1);
+  }
+
+  // Validate agent names if not auto mode
+  if (!args.auto && args.agents.length > 0) {
+    const invalidAgents = args.agents.filter(a => !CONFIG.availableAgents.includes(a));
+    if (invalidAgents.length > 0) {
+      log('red', '✗', `Invalid agent(s): ${invalidAgents.join(', ')}`);
+      log('yellow', '?', `Available: ${CONFIG.availableAgents.join(', ')}`);
+      process.exit(1);
+    }
+  }
+
+  try {
+    const orchestrator = new AgentOrchestrator();
+
+    if (args.auto) {
+      await orchestrator.orchestrateAuto(args.task);
+    } else if (args.agents.length > 0) {
+      await orchestrator.orchestrate(args.agents, args.task);
+    } else {
+      log('red', '✗', 'Specify --agents=<list> or use --auto mode');
+      process.exit(1);
+    }
+  } catch (error) {
+    log('red', '✗', `Error: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+main();
