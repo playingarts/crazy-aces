@@ -51,8 +51,8 @@ export class GameOverView {
                         <input type="email" id="emailInput" class="email-input" placeholder="your@email.com" />
                         <div class="email-error" id="emailError"></div>
                         <div class="email-form-buttons">
-                            <button type="submit" class="send-email-btn" id="sendDiscountBtn" data-action="send-discount">Send Discount</button>
-                            <button type="button" class="cancel-email-btn" data-action="hide-email-form">Cancel</button>
+                            <button type="submit" class="send-email-btn" id="sendDiscountBtn" data-action="send-discount">Get My Discount Code!</button>
+                            <button type="button" class="cancel-email-btn" data-action="hide-email-form">Skip</button>
                         </div>
                     </form>
                 `;
@@ -79,7 +79,7 @@ export class GameOverView {
             if (discountClaimed) {
                 if (discountText) {
                     const streakText = `${winStreak} win${winStreak === 1 ? '' : 's'} in a row`;
-                    discountText.textContent = `${streakText}! You already claimed your discount!`;
+                    discountText.textContent = `${streakText}! Discount already claimed`;
                 }
                 if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
             } else {
@@ -124,7 +124,7 @@ export class GameOverView {
             const discount = this.getDiscountFromStreak(0, gamesPlayed);
 
             if (resultText) {
-                resultText.textContent = 'So close!';
+                resultText.textContent = 'Nice try!';
                 resultText.className = 'result-text lose';
             }
 
@@ -139,7 +139,7 @@ export class GameOverView {
             // Check if discount was already claimed
             if (discountClaimed) {
                 if (discountText) {
-                    discountText.textContent = 'You already claimed your discount!';
+                    discountText.textContent = 'Discount already claimed';
                 }
                 if (discountButtonsContainer) discountButtonsContainer.style.display = 'none';
             } else if (discount > 0) {
@@ -221,27 +221,27 @@ export class GameOverView {
         // Milestone 1: Play 1 game (always completed after first game)
         if (milestone1) {
             if (gamesPlayed >= 1) {
-                milestone1.innerHTML = '<span class="milestone-icon">✅</span> Play 1 game → 5% Welcome Bonus';
+                milestone1.innerHTML = '<span class="milestone-icon">●</span> Play 1 game — 5% Welcome Bonus';
             } else {
-                milestone1.innerHTML = '<span class="milestone-icon unchecked">⬜</span> Play 1 game → 5% Welcome Bonus';
+                milestone1.innerHTML = '<span class="milestone-icon unchecked">○</span> Play 1 game — 5% Welcome Bonus';
             }
         }
 
         // Milestone 2: Win 1 game
         if (milestone2) {
             if (winStreak >= 1) {
-                milestone2.innerHTML = '<span class="milestone-icon">✅</span> Win 1 game → 10% Winner Bonus';
+                milestone2.innerHTML = '<span class="milestone-icon">●</span> Win 1 game — 10% Winner Bonus';
             } else {
-                milestone2.innerHTML = '<span class="milestone-icon unchecked">⬜</span> Win 1 game → 10% Winner Bonus';
+                milestone2.innerHTML = '<span class="milestone-icon unchecked">○</span> Win 1 game — 10% Winner Bonus';
             }
         }
 
         // Milestone 3: Win 2+ games in a row
         if (milestone3) {
             if (winStreak >= 2) {
-                milestone3.innerHTML = '<span class="milestone-icon">✅</span> Win 2+ games in a row → 15% Champion Bonus';
+                milestone3.innerHTML = '<span class="milestone-icon">●</span> Win 2+ in a row — 15% Champion Bonus';
             } else {
-                milestone3.innerHTML = '<span class="milestone-icon unchecked">⬜</span> Win 2+ games in a row → 15% Champion Bonus';
+                milestone3.innerHTML = '<span class="milestone-icon unchecked">○</span> Win 2+ in a row — 15% Champion Bonus';
             }
         }
     }

@@ -87,7 +87,7 @@
             </ul>
         </div>
 
-        <button class="rules-ok-btn" data-action="hide-rules">Got it</button>
+        <button class="rules-ok-btn" data-action="hide-rules">Let's play</button>
     </div>
 
     <div class="confetti-container" id="confettiContainer"></div>
@@ -103,7 +103,7 @@
         <div class="play-area">
             <div class="deck-pile" data-action="draw-card">
                 <div class="card card-back" id="deckCard"></div>
-                <div class="card-artist" id="deckHint" style="margin-top: 8px; display: none;">Click to draw</div>
+                <div class="card-artist" id="deckHint" style="margin-top: 8px; display: none;">Tap to draw</div>
             </div>
 
             <div class="discard-pile" id="discardPile">
@@ -159,9 +159,9 @@
         <div class="discount-section" id="discountSection" style="display: none;">
             <div class="discount-text" id="discountText"></div>
             <div class="discount-info" id="discountInfo">
-                <div id="milestone1"><span class="milestone-icon unchecked">⬜</span> Play 1 game → 5% Welcome Bonus</div>
-                <div id="milestone2"><span class="milestone-icon unchecked">⬜</span> Win 1 game → 10% Winner Bonus</div>
-                <div id="milestone3"><span class="milestone-icon unchecked">⬜</span> Win 2+ games in a row → 15% Champion Bonus</div>
+                <div id="milestone1"><span class="milestone-icon unchecked">○</span> Play 1 game — 5% Welcome Bonus</div>
+                <div id="milestone2"><span class="milestone-icon unchecked">○</span> Win 1 game — 10% Winner Bonus</div>
+                <div id="milestone3"><span class="milestone-icon unchecked">○</span> Win 2+ in a row — 15% Champion Bonus</div>
                 <div class="discount-note">Redeem your discount for <a href="https://playingarts.com/shop" target="_blank">Playing Arts decks</a></div>
             </div>
 
@@ -171,7 +171,7 @@
                     Claim <span id="claimPercent">0</span>% discount now
                 </button>
                 <button class="play-more-btn-small" id="playMoreBtnSmall" data-action="play-to-get-discount">
-                    Play more to get <span id="playMorePercent">10</span>%
+                    Win to unlock <span id="playMorePercent">10</span>%
                 </button>
             </div>
 
@@ -181,8 +181,8 @@
                     <input type="email" id="emailInput" class="email-input" placeholder="your@email.com" />
                     <div class="email-error" id="emailError"></div>
                     <div class="email-form-buttons">
-                        <button type="submit" class="send-email-btn" id="sendDiscountBtn" data-action="send-discount">Send Discount</button>
-                        <button type="button" class="cancel-email-btn" data-action="hide-email-form">Not now</button>
+                        <button type="submit" class="send-email-btn" id="sendDiscountBtn" data-action="send-discount">Get My Discount Code!</button>
+                        <button type="button" class="cancel-email-btn" data-action="hide-email-form">Skip</button>
                     </div>
                 </form>
             </div>

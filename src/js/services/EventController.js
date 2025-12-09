@@ -289,6 +289,24 @@ export class EventController {
     }
 
     /**
+     * Map server errors to user-friendly messages
+     */
+    getFriendlyErrorMessage(serverError) {
+        const errorMap = {
+            'Session token is required': 'Session expired. Please refresh and play again!',
+            'Invalid or expired session token': 'Session expired. Please refresh the page!',
+            'Session expired. Please play a new game.': 'Session expired. Start a new game to earn another discount!',
+            'This email has already claimed a discount': 'This email already has a discount! Check your inbox (and spam folder)',
+            'Too many discount requests. Please try again later.': 'Too many attempts. Please wait a moment and try again.',
+            'Invalid email': 'Please enter a valid email (like you@example.com)',
+            'Server configuration error': 'Oops! Something went wrong on our end. Please try again later.',
+            'Failed to send email. Please try again later.': 'Could not send your code. Please check your email and try again.',
+            'No active game session. Please play a game first.': 'Session expired. Start a new game to earn another discount!'
+        };
+        return errorMap[serverError] || serverError || 'Oops! Something went wrong. Please try again!';
+    }
+
+    /**
      * Send discount email via secure API
      * @param {string} email - Email address
      */
@@ -300,7 +318,7 @@ export class EventController {
 
         try {
             sendButton.disabled = true;
-            sendButton.textContent = 'Sending...';
+            sendButton.innerHTML = '<span class="spinner"></span> Sending...';
 
             // Determine API URL based on environment
             const apiUrl = window.location.hostname === 'localhost'
@@ -346,18 +364,18 @@ export class EventController {
                 this.game.state.claimDiscount();
                 this.game.state.resetWinStreak();
             } else {
-                // Show server error message
-                emailError.textContent = data.error || 'Failed to send email. Please try again.';
+                // Show user-friendly error message
+                emailError.textContent = this.getFriendlyErrorMessage(data.error);
                 emailError.classList.add('show');
             }
         } catch (error) {
             logger.error('Error sending email:', error);
-            emailError.textContent = 'Failed to send email. Please try again or contact support.';
+            emailError.textContent = this.getFriendlyErrorMessage(error.message);
             emailError.classList.add('show');
         } finally {
             if (sendButton) {
                 sendButton.disabled = false;
-                sendButton.textContent = 'Send Discount';
+                sendButton.innerHTML = 'Get My Discount Code!';
             }
         }
     }
