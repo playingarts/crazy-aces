@@ -98,7 +98,7 @@ export class Game {
 
             // Show different message for first game vs subsequent games
             if (!this.state.playerMadeFirstMove) {
-                this.ui.updateStatus("Play a card matching the table card's suit or rank");
+                this.ui.updateStatus('Match the suit or rank to play');
             } else {
                 this.ui.updateStatus('Your turn');
             }
@@ -247,7 +247,7 @@ export class Game {
                 this.state.jokerWasPlayed = true;
                 this.state.isComputerTurn = false; // Keep turn unlocked
                 this.state.isProcessingMove = false; // Unlock processing so player can play another card
-                this.ui.updateStatus('Joker: Play ANY card next!');
+                this.ui.updateStatus('Joker played — play any card');
 
                 // Preload Joker image before rendering
                 if (playedCard.imageUrl) {
@@ -278,7 +278,7 @@ export class Game {
                 this.state.pendingEightCard = playedCard;
                 this.state.isComputerTurn = false; // Unlock while waiting for suit selection
                 this.state.isProcessingMove = false; // Unlock processing while waiting for suit selection
-                this.ui.updateStatus('You played Ace - choose a suit');
+                this.ui.updateStatus('Ace played! Pick a suit');
 
                 // Preload all 4 Ace images (user will select which one to display)
                 this.logger.debug('🃏 Player played Ace - preloading all Ace images');
@@ -337,7 +337,7 @@ export class Game {
             this.logger.error('Error in handlePlayerCardClick:', error);
             this.state.isComputerTurn = false;
             this.state.isProcessingMove = false; // Unlock processing on error
-            this.ui.updateStatus('Error playing card. Please try again.');
+            this.ui.updateStatus('Something went wrong. Try again.');
         }
     }
 
@@ -414,7 +414,7 @@ export class Game {
             this.state.isComputerTurn = false; // CRITICAL FIX: Unlock turn on error
             this.state.isProcessingMove = false; // Unlock processing on error
             this.state.pendingEightCard = null; // Clear pending state
-            this.ui.updateStatus('Error changing suit. Please try again.');
+            this.ui.updateStatus('Something went wrong. Try again.');
         }
     }
 
@@ -501,7 +501,7 @@ export class Game {
             this.state.isDrawing = false;
             this.state.isComputerTurn = false;
             this.state.isProcessingMove = false; // Unlock processing on error
-            this.ui.updateStatus('Error drawing card. Please try again.');
+            this.ui.updateStatus('Something went wrong. Try again.');
         }
     }
 
@@ -510,7 +510,7 @@ export class Game {
      */
     async executeComputerTurn() {
         try {
-            this.ui.updateStatus("Computer's turn...");
+            this.ui.updateStatus("Opponent's move");
 
             await this.delay(this.config.TIMING.COMPUTER_TURN_DELAY);
 
@@ -530,7 +530,7 @@ export class Game {
 
                 // Handle Joker - computer plays another card to define suit
                 if (result.isJoker) {
-                    this.ui.updateStatus('Computer played Joker');
+                    this.ui.updateStatus('Opponent played Joker');
 
                     // Preload Joker image before rendering
                     if (card.imageUrl) {
@@ -576,11 +576,11 @@ export class Game {
                         '♣': 'Clubs'
                     };
                     this.ui.updateStatus(
-                        `Computer played Ace - changed to ${suitNames[result.newSuit]}`
+                        `Opponent played Ace — changed to ${suitNames[result.newSuit]}`
                     );
                 } else {
                     const cardName = `${card.rank}${card.suit}`;
-                    this.ui.updateStatus(`Computer played ${cardName}`);
+                    this.ui.updateStatus(`Opponent played ${cardName}`);
                 }
             } else if (result.action === 'draw') {
                 // Preload the drawn card's image
@@ -598,7 +598,7 @@ export class Game {
                     this.logger.error('Computer drawn card has no imageUrl:', result.card);
                 }
 
-                this.ui.updateStatus('Computer drew a card');
+                this.ui.updateStatus('Opponent drew a card');
                 this.render(false);
 
                 // If drawn card is playable, computer plays it
@@ -609,7 +609,7 @@ export class Game {
                 }
                 // If drawn card is NOT playable, computer passes turn - continue to unlock below
             } else if (result.action === 'pass') {
-                this.ui.updateStatus('Computer passes - deck empty');
+                this.ui.updateStatus('Opponent passes — deck empty');
             }
 
             // Render with animation from top (computer's side) if card was played
@@ -655,7 +655,7 @@ export class Game {
             this.logger.error('Error in executeComputerTurn:', error);
             this.state.isComputerTurn = false;
             this.state.isProcessingMove = false; // Unlock processing on error
-            this.ui.updateStatus('Error in computer turn. Please try again.');
+            this.ui.updateStatus('Something went wrong. Try again.');
         }
     }
 
@@ -678,10 +678,10 @@ export class Game {
 
         if (playerWon) {
             this.ui.updateStatus(
-                `You won!${winResult.winStreak > 1 ? ` Streak: ${winResult.winStreak}` : ''}`
+                `You win!${winResult.winStreak > 1 ? ` ${winResult.winStreak} in a row` : ''}`
             );
         } else {
-            this.ui.updateStatus('Computer won!');
+            this.ui.updateStatus('Opponent wins!');
         }
 
         // Update server-side session with game result (non-blocking)
