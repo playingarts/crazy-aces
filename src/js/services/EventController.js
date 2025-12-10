@@ -54,6 +54,10 @@ export class EventController {
                 this.handleHideRules();
                 break;
 
+            case 'show-rules':
+                this.handleShowRules();
+                break;
+
             case 'draw-card':
                 this.handleDrawCard();
                 break;
@@ -108,12 +112,34 @@ export class EventController {
     // ============================================================================
 
     /**
-     * Hide rules box (will show again on page refresh)
+     * Hide rules box and show help button
      */
     handleHideRules() {
-        const rulesBox = document.querySelector('.rules-box');
+        const rulesBox = document.getElementById('rulesBox');
+        const helpBtn = document.getElementById('rulesHelpBtn');
+
         if (rulesBox) {
-            rulesBox.style.display = 'none';
+            rulesBox.classList.add('hidden');
+            rulesBox.classList.remove('shown');
+        }
+        if (helpBtn) {
+            helpBtn.classList.add('visible');
+        }
+    }
+
+    /**
+     * Show rules box and hide help button
+     */
+    handleShowRules() {
+        const rulesBox = document.getElementById('rulesBox');
+        const helpBtn = document.getElementById('rulesHelpBtn');
+
+        if (rulesBox) {
+            rulesBox.classList.remove('hidden');
+            rulesBox.classList.add('shown');
+        }
+        if (helpBtn) {
+            helpBtn.classList.remove('visible');
         }
     }
 

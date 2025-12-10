@@ -105,23 +105,88 @@ body {
     opacity: 1;
 }
 
+/* Help button (shows when rules minimized) */
+.rules-help-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #212121;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 998;
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.3s ease,
+        color 0.3s ease;
+    /* Hidden by default on desktop (rules are visible) */
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+}
+
+/* Show ? when it gets the 'show' treatment (after Let's play clicked) */
+.rules-help-btn.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+    animation: helpBtnPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes helpBtnPop {
+    0% {
+        transform: scale(1.8);
+        background: #3a3a3a;
+    }
+    50% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        background: #212121;
+    }
+}
+
+.rules-help-btn:hover {
+    background: #333333;
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+
+.rules-help-btn:active {
+    transform: scale(0.95);
+    background: #2a2a2a;
+}
+
+
 .rules-box {
     position: fixed;
     top: 20px;
     right: 20px;
     width: 340px;
-    background: rgba(255, 255, 255, 0.03);
+    background: #212121;
     border-radius: 12px;
     padding: 20px;
     z-index: 997;
+    /* Anchor to top-right corner for "suck" effect */
+    transform-origin: top right;
     transition:
-        opacity 0.3s ease,
-        transform 0.3s ease;
+        opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        border-radius 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rules-box.hidden {
     opacity: 0;
-    transform: translateX(100%);
+    /* Suck into the ? button: scale down and shift to top-right corner */
+    transform: scale(0.05);
+    border-radius: 50%;
     pointer-events: none;
 }
 
@@ -791,9 +856,54 @@ body {
         overflow: visible;
     }
 
-    .logo-link,
-    .rules-box {
+    .logo-link {
         display: none;
+    }
+
+    /* On mobile: rules hidden by default (sucked into ? button) */
+    .rules-box {
+        /* Equal margins: 10px from top, left, right */
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        transform-origin: top right;
+        opacity: 0;
+        transform: scale(0.05);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    /* Show rules on mobile only when explicitly shown via ? button */
+    .rules-box.shown {
+        opacity: 1;
+        transform: scale(1);
+        border-radius: 12px;
+        pointer-events: auto;
+    }
+
+    /* Smaller ? button on mobile - visible by default, closer to corner */
+    .rules-help-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        top: 10px;
+        right: 10px;
+        background-color: #212121 !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        /* Visible by default on mobile, on top of rules box */
+        opacity: 1 !important;
+        transform: scale(1);
+        pointer-events: auto;
+        z-index: 999;
+    }
+
+    /* Hide ? when rules are shown (visible class removed) */
+    .rules-box.shown ~ .rules-help-btn {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
     }
 
     .opponent-hand-section {
