@@ -103,6 +103,15 @@ export class CardRenderer {
                     </div>
                     <div class="card-artist"><a href="${newArtistUrl}" target="_blank">${newArtist}</a></div>
                 `;
+            } else {
+                // Regular card played after Joker (suit was changed)
+                this.elements.tableCard.innerHTML = `
+                    <div class="card-info">
+                        <span class="info-rank">${card.rank}</span>
+                        <span class="info-suit">${card.suit}</span>
+                    </div>
+                    <div class="card-artist"><a href="${artistUrl}" target="_blank">${card.artist}</a></div>
+                `;
             }
         } else if (card.isJoker) {
             // Show JOKER text before suit is chosen
