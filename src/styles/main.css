@@ -1814,12 +1814,12 @@ body {
     }
 
     .discount-text {
-        font-size: 13px;
+        font-size: 15px;
         margin-bottom: 12px;
     }
 
     .discount-info {
-        font-size: 13px;
+        font-size: 15px;
         line-height: 1.5;
         margin-bottom: 0;
         color: #999;
@@ -1865,6 +1865,6 @@ body {
     }
 
     .discount-sent-message {
-        font-size: 13px;
+        font-size: 15px;
     }
 }
