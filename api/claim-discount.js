@@ -26,6 +26,7 @@ import { checkRateLimit, getClientIP } from './lib/rateLimit.js';
 import { escapeHtml } from './lib/htmlEscape.js';
 import { validateEmail, hashEmail } from './lib/emailValidation.js';
 import { setSecurityHeaders } from './lib/securityHeaders.js';
+import { notifyDiscountClaimed } from './lib/telegram.js';
 
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -387,6 +388,18 @@ export default async function handler(req, res) {
                 discountPercent,
                 timestamp: new Date().toISOString()
             });
+
+            // Send Telegram notification (await so it completes before function ends)
+            try {
+                await notifyDiscountClaimed({
+                    email: normalizedEmail,
+                    discount: discountPercent,
+                    winStreak,
+                    device: req.headers['user-agent']?.includes('Mobile') ? 'mobile' : 'desktop'
+                });
+            } catch (telegramErr) {
+                console.error('[Telegram] Notification failed:', telegramErr.message);
+            }
 
         } catch (error) {
             console.error('[ERROR] Email service exception:', {

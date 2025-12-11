@@ -13,6 +13,10 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
  * @returns {Promise<boolean>} - Success status
  */
 export async function sendTelegramMessage(message) {
+    console.log('[Telegram] Attempting to send notification...');
+    console.log('[Telegram] Token configured:', !!TELEGRAM_BOT_TOKEN);
+    console.log('[Telegram] Chat ID configured:', !!TELEGRAM_CHAT_ID);
+
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
         console.log('[Telegram] Not configured, skipping notification');
         return false;
