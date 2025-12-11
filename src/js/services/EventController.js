@@ -5,6 +5,7 @@
 
 import { EMAIL_CONFIG } from '../config/email.config.js';
 import { logger } from '../utils/Logger.js';
+import { analytics } from './Analytics.js';
 
 export class EventController {
     constructor(game) {
@@ -131,6 +132,9 @@ export class EventController {
      * Show rules box and hide help button
      */
     handleShowRules() {
+        // Track rules viewed via help button
+        analytics.rulesViewed('help_button');
+
         const rulesBox = document.getElementById('rulesBox');
         const helpBtn = document.getElementById('rulesHelpBtn');
 
@@ -176,6 +180,8 @@ export class EventController {
      */
     async handlePlayAgain() {
         if (this.game) {
+            // Track play again (after loss since win goes through handlePlayMore)
+            analytics.playAgain(false);
             await this.game.reset();
         }
     }
@@ -184,20 +190,36 @@ export class EventController {
      * Handle play more button (after claiming discount)
      */
     async handlePlayMore() {
-        await this.handlePlayAgain();
+        // Track play again after win
+        analytics.playAgain(true);
+        if (this.game) {
+            await this.game.reset();
+        }
     }
 
     /**
      * Handle "Play More to Get X%" button
      */
     async handlePlayToGetDiscount() {
-        await this.handlePlayAgain();
+        // Track play for more discount
+        const currentDiscount = this.getDiscount();
+        const targetDiscount = currentDiscount < 10 ? 10 : 15;
+        analytics.playForMore(currentDiscount, targetDiscount);
+
+        if (this.game) {
+            await this.game.reset();
+        }
     }
 
     /**
      * Show email form for discount claim
      */
     handleShowEmailForm() {
+        // Track claim button clicked
+        const discount = this.getDiscount();
+        analytics.claimClicked(discount);
+        analytics.emailFormOpened();
+
         const discountButtonsContainer = document.getElementById('discountButtonsContainer');
         const emailFormInline = document.getElementById('emailFormInline');
         const emailInput = document.getElementById('emailInput');
@@ -247,6 +269,7 @@ export class EventController {
         if (!email) {
             emailError.textContent = 'Please enter your email address';
             emailError.classList.add('show');
+            analytics.emailSubmitted(false);
             return;
         }
 
@@ -254,14 +277,19 @@ export class EventController {
         if (!emailRegex.test(email)) {
             emailError.textContent = 'Please enter a valid email address';
             emailError.classList.add('show');
+            analytics.emailSubmitted(false);
             return;
         }
 
         if (this.hasEmailClaimed(email)) {
             emailError.textContent = 'This email has already claimed a discount!';
             emailError.classList.add('show');
+            analytics.emailSubmitted(false);
             return;
         }
+
+        // Track valid email submission
+        analytics.emailSubmitted(true);
 
         // Send email
         await this.sendDiscountEmail(email);
@@ -373,6 +401,10 @@ export class EventController {
             const data = await response.json();
 
             if (response.ok && data.success) {
+                // Track successful email
+                const discount = this.getDiscount();
+                analytics.emailSentSuccess(discount);
+
                 // Mark email as claimed (client-side tracking for UX only)
                 this.markEmailAsClaimed(email);
 
@@ -390,12 +422,16 @@ export class EventController {
                 this.game.state.claimDiscount();
                 this.game.state.resetWinStreak();
             } else {
+                // Track failed email
+                analytics.emailSentFailed(data.error || 'unknown');
+
                 // Show user-friendly error message
                 emailError.textContent = this.getFriendlyErrorMessage(data.error);
                 emailError.classList.add('show');
             }
         } catch (error) {
             logger.error('Error sending email:', error);
+            analytics.emailSentFailed(error.message || 'network_error');
             emailError.textContent = this.getFriendlyErrorMessage(error.message);
             emailError.classList.add('show');
         } finally {

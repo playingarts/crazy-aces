@@ -9,6 +9,7 @@ import { config, validateConfig, getConfigSummary } from './config/index.js';
 import { logger } from './utils/Logger.js';
 import { errorService, ErrorContext, ErrorSeverity } from './services/ErrorService.js';
 import { VersionDisplay } from './utils/VersionDisplay.js';
+import { analytics } from './services/Analytics.js';
 
 // ============================================================================
 // CONFIGURATION VALIDATION
@@ -58,6 +59,10 @@ async function initialize() {
 
         // Initialize version display
         new VersionDisplay();
+
+        // Initialize analytics tracking
+        analytics.init();
+        logger.info('Analytics initialized');
 
         // Email functionality now handled server-side via Vercel API
         // No client-side EmailJS initialization needed

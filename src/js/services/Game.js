@@ -11,6 +11,7 @@ import { GameUI } from '../ui/GameUI.js';
 import { UIStateManager } from '../ui/UIStateManager.js';
 import { logger } from '../utils/Logger.js';
 import { errorService, ErrorContext, ErrorSeverity } from './ErrorService.js';
+import { analytics } from './Analytics.js';
 
 export class Game {
     /**
@@ -95,6 +96,9 @@ export class Game {
             if (this.sessionService) {
                 this.sessionService.startSession();
             }
+
+            // Track game started
+            analytics.gameStarted();
 
             // Show different message for first game vs subsequent games
             if (!this.state.playerMadeFirstMove) {
@@ -204,6 +208,9 @@ export class Game {
 
             // Remove from hand and add to discard pile
             const playedCard = this.state.playCardFromHand(cardIndex);
+
+            // Track card played
+            analytics.cardPlayed(playedCard);
 
             // If player has no cards left, hide hand and status message instantly
             if (this.state.playerHand.length === 0) {
@@ -375,6 +382,9 @@ export class Game {
             this.state.currentSuit = suit;
             this.state.currentRank = originalRank; // Use original rank (always 'A' for Aces)
 
+            // Track suit selection
+            analytics.suitSelected(cardToTransform.isAce ? 'ace' : 'joker', suit);
+
             // Record the chosen suit (for Ace only)
             if (cardToTransform.isAce) {
                 this.state.recordChosenAceSuit(suit);
@@ -487,6 +497,10 @@ export class Game {
 
             // Check if drawn card is playable
             const canPlayDrawnCard = this.engine.canPlayCard(card);
+
+            // Track card drawn
+            analytics.cardDrawn(canPlayDrawnCard);
+
             if (canPlayDrawnCard) {
                 this.ui.updateStatus('You can play the card you drew!');
                 this.state.isDrawing = false;
@@ -665,6 +679,15 @@ export class Game {
      */
     async handleGameEnd(winResult) {
         const playerWon = winResult.winner === 'player';
+
+        // Track game ended
+        analytics.gameEnded(winResult.winner, winResult.winStreak || 0);
+
+        // Track discount offered if player won
+        if (playerWon && winResult.winStreak > 0) {
+            const discount = winResult.winStreak >= 2 ? 15 : 10;
+            analytics.discountOffered(discount, winResult.winStreak);
+        }
 
         // Note: hands and notification are already hidden when last card was played
 
