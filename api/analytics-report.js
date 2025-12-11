@@ -159,6 +159,10 @@ export default async function handler(req, res) {
                 cards_played: totals.card_played,
                 cards_drawn: totals.card_drawn
             },
+            devices: {
+                mobile: totals.games_mobile || 0,
+                desktop: totals.games_desktop || 0
+            },
             daily: dailyMetrics
         });
 

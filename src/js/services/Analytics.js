@@ -38,6 +38,7 @@ class AnalyticsService {
     constructor() {
         this.enabled = true;
         this.sessionId = this.generateSessionId();
+        this.device = this.detectDevice();
         this.gameStartTime = null;
         this.turnCount = 0;
         this.cardsPlayed = 0;
@@ -45,6 +46,16 @@ class AnalyticsService {
         this.eventQueue = [];
         this.flushInterval = null;
         this.apiUrl = null;
+    }
+
+    /**
+     * Detect device type
+     * @returns {string} 'mobile' or 'desktop'
+     */
+    detectDevice() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            || window.innerWidth < 768;
+        return isMobile ? 'mobile' : 'desktop';
     }
 
     /**
@@ -83,6 +94,7 @@ class AnalyticsService {
         const event = {
             event: eventName,
             sessionId: this.sessionId,
+            device: this.device,
             timestamp: Date.now(),
             ...data
         };

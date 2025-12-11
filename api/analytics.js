@@ -168,6 +168,7 @@ function sanitizeEvent(event) {
     const allowed = {
         event: event.event,
         sessionId: typeof event.sessionId === 'string' ? event.sessionId.slice(0, 50) : undefined,
+        device: ['mobile', 'desktop'].includes(event.device) ? event.device : undefined,
         timestamp: typeof event.timestamp === 'number' ? event.timestamp : Date.now()
     };
 
@@ -274,6 +275,13 @@ function sanitizeEvent(event) {
  */
 function updateMetrics(pipeline, today, event) {
     switch (event.event) {
+        case 'game_started':
+            // Track games by device
+            if (event.device) {
+                pipeline.hincrby(`analytics:daily:${today}`, `games_${event.device}`, 1);
+            }
+            break;
+
         case 'game_ended':
             // Track win/loss ratio
             if (event.winner === 'player') {
