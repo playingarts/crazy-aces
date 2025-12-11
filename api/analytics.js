@@ -31,6 +31,11 @@ const VALID_EVENTS = new Set([
     'card_played',
     'card_drawn',
     'suit_selected',
+    'invalid_card',
+    'hint_shown',
+    'first_action',
+    'session_start',
+    'session_end',
     'discount_offered',
     'claim_clicked',
     'email_form_opened',
@@ -213,15 +218,6 @@ function sanitizeEvent(event) {
             }
             break;
 
-        case 'suit_selected':
-            if (['ace', 'joker'].includes(event.cardType)) {
-                allowed.cardType = event.cardType;
-            }
-            if (typeof event.suit === 'string' && event.suit.length === 1) {
-                allowed.suit = event.suit;
-            }
-            break;
-
         case 'discount_offered':
         case 'claim_clicked':
         case 'email_sent_success':
@@ -265,6 +261,90 @@ function sanitizeEvent(event) {
                 allowed.target = event.target;
             }
             break;
+
+        case 'session_start':
+            if (typeof event.referrer === 'string') {
+                allowed.referrer = event.referrer.slice(0, 50);
+            }
+            if (typeof event.referrerFull === 'string') {
+                allowed.referrerFull = event.referrerFull.slice(0, 200);
+            }
+            if (typeof event.isReturning === 'boolean') {
+                allowed.isReturning = event.isReturning;
+            }
+            break;
+
+        case 'session_end':
+            if (typeof event.duration === 'number' && event.duration >= 0 && event.duration <= 86400000) {
+                allowed.duration = event.duration;
+            }
+            if (typeof event.gamesPlayed === 'number' && event.gamesPlayed >= 0 && event.gamesPlayed <= 100) {
+                allowed.gamesPlayed = event.gamesPlayed;
+            }
+            break;
+
+        case 'first_action':
+            if (typeof event.timeToAction === 'number' && event.timeToAction >= 0 && event.timeToAction <= 300000) {
+                allowed.timeToAction = event.timeToAction;
+            }
+            break;
+
+        case 'invalid_card':
+            if (['joker', 'ace', 'regular'].includes(event.cardType)) {
+                allowed.cardType = event.cardType;
+            }
+            if (typeof event.rank === 'string' && event.rank.length <= 2) {
+                allowed.rank = event.rank;
+            }
+            if (typeof event.suit === 'string' && event.suit.length === 1) {
+                allowed.suit = event.suit;
+            }
+            if (typeof event.reason === 'string') {
+                allowed.reason = event.reason.slice(0, 50);
+            }
+            if (typeof event.attemptNumber === 'number' && event.attemptNumber >= 0 && event.attemptNumber <= 100) {
+                allowed.attemptNumber = event.attemptNumber;
+            }
+            if (typeof event.turn === 'number' && event.turn >= 0 && event.turn <= 500) {
+                allowed.turn = event.turn;
+            }
+            break;
+
+        case 'hint_shown':
+            if (['playable_card', 'draw_card'].includes(event.hintType)) {
+                allowed.hintType = event.hintType;
+            }
+            if (typeof event.turn === 'number' && event.turn >= 0 && event.turn <= 500) {
+                allowed.turn = event.turn;
+            }
+            break;
+
+        case 'game_abandoned':
+            if (typeof event.turn === 'number' && event.turn >= 0 && event.turn <= 500) {
+                allowed.turn = event.turn;
+            }
+            if (typeof event.cardsPlayed === 'number' && event.cardsPlayed >= 0) {
+                allowed.cardsPlayed = event.cardsPlayed;
+            }
+            if (typeof event.cardsDrawn === 'number' && event.cardsDrawn >= 0) {
+                allowed.cardsDrawn = event.cardsDrawn;
+            }
+            if (typeof event.duration === 'number' && event.duration >= 0 && event.duration <= 3600000) {
+                allowed.duration = event.duration;
+            }
+            break;
+
+        case 'suit_selected':
+            if (['ace', 'joker'].includes(event.cardType)) {
+                allowed.cardType = event.cardType;
+            }
+            if (typeof event.suit === 'string' && event.suit.length === 1) {
+                allowed.suit = event.suit;
+            }
+            if (typeof event.selectionTime === 'number' && event.selectionTime >= 0 && event.selectionTime <= 60000) {
+                allowed.selectionTime = event.selectionTime;
+            }
+            break;
     }
 
     return allowed;
@@ -306,6 +386,63 @@ function updateMetrics(pipeline, today, event) {
             // Track card type usage
             if (event.cardType) {
                 pipeline.hincrby(`analytics:daily:${today}`, `cards_${event.cardType}`, 1);
+            }
+            break;
+
+        case 'session_start':
+            // Track new vs returning visitors
+            if (event.isReturning) {
+                pipeline.hincrby(`analytics:daily:${today}`, 'returning_visitors', 1);
+            } else {
+                pipeline.hincrby(`analytics:daily:${today}`, 'new_visitors', 1);
+            }
+            // Track referrers
+            if (event.referrer) {
+                pipeline.hincrby(`analytics:daily:${today}`, `referrer_${event.referrer}`, 1);
+            }
+            break;
+
+        case 'first_action':
+            // Track time to first action (running sum for averaging)
+            if (event.timeToAction) {
+                pipeline.hincrby(`analytics:daily:${today}`, 'total_time_to_first_action', event.timeToAction);
+                pipeline.hincrby(`analytics:daily:${today}`, 'first_action_count', 1);
+            }
+            break;
+
+        case 'invalid_card':
+            // Track invalid card attempts
+            pipeline.hincrby(`analytics:daily:${today}`, 'invalid_card_attempts', 1);
+            break;
+
+        case 'hint_shown':
+            // Track hints by type
+            if (event.hintType) {
+                pipeline.hincrby(`analytics:daily:${today}`, `hints_${event.hintType}`, 1);
+            }
+            break;
+
+        case 'game_abandoned':
+            // Track game abandonment
+            pipeline.hincrby(`analytics:daily:${today}`, 'games_abandoned', 1);
+            if (event.turn !== undefined) {
+                pipeline.hincrby(`analytics:daily:${today}`, 'abandon_turns_total', event.turn);
+            }
+            break;
+
+        case 'suit_selected':
+            // Track suit selection timing (running sum for averaging)
+            if (event.selectionTime) {
+                pipeline.hincrby(`analytics:daily:${today}`, 'total_suit_selection_time', event.selectionTime);
+                pipeline.hincrby(`analytics:daily:${today}`, 'suit_selection_count', 1);
+            }
+            break;
+
+        case 'session_end':
+            // Track session duration (running sum for averaging)
+            if (event.duration) {
+                pipeline.hincrby(`analytics:daily:${today}`, 'total_session_duration', event.duration);
+                pipeline.hincrby(`analytics:daily:${today}`, 'session_count', 1);
             }
             break;
     }

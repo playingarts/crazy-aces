@@ -89,7 +89,21 @@ export default async function handler(req, res) {
             rules_viewed: 0,
             play_again: 0,
             play_for_more: 0,
-            total_duration: 0
+            total_duration: 0,
+            // New metrics
+            new_visitors: 0,
+            returning_visitors: 0,
+            invalid_card_attempts: 0,
+            total_time_to_first_action: 0,
+            first_action_count: 0,
+            games_abandoned: 0,
+            abandon_turns_total: 0,
+            hints_playable_card: 0,
+            hints_draw_card: 0,
+            total_suit_selection_time: 0,
+            suit_selection_count: 0,
+            total_session_duration: 0,
+            session_count: 0
         };
 
         for (const date of dates) {
@@ -131,6 +145,28 @@ export default async function handler(req, res) {
                 : 0
         };
 
+        // Calculate new derived metrics
+        const avgTimeToFirstAction = totals.first_action_count > 0
+            ? Math.round(totals.total_time_to_first_action / totals.first_action_count / 1000)
+            : 0;
+
+        const avgSuitSelectionTime = totals.suit_selection_count > 0
+            ? Math.round(totals.total_suit_selection_time / totals.suit_selection_count / 1000)
+            : 0;
+
+        const avgSessionDuration = totals.session_count > 0
+            ? Math.round(totals.total_session_duration / totals.session_count / 1000)
+            : 0;
+
+        const avgAbandonTurn = totals.games_abandoned > 0
+            ? Math.round(totals.abandon_turns_total / totals.games_abandoned)
+            : 0;
+
+        const totalVisitors = totals.new_visitors + totals.returning_visitors;
+        const returningRate = totalVisitors > 0
+            ? ((totals.returning_visitors / totalVisitors) * 100).toFixed(1)
+            : 0;
+
         return res.status(200).json({
             success: true,
             period: `Last ${days} days`,
@@ -143,6 +179,22 @@ export default async function handler(req, res) {
                 avg_game_duration: `${avgGameDuration}s`,
                 conversion_rate: `${conversionRate}%`,
                 emails_sent: totals.email_sent_success
+            },
+            visitors: {
+                total: totalVisitors,
+                new: totals.new_visitors,
+                returning: totals.returning_visitors,
+                returning_rate: `${returningRate}%`,
+                avg_session_duration: `${avgSessionDuration}s`
+            },
+            user_behavior: {
+                avg_time_to_first_action: `${avgTimeToFirstAction}s`,
+                invalid_card_attempts: totals.invalid_card_attempts,
+                hints_playable: totals.hints_playable_card,
+                hints_draw: totals.hints_draw_card,
+                avg_suit_selection_time: `${avgSuitSelectionTime}s`,
+                games_abandoned: totals.games_abandoned,
+                avg_abandon_turn: avgAbandonTurn
             },
             funnel: {
                 games_won: totals.player_wins,

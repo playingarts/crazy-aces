@@ -78,27 +78,34 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Rate limiting: Prevent spam and abuse
-        const clientIP = getClientIP(req);
-
-        // IP-based rate limit: 3 discount claims per IP per hour
-        const ipRateLimit = await checkRateLimit(
-            redis,
-            `ratelimit:claim:ip:${clientIP}`,
-            3,
-            3600 // 1 hour
-        );
-
-        if (!ipRateLimit.allowed) {
-            const resetDate = new Date(ipRateLimit.resetAt);
-            return res.status(429).json({
-                success: false,
-                error: 'Too many discount requests. Please try again later.',
-                retryAfter: Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000)
-            });
-        }
-
         const { email, sessionToken } = req.body;
+
+        // Test email whitelist - bypasses rate limiting for testing
+        const testEmails = ['korzinin@gmail.com'];
+        const emailForRateCheck = email ? email.trim().toLowerCase() : '';
+        const isTestEmailForRate = testEmails.includes(emailForRateCheck);
+
+        // Rate limiting: Prevent spam and abuse (skip for test emails)
+        if (!isTestEmailForRate) {
+            const clientIP = getClientIP(req);
+
+            // IP-based rate limit: 3 discount claims per IP per hour
+            const ipRateLimit = await checkRateLimit(
+                redis,
+                `ratelimit:claim:ip:${clientIP}`,
+                3,
+                3600 // 1 hour
+            );
+
+            if (!ipRateLimit.allowed) {
+                const resetDate = new Date(ipRateLimit.resetAt);
+                return res.status(429).json({
+                    success: false,
+                    error: 'Too many discount requests. Please try again later.',
+                    retryAfter: Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000)
+                });
+            }
+        }
 
         // Validate session token
         if (!sessionToken) {
@@ -158,22 +165,27 @@ export default async function handler(req, res) {
         // Use hashed email in Redis key for privacy
         const claimKey = `claim:${emailHash}`;
 
-        if (redis) {
-            // Production: Check Redis
-            const existingClaim = await redis.get(claimKey);
-            if (existingClaim) {
-                return res.status(409).json({
-                    success: false,
-                    error: 'This email has already claimed a discount'
-                });
-            }
-        } else {
-            // Development: Check in-memory Map
-            if (claimedEmails.has(normalizedEmail)) {
-                return res.status(409).json({
-                    success: false,
-                    error: 'This email has already claimed a discount'
-                });
+        // Use test email whitelist from rate limit check (also bypasses claim check)
+        const isTestEmail = testEmails.includes(normalizedEmail) || testEmails.includes(email.trim().toLowerCase());
+
+        if (!isTestEmail) {
+            if (redis) {
+                // Production: Check Redis
+                const existingClaim = await redis.get(claimKey);
+                if (existingClaim) {
+                    return res.status(409).json({
+                        success: false,
+                        error: 'This email has already claimed a discount'
+                    });
+                }
+            } else {
+                // Development: Check in-memory Map
+                if (claimedEmails.has(normalizedEmail)) {
+                    return res.status(409).json({
+                        success: false,
+                        error: 'This email has already claimed a discount'
+                    });
+                }
             }
         }
 
@@ -350,6 +362,9 @@ export default async function handler(req, res) {
             if (emailResult.error) {
                 console.error('[ERROR] Email send failed:', {
                     errorType: emailResult.error?.name || 'Unknown',
+                    errorMessage: emailResult.error?.message || 'No message',
+                    errorCode: emailResult.error?.statusCode || 'No code',
+                    fromAddress: process.env.EMAIL_FROM,
                     timestamp: new Date().toISOString()
                 });
                 return res.status(500).json({
@@ -376,6 +391,8 @@ export default async function handler(req, res) {
         } catch (error) {
             console.error('[ERROR] Email service exception:', {
                 errorType: error?.name || 'Unknown',
+                errorMessage: error?.message || 'No message',
+                fromAddress: process.env.EMAIL_FROM,
                 timestamp: new Date().toISOString()
             });
             return res.status(500).json({

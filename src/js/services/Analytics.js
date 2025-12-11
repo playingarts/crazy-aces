@@ -19,6 +19,8 @@ export const AnalyticsEvents = {
     CARD_PLAYED: 'card_played',
     CARD_DRAWN: 'card_drawn',
     SUIT_SELECTED: 'suit_selected',
+    INVALID_CARD: 'invalid_card',
+    HINT_SHOWN: 'hint_shown',
 
     // Conversion funnel
     DISCOUNT_OFFERED: 'discount_offered',
@@ -31,7 +33,12 @@ export const AnalyticsEvents = {
     // Engagement
     RULES_VIEWED: 'rules_viewed',
     PLAY_AGAIN: 'play_again',
-    PLAY_FOR_MORE: 'play_for_more'
+    PLAY_FOR_MORE: 'play_for_more',
+    FIRST_ACTION: 'first_action',
+
+    // Session
+    SESSION_START: 'session_start',
+    SESSION_END: 'session_end'
 };
 
 class AnalyticsService {
@@ -46,6 +53,16 @@ class AnalyticsService {
         this.eventQueue = [];
         this.flushInterval = null;
         this.apiUrl = null;
+
+        // New tracking properties
+        this.referrer = document.referrer || 'direct';
+        this.isReturning = this.checkReturningVisitor();
+        this.pageLoadTime = Date.now();
+        this.firstActionTracked = false;
+        this.suitSelectionStartTime = null;
+        this.sessionStartTime = Date.now();
+        this.invalidAttempts = 0;
+        this.currentTurn = 0;
     }
 
     /**
@@ -56,6 +73,54 @@ class AnalyticsService {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
             || window.innerWidth < 768;
         return isMobile ? 'mobile' : 'desktop';
+    }
+
+    /**
+     * Check if this is a returning visitor
+     * @returns {boolean}
+     */
+    checkReturningVisitor() {
+        try {
+            const lastVisit = localStorage.getItem('analytics_last_visit');
+            const now = Date.now();
+            localStorage.setItem('analytics_last_visit', now.toString());
+            return !!lastVisit;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Parse referrer into category
+     * @returns {string} Referrer category
+     */
+    parseReferrer() {
+        const ref = this.referrer;
+        if (!ref || ref === 'direct') return 'direct';
+
+        try {
+            const url = new URL(ref);
+            const host = url.hostname.toLowerCase();
+
+            // Social media
+            if (host.includes('facebook') || host.includes('fb.com')) return 'facebook';
+            if (host.includes('twitter') || host.includes('x.com')) return 'twitter';
+            if (host.includes('instagram')) return 'instagram';
+            if (host.includes('linkedin')) return 'linkedin';
+            if (host.includes('reddit')) return 'reddit';
+
+            // Search engines
+            if (host.includes('google')) return 'google';
+            if (host.includes('bing')) return 'bing';
+            if (host.includes('duckduckgo')) return 'duckduckgo';
+
+            // Playing Arts sites
+            if (host.includes('playingarts.com')) return 'playingarts';
+
+            return host;
+        } catch {
+            return 'unknown';
+        }
     }
 
     /**
@@ -71,7 +136,13 @@ class AnalyticsService {
         this.flushInterval = setInterval(() => this.flush(), 5000);
 
         // Flush on page unload
-        window.addEventListener('beforeunload', () => this.flush(true));
+        window.addEventListener('beforeunload', () => {
+            this.sessionEnd();
+            this.flush(true);
+        });
+
+        // Track session start with referrer
+        this.sessionStart();
 
         logger.debug('Analytics initialized', { sessionId: this.sessionId });
     }
@@ -289,6 +360,119 @@ class AnalyticsService {
             current: currentPercent,
             target: targetPercent
         });
+    }
+
+    // ========================================================================
+    // NEW TRACKING METHODS
+    // ========================================================================
+
+    /**
+     * Track session start with referrer info
+     */
+    sessionStart() {
+        this.track(AnalyticsEvents.SESSION_START, {
+            referrer: this.parseReferrer(),
+            referrerFull: this.referrer.slice(0, 200),
+            isReturning: this.isReturning
+        });
+    }
+
+    /**
+     * Track session end with duration
+     */
+    sessionEnd() {
+        const duration = Date.now() - this.sessionStartTime;
+        this.track(AnalyticsEvents.SESSION_END, {
+            duration,
+            gamesPlayed: this.turnCount > 0 ? 1 : 0
+        });
+    }
+
+    /**
+     * Track first action (time from page load)
+     */
+    firstAction() {
+        if (this.firstActionTracked) return;
+        this.firstActionTracked = true;
+
+        const timeToAction = Date.now() - this.pageLoadTime;
+        this.track(AnalyticsEvents.FIRST_ACTION, {
+            timeToAction
+        });
+    }
+
+    /**
+     * Track invalid card attempt
+     * @param {Object} card - Card that was attempted
+     * @param {string} reason - Why it was invalid
+     */
+    invalidCard(card, reason = 'not_playable') {
+        this.invalidAttempts++;
+        this.track(AnalyticsEvents.INVALID_CARD, {
+            cardType: card?.isJoker ? 'joker' : (card?.isAce ? 'ace' : 'regular'),
+            rank: card?.rank,
+            suit: card?.suit,
+            reason,
+            attemptNumber: this.invalidAttempts,
+            turn: this.currentTurn
+        });
+    }
+
+    /**
+     * Track hint shown
+     * @param {string} hintType - Type of hint
+     */
+    hintShown(hintType = 'playable_card') {
+        this.track(AnalyticsEvents.HINT_SHOWN, {
+            hintType,
+            turn: this.currentTurn
+        });
+    }
+
+    /**
+     * Track game abandoned
+     */
+    gameAbandoned() {
+        const duration = this.gameStartTime ? Date.now() - this.gameStartTime : 0;
+        this.track(AnalyticsEvents.GAME_ABANDONED, {
+            turn: this.currentTurn,
+            cardsPlayed: this.cardsPlayed,
+            cardsDrawn: this.cardsDrawn,
+            duration
+        });
+    }
+
+    /**
+     * Start timing suit selection
+     */
+    startSuitSelection() {
+        this.suitSelectionStartTime = Date.now();
+    }
+
+    /**
+     * Track suit selection with timing
+     * @param {string} cardType - 'ace' or 'joker'
+     * @param {string} chosenSuit - Suit selected
+     */
+    suitSelectedWithTiming(cardType, chosenSuit) {
+        const selectionTime = this.suitSelectionStartTime
+            ? Date.now() - this.suitSelectionStartTime
+            : null;
+
+        this.track(AnalyticsEvents.SUIT_SELECTED, {
+            cardType,
+            suit: chosenSuit,
+            selectionTime
+        });
+
+        this.suitSelectionStartTime = null;
+    }
+
+    /**
+     * Update current turn (call on each play)
+     */
+    incrementTurn() {
+        this.currentTurn++;
     }
 
     /**

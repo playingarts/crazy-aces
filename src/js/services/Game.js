@@ -170,9 +170,15 @@ export class Game {
             this.state.isProcessingMove = true;
             this.state.isComputerTurn = true;
 
+            // Track first action (before validation to capture even failed attempts)
+            analytics.firstAction();
+
             // Validate move
             const validation = this.engine.validatePlayerMove(cardIndex);
             if (!validation.valid) {
+                // Track invalid card attempt
+                analytics.invalidCard(card, validation.reason);
+
                 // Unlock turn and processing if validation fails
                 this.state.isComputerTurn = false;
                 this.state.isProcessingMove = false;
@@ -189,6 +195,9 @@ export class Game {
                 }
                 return;
             }
+
+            // Increment turn counter for analytics
+            analytics.incrementTurn();
 
             // Clear hint timer and mark player has acted
             this.ui.clearHintTimer();
@@ -291,6 +300,9 @@ export class Game {
                 this.logger.debug('🃏 Player played Ace - preloading all Ace images');
                 await this.ui.preloadHandImages([playedCard]).catch(() => {});
 
+                // Start suit selection timing
+                analytics.startSuitSelection();
+
                 // Show suit selector with already-chosen suits disabled
                 // (these are the suits that were CHOSEN by previous Aces, not the original Ace suits)
                 this.ui.showSuitSelector(
@@ -382,8 +394,8 @@ export class Game {
             this.state.currentSuit = suit;
             this.state.currentRank = originalRank; // Use original rank (always 'A' for Aces)
 
-            // Track suit selection
-            analytics.suitSelected(cardToTransform.isAce ? 'ace' : 'joker', suit);
+            // Track suit selection with timing
+            analytics.suitSelectedWithTiming(cardToTransform.isAce ? 'ace' : 'joker', suit);
 
             // Record the chosen suit (for Ace only)
             if (cardToTransform.isAce) {
@@ -468,6 +480,9 @@ export class Game {
             this.state.isComputerTurn = true; // Lock turn
             this.ui.clearHintTimer();
             this.ui.hideDeckHint(true); // Hide and dismiss permanently (they learned to draw)
+
+            // Track first action
+            analytics.firstAction();
 
             // Mark that player has acted
             if (!this.state.playerHasActed) {
@@ -729,6 +744,8 @@ export class Game {
         if (hasPlayableCard) {
             // Only show shake hints before first move
             if (!this.state.playerMadeFirstMove) {
+                // Track hint shown
+                analytics.hintShown('playable_card');
                 this.ui.showPlayableCardHint((index) => {
                     const card = this.state.playerHand[index];
                     return this.engine.canPlayCard(card);
@@ -736,6 +753,7 @@ export class Game {
             }
         } else {
             // Player has no playable cards - show deck hint (works even after first move)
+            analytics.hintShown('draw_card');
             this.ui.showDeckHint();
         }
 
@@ -768,6 +786,11 @@ export class Game {
      * Reset and start new game
      */
     async reset() {
+        // Track game abandoned if game was in progress
+        if (this.state.gameStarted && !this.state.gameOver && analytics.currentTurn > 0) {
+            analytics.gameAbandoned();
+        }
+
         this.state.reset();
         await this.init();
     }

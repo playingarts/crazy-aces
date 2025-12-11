@@ -301,6 +301,12 @@ export class EventController {
      * @returns {boolean} True if already claimed
      */
     hasEmailClaimed(email) {
+        // Test emails can claim unlimited times
+        const testEmails = ['korzinin@gmail.com'];
+        if (testEmails.includes(email.toLowerCase())) {
+            return false;
+        }
+
         try {
             const claimed = localStorage.getItem('claimedEmails');
             if (!claimed) return false;
