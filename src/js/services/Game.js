@@ -71,46 +71,33 @@ export class Game {
             this.state.initializeGame(this.config.GAME.INITIAL_HAND_SIZE);
             this.state.ensurePlayerHasPlayableCard();
 
-            // Preload images (wait for completion to avoid loading flash)
+            // Preload images in parallel for faster loading
             this.ui.updateStatus('Loading images...');
             const topCard = this.state.topCard;
-            if (topCard) {
-                try {
-                    await this.ui.preloadImage(topCard.imageUrl);
-                } catch (err) {
-                    await this.errorService.handle(err, ErrorContext.IMAGE_LOAD, {
-                        severity: ErrorSeverity.LOW,
-                        metadata: { image: topCard.imageUrl, card: 'topCard' }
-                    });
-                }
+            const preloadPromises = [];
+
+            // Collect all preload promises
+            if (topCard?.imageUrl) {
+                preloadPromises.push(this.ui.preloadImage(topCard.imageUrl).catch(() => {}));
             }
-            // Preload both player and computer hands
-            try {
-                await this.ui.preloadHandImages(this.state.playerHand);
-            } catch (err) {
-                await this.errorService.handle(err, ErrorContext.IMAGE_LOAD, {
-                    severity: ErrorSeverity.LOW,
-                    metadata: { hand: 'player', count: this.state.playerHand.length }
-                });
-            }
-            try {
-                await this.ui.preloadHandImages(this.state.computerHand);
-            } catch (err) {
-                await this.errorService.handle(err, ErrorContext.IMAGE_LOAD, {
-                    severity: ErrorSeverity.LOW,
-                    metadata: { hand: 'computer', count: this.state.computerHand.length }
-                });
-            }
+            preloadPromises.push(this.ui.preloadHandImages(this.state.playerHand).catch(() => {}));
+            preloadPromises.push(this.ui.preloadHandImages(this.state.computerHand).catch(() => {}));
+
+            // Start session in parallel (don't block on it)
+            const sessionPromise = this.sessionService
+                ? this.sessionService.startSession().catch(() => {})
+                : Promise.resolve();
+
+            // Wait for all images to load in parallel
+            await Promise.all(preloadPromises);
 
             // Render initial state
             this.render();
 
             this.ui.hideGameOver();
 
-            // Start game session for server-side tracking (must await to ensure session exists)
-            if (this.sessionService) {
-                await this.sessionService.startSession();
-            }
+            // Ensure session is ready (usually already done by now)
+            await sessionPromise;
 
             // Track game started
             analytics.gameStarted();
