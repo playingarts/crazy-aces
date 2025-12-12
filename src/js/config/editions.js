@@ -393,15 +393,50 @@ export const EDITIONS = {
 // List of available edition IDs for random selection
 export const EDITION_IDS = Object.keys(EDITIONS);
 
+// Storage key for last played edition
+const LAST_EDITION_KEY = 'lastPlayedEdition';
+
 /**
- * Get a random edition (different from current)
+ * Get the last played edition from localStorage
+ * @returns {string|null} Last edition ID or null
+ */
+function getLastEditionId() {
+    try {
+        return localStorage.getItem(LAST_EDITION_KEY);
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Save the current edition to localStorage
+ * @param {string} editionId - Edition ID to save
+ */
+function saveLastEditionId(editionId) {
+    try {
+        localStorage.setItem(LAST_EDITION_KEY, editionId);
+    } catch {
+        // Ignore storage errors
+    }
+}
+
+/**
+ * Get a random edition (different from last played)
  * @returns {Object} Random edition config
  */
 export function getRandomEdition() {
-    // Filter out the current edition to ensure rotation
-    const availableIds = EDITION_IDS.filter((id) => id !== currentEdition.id);
+    // Get last played edition from storage (persists across refreshes)
+    const lastEditionId = getLastEditionId() || currentEdition.id;
+
+    // Filter out the last edition to ensure rotation
+    const availableIds = EDITION_IDS.filter((id) => id !== lastEditionId);
     const randomIndex = Math.floor(Math.random() * availableIds.length);
-    return EDITIONS[availableIds[randomIndex]];
+    const selectedEdition = EDITIONS[availableIds[randomIndex]];
+
+    // Save selection for next rotation
+    saveLastEditionId(selectedEdition.id);
+
+    return selectedEdition;
 }
 
 /**
