@@ -12,6 +12,7 @@ import { UIStateManager } from '../ui/UIStateManager.js';
 import { logger } from '../utils/Logger.js';
 import { errorService, ErrorContext, ErrorSeverity } from './ErrorService.js';
 import { analytics } from './Analytics.js';
+import { getRandomEdition, setCurrentEdition, getCurrentEdition } from '../config/editions.js';
 
 export class Game {
     /**
@@ -48,6 +49,20 @@ export class Game {
         try {
             this.ui.clearAllTimeouts();
             this.ui.updateStatus('Loading cards...');
+
+            // Select a random edition for this game
+            const edition = getRandomEdition();
+            setCurrentEdition(edition);
+            this.logger.debug('Selected edition:', edition.name);
+
+            // Clear preload cache if edition changed
+            this.ui.checkEditionChange(edition.id);
+
+            // Update card-back CSS for current edition
+            document.documentElement.style.setProperty(
+                '--card-back-image',
+                `url('${edition.baseUrl}${edition.backsideImage}')`
+            );
 
             // Reset all UI elements to default state
             this.uiState.resetAllDisplays();

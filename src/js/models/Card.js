@@ -2,8 +2,7 @@
  * Card model representing a playing card
  */
 
-import { GAME_CONFIG } from '../config/constants.js';
-import { ARTIST_URL_SLUGS, CARD_IMAGE_FILENAMES } from '../config/cardData.js';
+import { getCurrentEdition } from '../config/editions.js';
 
 export class Card {
     constructor(rank, suit, artist) {
@@ -15,25 +14,46 @@ export class Card {
     }
 
     /**
-     * Get the image URL for this card
+     * Get the image URL for this card using current edition
      */
     get imageUrl() {
+        const edition = getCurrentEdition();
         const key = this.isJoker
-            ? this.artist === 'Mike Friedrich'
+            ? this.jokerIndex === 1
                 ? 'JOKER'
                 : 'JOKER_2'
             : `${this.rank}${this.suit}`;
 
-        const filename = CARD_IMAGE_FILENAMES[key];
-        return filename ? `${GAME_CONFIG.URLS.BASE_IMAGE}${filename}` : '';
+        const filename = edition.cardFilenames[key];
+        return filename ? `${edition.baseUrl}${filename}` : '';
     }
 
     /**
-     * Get the artist page URL
+     * Get the artist page URL using current edition
      */
     get artistUrl() {
-        const slug = ARTIST_URL_SLUGS[this.artist];
-        return slug ? `${GAME_CONFIG.URLS.CARD_INFO_BASE}${slug}` : GAME_CONFIG.URLS.CARD_INFO_BASE;
+        const edition = getCurrentEdition();
+        const key = this.isJoker
+            ? this.jokerIndex === 1
+                ? 'JOKER'
+                : 'JOKER_2'
+            : `${this.rank}${this.suit}`;
+
+        // Check for URL override first
+        if (edition.cardArtistUrls && edition.cardArtistUrls[key]) {
+            return `${edition.infoUrl}${edition.cardArtistUrls[key]}`;
+        }
+
+        // Fall back to deriving from filename
+        const filename = edition.cardFilenames[key];
+        if (!filename) return edition.infoUrl;
+
+        const artistSlug = filename
+            .replace(/\.(?:jpg|gif).*$/, '')
+            .replace(/^(?:\d+|ace|jack|queen|king)-of-(?:spades|hearts|diamonds|dimonds|clubs)-/, '')
+            .replace(/^joker-(?:\d-)?/, '');
+
+        return artistSlug ? `${edition.infoUrl}${artistSlug}` : edition.infoUrl;
     }
 
     /**
@@ -56,7 +76,9 @@ export class Card {
      * Create a copy of this card
      */
     clone() {
-        return new Card(this.rank, this.suit, this.artist);
+        const card = new Card(this.rank, this.suit, this.artist);
+        card.jokerIndex = this.jokerIndex;
+        return card;
     }
 
     /**
@@ -68,7 +90,8 @@ export class Card {
             suit: this.suit,
             artist: this.artist,
             isAce: this.isAce,
-            isJoker: this.isJoker
+            isJoker: this.isJoker,
+            jokerIndex: this.jokerIndex
         };
     }
 
@@ -76,7 +99,9 @@ export class Card {
      * Create from JSON
      */
     static fromJSON(json) {
-        return new Card(json.rank, json.suit, json.artist);
+        const card = new Card(json.rank, json.suit, json.artist);
+        card.jokerIndex = json.jokerIndex;
+        return card;
     }
 
     /**

@@ -293,6 +293,14 @@ export class GameUI {
         return this.assetLoader.preloadCardOnDraw(card);
     }
 
+    /**
+     * Check if edition changed and clear cache if needed
+     * @param {string} editionId - Current edition ID
+     */
+    checkEditionChange(editionId) {
+        this.assetLoader.checkEditionChange(editionId);
+    }
+
     // ========== Game Over (delegated to GameOverView) ==========
 
     /**

@@ -3,8 +3,7 @@
  * Renders table card, player hand, computer hand, and card stack
  */
 
-import { GAME_CONFIG } from '../config/constants.js';
-import { CARD_IMAGE_FILENAMES, CARD_ARTISTS, ARTIST_URL_SLUGS } from '../config/cardData.js';
+import { getCurrentEdition } from '../config/editions.js';
 
 export class CardRenderer {
     constructor(config, elements) {
@@ -18,9 +17,10 @@ export class CardRenderer {
      * @returns {string} Image URL for the Ace of that suit
      */
     getAceImageUrl(suit) {
+        const edition = getCurrentEdition();
         const key = `A${suit}`;
-        const filename = CARD_IMAGE_FILENAMES[key];
-        return filename ? `${GAME_CONFIG.URLS.BASE_IMAGE}${filename}` : '';
+        const filename = edition.cardFilenames[key];
+        return filename ? `${edition.baseUrl}${filename}` : '';
     }
 
     /**
@@ -89,12 +89,25 @@ export class CardRenderer {
                 `;
             } else if (card.isAce) {
                 // Ace: show rank + new suit + artist for the NEW suit
+                const edition = getCurrentEdition();
                 const newAceKey = `A${currentSuit}`;
-                const newArtist = CARD_ARTISTS[newAceKey] || card.artist;
-                const newArtistSlug = ARTIST_URL_SLUGS[newArtist];
-                const newArtistUrl = newArtistSlug
-                    ? `${GAME_CONFIG.URLS.CARD_INFO_BASE}${newArtistSlug}`
-                    : GAME_CONFIG.URLS.CARD_INFO_BASE;
+                const newArtist = edition.cardArtists[newAceKey] || card.artist;
+
+                // Get artist URL for the new Ace
+                let newArtistUrl = edition.infoUrl;
+                if (edition.cardArtistUrls && edition.cardArtistUrls[newAceKey]) {
+                    newArtistUrl = `${edition.infoUrl}${edition.cardArtistUrls[newAceKey]}`;
+                } else {
+                    const newAceFilename = edition.cardFilenames[newAceKey];
+                    if (newAceFilename) {
+                        const newArtistSlug = newAceFilename
+                            .replace(/\.(?:jpg|gif).*$/, '')
+                            .replace(/^ace-of-(?:spades|hearts|diamonds|clubs)-/, '');
+                        if (newArtistSlug) {
+                            newArtistUrl = `${edition.infoUrl}${newArtistSlug}`;
+                        }
+                    }
+                }
 
                 this.elements.tableCard.innerHTML = `
                     <div class="card-info">

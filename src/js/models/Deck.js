@@ -4,7 +4,7 @@
 
 import { Card } from './Card.js';
 import { SUITS, RANKS, GAME_CONFIG } from '../config/constants.js';
-import { CARD_ARTISTS } from '../config/cardData.js';
+import { getCurrentEdition } from '../config/editions.js';
 
 export class Deck {
     constructor() {
@@ -14,9 +14,11 @@ export class Deck {
 
     /**
      * Initialize a standard 54-card deck (52 + 2 jokers)
+     * Uses current edition for artist data
      */
     _initialize() {
         this.cards = [];
+        const edition = getCurrentEdition();
 
         // Create standard 52 cards
         Object.values(SUITS).forEach((suit) => {
@@ -24,15 +26,18 @@ export class Deck {
 
             RANKS.forEach((rank) => {
                 const key = `${rank}${suit}`;
-                const artist = CARD_ARTISTS[key] || 'Unknown';
+                const artist = edition.cardArtists[key] || 'Unknown';
                 this.cards.push(new Card(rank, suit, artist));
             });
         });
 
-        // Add jokers
+        // Add jokers with jokerIndex for image lookup
         for (let i = 0; i < GAME_CONFIG.NUM_JOKERS; i++) {
-            const artist = i === 0 ? CARD_ARTISTS.JOKER_1 : CARD_ARTISTS.JOKER_2;
-            this.cards.push(new Card('JOKER', SUITS.JOKER, artist));
+            const artistKey = i === 0 ? 'JOKER_1' : 'JOKER_2';
+            const artist = edition.cardArtists[artistKey] || 'Unknown';
+            const joker = new Card('JOKER', SUITS.JOKER, artist);
+            joker.jokerIndex = i + 1; // 1 or 2
+            this.cards.push(joker);
         }
     }
 

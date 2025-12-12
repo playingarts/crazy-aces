@@ -3,12 +3,39 @@
  * Manages image caching and preloading to prevent blank cards
  */
 
+import { getCurrentEdition } from '../config/editions.js';
+
 export class AssetLoader {
     constructor() {
         // Image preloading cache
         this.preloadedImages = [];
         this.preloadedUrls = new Set();
-        this.acesPreloaded = false; // Track if all Aces have been preloaded
+        this.acesPreloadedForEdition = null; // Track which edition's Aces have been preloaded
+        this.currentEditionId = null; // Track current edition for cache invalidation
+    }
+
+    /**
+     * Clear the preload cache (called when edition changes)
+     * NOTE: We keep preloadedImages to prevent garbage collection of loaded images
+     * Only clear the URL tracking so new edition URLs get preloaded
+     */
+    clearCache() {
+        // DON'T clear preloadedImages - they keep images in browser memory
+        // this.preloadedImages = [];
+        this.preloadedUrls.clear();
+        this.acesPreloadedForEdition = null;
+    }
+
+    /**
+     * Check and clear cache if edition changed
+     * @param {string} editionId - Current edition ID
+     */
+    checkEditionChange(editionId) {
+        if (this.currentEditionId && this.currentEditionId !== editionId) {
+            console.log('🔄 Edition changed, clearing preload cache');
+            this.clearCache();
+        }
+        this.currentEditionId = editionId;
     }
 
     /**
@@ -67,7 +94,9 @@ export class AssetLoader {
                 if (card.isAce) hasAce = true;
             });
 
+            console.log('🎴 Preloading hand images:', urls.length, 'cards');
             await Promise.all(urls.map((url) => this.preloadImage(url)));
+            console.log('✅ Hand preloading complete, cached URLs:', this.preloadedUrls.size);
 
             // If any card is an Ace, preload all 4 Aces (since Aces can change suit)
             if (hasAce) {
@@ -83,22 +112,24 @@ export class AssetLoader {
      * @returns {Promise<void>}
      */
     async preloadAllAces() {
-        // Skip if already preloaded
-        if (this.acesPreloaded) {
-            console.log('✓ All Aces already preloaded, skipping');
+        const edition = getCurrentEdition();
+
+        // Skip if already preloaded for this edition
+        if (this.acesPreloadedForEdition === edition.id) {
+            console.log('✓ All Aces already preloaded for', edition.name);
             return;
         }
 
         try {
-            console.log('🎴 Preloading all 4 Ace images (first time)...');
-            const aceUrls = [
-                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-spades-iain-macarthur.jpg?2',
-                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-hearts-mr-kone.jpg?2',
-                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-diamonds-jordan-debney.jpg?2',
-                'https://s3.amazonaws.com/img.playingarts.com/one-small-hd/ace-of-clubs-andreas-preis.jpg?2'
-            ];
+            console.log('🎴 Preloading all 4 Ace images for', edition.name);
+            const suits = ['♠', '♥', '♦', '♣'];
+            const aceUrls = suits.map((suit) => {
+                const key = `A${suit}`;
+                const filename = edition.cardFilenames[key];
+                return `${edition.baseUrl}${filename}`;
+            });
             await Promise.all(aceUrls.map((url) => this.preloadImage(url)));
-            this.acesPreloaded = true; // Mark as preloaded
+            this.acesPreloadedForEdition = edition.id;
             console.log('✅ All 4 Ace images preloaded successfully');
         } catch (error) {
             console.error('❌ Failed to preload Ace images:', error);
