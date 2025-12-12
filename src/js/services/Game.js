@@ -87,14 +87,14 @@ export class Game {
                 });
             }
 
-            // Render initial state (before session to avoid delay)
+            // Render initial state
             this.render();
 
             this.ui.hideGameOver();
 
-            // Start game session for server-side tracking (non-blocking)
+            // Start game session for server-side tracking (must await to ensure session exists)
             if (this.sessionService) {
-                this.sessionService.startSession();
+                await this.sessionService.startSession();
             }
 
             // Track game started
@@ -255,7 +255,7 @@ export class Game {
                     this.render(true, 'bottom');
 
                     await this.delay(this.config.TIMING.GAME_END_DELAY);
-                    this.handleGameEnd(winResult);
+                    await this.handleGameEnd(winResult);
                     return;
                 }
 
@@ -582,7 +582,7 @@ export class Game {
                     if (jokerWinResult) {
                         this.state.isProcessingMove = false; // Unlock processing - game is over
                         await this.delay(this.config.TIMING.GAME_END_DELAY);
-                        this.handleGameEnd(jokerWinResult); // CRITICAL FIX: Use captured result
+                        await this.handleGameEnd(jokerWinResult); // CRITICAL FIX: Use captured result
                         return;
                     }
 
@@ -722,9 +722,9 @@ export class Game {
             this.ui.updateStatus('Opponent wins!');
         }
 
-        // Update server-side session with game result (non-blocking)
+        // Update server-side session with game result (must await to ensure win streak is recorded)
         if (this.sessionService) {
-            this.sessionService.updateSession(playerWon);
+            await this.sessionService.updateSession(playerWon);
         }
     }
 
