@@ -190,10 +190,10 @@ export default async function handler(req, res) {
             }
         }
 
-        // NEW SYSTEM: Calculate discount based on win streak
-        // - Play 1 game (win or lose) = 5% Welcome Bonus
-        // - WIN 1 game = 10%
-        // - WIN 2+ games in a row = 15%
+        // Discount calculation based on win streak:
+        // - Play 1 game (win or lose) = 5% Deck Discount
+        // - WIN 1 game = 10% Deck Discount
+        // - WIN 2+ games in a row = 15% Deck Discount
         let discountPercent;
         if (winStreak >= 2) {
             discountPercent = 15; // 2+ consecutive wins
@@ -241,14 +241,12 @@ export default async function handler(req, res) {
             const safeWinStreak = escapeHtml(String(winStreak));
             const safeDiscountCode = escapeHtml(discountCode);
 
-            // Determine bonus tier name and greeting for email
-            let bonusName = 'Welcome Bonus';
+            // Determine discount tier name and greeting for email
+            let discountTierName = 'Deck Discount';
             let greeting = 'Welcome, Card Collector! 🎉';
             if (discountPercent === 15) {
-                bonusName = 'Champion Bonus';
                 greeting = 'Champion Status Unlocked! 🏆';
             } else if (discountPercent === 10) {
-                bonusName = 'Winner Bonus';
                 greeting = "You're a Winner! 🏆";
             }
 
@@ -263,7 +261,7 @@ export default async function handler(req, res) {
             const emailResult = await resend.emails.send({
                 from: process.env.EMAIL_FROM,
                 to: normalizedEmail,
-                subject: `Your ${safeDiscountPercent}% ${bonusName} Awaits - Playing Arts`,
+                subject: `Your ${safeDiscountPercent}% ${discountTierName} Awaits - Playing Arts`,
                 html: `
 <!DOCTYPE html>
 <html>
@@ -297,7 +295,7 @@ export default async function handler(req, res) {
                     <tr>
                         <td style="padding:0 0 25px 0;">
                             <p style="margin:0; font-size:16px; line-height:1.6; color:#333; font-family:'Segoe UI', Arial, sans-serif;">
-                                You've earned a <strong>${safeDiscountPercent}% ${bonusName}</strong> for ${achievementText}!
+                                You've earned a <strong>${safeDiscountPercent}% ${discountTierName}</strong> for ${achievementText}!
                             </p>
                         </td>
                     </tr>
@@ -361,24 +359,25 @@ export default async function handler(req, res) {
 
             // Check if Resend returned an error
             if (emailResult.error) {
+                const errorMsg = emailResult.error?.message || 'Unknown error';
                 console.error('[ERROR] Email send failed:', {
                     errorType: emailResult.error?.name || 'Unknown',
-                    errorMessage: emailResult.error?.message || 'No message',
+                    errorMessage: errorMsg,
                     errorCode: emailResult.error?.statusCode || 'No code',
                     fromAddress: process.env.EMAIL_FROM,
                     timestamp: new Date().toISOString()
                 });
                 return res.status(500).json({
                     success: false,
-                    error: 'Failed to send email. Please try again later.'
+                    error: `Failed to send email: ${errorMsg}`
                 });
             }
 
             if (!emailResult.data?.id) {
-                console.error('[ERROR] Email send failed: No email ID returned');
+                console.error('[ERROR] Email send failed: No email ID returned', emailResult);
                 return res.status(500).json({
                     success: false,
-                    error: 'Failed to send email. Please try again later.'
+                    error: 'Failed to send email: No email ID returned'
                 });
             }
 
@@ -402,15 +401,16 @@ export default async function handler(req, res) {
             }
 
         } catch (error) {
+            const errorMsg = error?.message || 'Unknown exception';
             console.error('[ERROR] Email service exception:', {
                 errorType: error?.name || 'Unknown',
-                errorMessage: error?.message || 'No message',
+                errorMessage: errorMsg,
                 fromAddress: process.env.EMAIL_FROM,
                 timestamp: new Date().toISOString()
             });
             return res.status(500).json({
                 success: false,
-                error: 'Failed to send email. Please try again later.'
+                error: `Email service error: ${errorMsg}`
             });
         }
 

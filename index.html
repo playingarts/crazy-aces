@@ -55,7 +55,7 @@
                 </linearGradient>
             </defs>
         </svg>
-        <div class="loading-text">Loading...</div>
+        <div class="loading-text">Shuffling<span class="loading-dots"></span></div>
     </div>
 
     <!-- Playing Arts Logo - Always Visible -->
@@ -75,7 +75,7 @@
 
 
     <!-- Rules Box -->
-    <div class="rules-box" id="rulesBox">
+    <div class="rules-box shown" id="rulesBox">
         <!-- Logo shown only on mobile -->
         <a href="https://playingarts.com" target="_blank" rel="noopener noreferrer" class="rules-box-logo">
             <svg width="100" height="20" viewBox="0 0 128 26" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
@@ -93,10 +93,7 @@
             </ul>
         </div>
 
-        <div class="rules-buttons">
-            <button class="rules-ok-btn" data-action="hide-rules">Let's play</button>
-            <a href="https://playingarts.com/shop" target="_blank" rel="noopener noreferrer" class="rules-shop-btn">Shop decks</a>
-        </div>
+        <button class="rules-ok-btn" data-action="hide-rules">Let's play</button>
     </div>
 
     <!-- Help Button (shows when rules minimized) -->
@@ -171,10 +168,10 @@
         <div class="discount-section" id="discountSection" style="display: none;">
             <div class="discount-text" id="discountText"></div>
             <div class="discount-info" id="discountInfo">
-                <div id="milestone1"><span class="milestone-icon unchecked">○</span> Play 1 game — 5% Welcome Bonus</div>
-                <div id="milestone2"><span class="milestone-icon unchecked">○</span> Win 1 game — 10% Winner Bonus</div>
-                <div id="milestone3"><span class="milestone-icon unchecked">○</span> Win 2+ in a row — 15% Champion Bonus</div>
-                <div class="discount-note">Redeem your discount for <a href="https://playingarts.com/shop" target="_blank">Playing Arts decks</a></div>
+                <div id="milestone1"><span class="milestone-icon unchecked">○</span> Play 1 game — 5% Deck Discount</div>
+                <div id="milestone2"><span class="milestone-icon unchecked">○</span> Win 1 game — 10% Deck Discount</div>
+                <div id="milestone3"><span class="milestone-icon unchecked">○</span> Win 2+ in a row — 15% Deck Discount</div>
+                <div class="discount-note">Redeem your discount for your next order at <a href="https://playingarts.com/shop" target="_blank">Playing Arts store</a></div>
             </div>
 
             <!-- Claim buttons container (shown initially) -->

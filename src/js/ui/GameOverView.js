@@ -88,11 +88,11 @@ export class GameOverView {
                     // New messaging based on discount tier
                     let message = '';
                     if (discount === 15) {
-                        message = '15% Champion Bonus Unlocked!';
+                        message = '15% Deck Discount Unlocked!';
                     } else if (discount === 10) {
-                        message = '10% Winner Bonus Unlocked!';
+                        message = '10% Deck Discount Unlocked!';
                     } else {
-                        message = '5% Welcome Bonus Unlocked!';
+                        message = '5% Deck Discount Unlocked!';
                     }
                     discountText.textContent = message;
                 }
@@ -133,7 +133,7 @@ export class GameOverView {
                 gameOverIcon.style.display = 'flex';
             }
 
-            // Show Play More button
+            // Show Play More button (no Shop Decks on lose - feels tone-deaf)
             if (playMoreBtn) playMoreBtn.style.display = 'block';
 
             // Check if discount was already claimed
@@ -221,27 +221,27 @@ export class GameOverView {
         // Milestone 1: Play 1 game (always completed after first game)
         if (milestone1) {
             if (gamesPlayed >= 1) {
-                milestone1.innerHTML = '<span class="milestone-icon">●</span> Play 1 game — 5% Welcome Bonus';
+                milestone1.innerHTML = '<span class="milestone-icon checked">●</span> Play 1 game — 5% Deck Discount';
             } else {
-                milestone1.innerHTML = '<span class="milestone-icon unchecked">○</span> Play 1 game — 5% Welcome Bonus';
+                milestone1.innerHTML = '<span class="milestone-icon unchecked">○</span> Play 1 game — 5% Deck Discount';
             }
         }
 
         // Milestone 2: Win 1 game
         if (milestone2) {
             if (winStreak >= 1) {
-                milestone2.innerHTML = '<span class="milestone-icon">●</span> Win 1 game — 10% Winner Bonus';
+                milestone2.innerHTML = '<span class="milestone-icon checked">●</span> Win 1 game — 10% Deck Discount';
             } else {
-                milestone2.innerHTML = '<span class="milestone-icon unchecked">○</span> Win 1 game — 10% Winner Bonus';
+                milestone2.innerHTML = '<span class="milestone-icon unchecked">○</span> Win 1 game — 10% Deck Discount';
             }
         }
 
         // Milestone 3: Win 2+ games in a row
         if (milestone3) {
             if (winStreak >= 2) {
-                milestone3.innerHTML = '<span class="milestone-icon">●</span> Win 2+ in a row — 15% Champion Bonus';
+                milestone3.innerHTML = '<span class="milestone-icon checked">●</span> Win 2+ in a row — 15% Deck Discount';
             } else {
-                milestone3.innerHTML = '<span class="milestone-icon unchecked">○</span> Win 2+ in a row — 15% Champion Bonus';
+                milestone3.innerHTML = '<span class="milestone-icon unchecked">○</span> Win 2+ in a row — 15% Deck Discount';
             }
         }
     }

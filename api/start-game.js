@@ -61,11 +61,11 @@ export default async function handler(req, res) {
 
         // START NEW SESSION
         if (req.method === 'POST' && !req.body.sessionToken) {
-            // Rate limit: 30 new sessions per IP per hour
+            // Rate limit: 200 new sessions per IP per hour (generous for legitimate use)
             const sessionCreateLimit = await checkRateLimit(
                 redis,
                 `ratelimit:session:create:${clientIP}`,
-                30,
+                200,
                 3600 // 1 hour
             );
 
@@ -103,13 +103,69 @@ export default async function handler(req, res) {
             });
         }
 
+        // REUSE SESSION (start new game with existing session to preserve win streak)
+        if (req.method === 'POST' && req.body.sessionToken && req.body.newGame) {
+            const { sessionToken } = req.body;
+
+            // Verify token
+            const tokenData = verifySessionToken(sessionToken);
+            if (!tokenData) {
+                // Token invalid/expired - create new session
+                const sessionId = crypto.randomBytes(32).toString('hex');
+                const sessionData = {
+                    id: sessionId,
+                    winStreak: 0,
+                    gamesPlayed: 0,
+                    createdAt: new Date().toISOString(),
+                    lastActivity: new Date().toISOString(),
+                    ip: req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown'
+                };
+
+                if (redis) {
+                    await redis.setex(`session:${sessionId}`, SESSION_TIMEOUT, JSON.stringify(sessionData));
+                }
+
+                const token = generateSessionToken(sessionId, 0);
+                return res.status(200).json({
+                    success: true,
+                    sessionToken: token,
+                    winStreak: 0
+                });
+            }
+
+            const { sessionId } = tokenData;
+
+            if (redis) {
+                const sessionDataStr = await redis.get(`session:${sessionId}`);
+                if (sessionDataStr) {
+                    const sessionData = JSON.parse(sessionDataStr);
+                    // Refresh session timeout
+                    sessionData.lastActivity = new Date().toISOString();
+                    await redis.setex(`session:${sessionId}`, SESSION_TIMEOUT, JSON.stringify(sessionData));
+
+                    return res.status(200).json({
+                        success: true,
+                        sessionToken: sessionToken,
+                        winStreak: sessionData.winStreak
+                    });
+                }
+            }
+
+            // Fallback: return token data if no Redis
+            return res.status(200).json({
+                success: true,
+                sessionToken: sessionToken,
+                winStreak: tokenData.winStreak || 0
+            });
+        }
+
         // UPDATE SESSION (record win/loss)
         if (req.method === 'POST' && req.body.sessionToken) {
-            // Rate limit: 30 session updates per IP per hour (generous for legitimate gameplay)
+            // Rate limit: 200 session updates per IP per hour (generous for legitimate gameplay)
             const sessionUpdateLimit = await checkRateLimit(
                 redis,
                 `ratelimit:session:update:${clientIP}`,
-                30,
+                200,
                 3600 // 1 hour
             );
 

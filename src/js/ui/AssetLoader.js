@@ -142,14 +142,15 @@ export class AssetLoader {
      * @returns {Promise<void>}
      */
     async preloadCardOnDraw(card) {
+        // Don't block on preloading - render immediately and load in background
         try {
             if (card.imageUrl) {
-                await this.preloadImage(card.imageUrl);
+                this.preloadImage(card.imageUrl).catch(() => {});
             }
 
-            // If it's an Ace, preload all Aces
+            // If it's an Ace, preload all Aces in background (don't block)
             if (card.isAce) {
-                await this.preloadAllAces();
+                this.preloadAllAces().catch(() => {});
             }
         } catch (error) {
             // Continue anyway

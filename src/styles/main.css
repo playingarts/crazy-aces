@@ -87,6 +87,19 @@ body {
     opacity: 0.5;
 }
 
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
+}
+
 .logo-link {
     position: fixed;
     top: 20px;
@@ -119,7 +132,7 @@ body {
     border-radius: 50%;
     background: #212121;
     border: none;
-    color: rgba(255, 255, 255, 0.6);
+    color: #ffffff;
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
@@ -146,7 +159,7 @@ body {
 @keyframes helpBtnPop {
     0% {
         transform: scale(1.8);
-        background: #3a3a3a;
+        background: #212121;
     }
     50% {
         transform: scale(0.9);
@@ -159,13 +172,13 @@ body {
 
 .rules-help-btn:hover {
     background: #333333;
-    color: rgba(255, 255, 255, 0.9);
+    color: #ffffff;
     transform: scale(1.1);
 }
 
 .rules-help-btn:active {
     transform: scale(0.95);
-    background: #2a2a2a;
+    background: #444444;
 }
 
 
@@ -205,7 +218,7 @@ body {
 }
 
 .rules-content {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.75);
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 15px;
@@ -215,7 +228,7 @@ body {
     font-size: 15px;
     font-weight: 600;
     margin: 0 0 8px 0;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .rules-content ul {
@@ -234,7 +247,7 @@ body {
     padding: 12px 28px;
     border-radius: 8px;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 400;
     cursor: pointer;
     width: auto;
     display: block;
@@ -248,35 +261,6 @@ body {
 }
 
 .rules-ok-btn:active {
-    transform: scale(0.98);
-}
-
-.rules-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
-}
-
-.rules-shop-btn {
-    background: #4a4a4a;
-    border: none;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: opacity 0.2s, transform 0.2s;
-}
-
-.rules-shop-btn:hover {
-    opacity: 0.9;
-    transform: scale(1.02);
-}
-
-.rules-shop-btn:active {
     transform: scale(0.98);
 }
 
@@ -459,6 +443,8 @@ body {
     position: relative;
     cursor: pointer;
     transition: transform 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .deck-pile::before,
@@ -505,6 +491,48 @@ body {
 
 .deck-pile.deck-drawing {
     animation: deckDraw 0.4s ease;
+}
+
+/* Flying card from deck */
+.deck-flying-card {
+    position: fixed;
+    background-image: var(--card-back-image);
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.deck-flying-card.deck-flying-bottom {
+    animation: flyToPlayer 0.35s ease-out forwards;
+}
+
+.deck-flying-card.deck-flying-top {
+    animation: flyToOpponent 0.35s ease-out forwards;
+}
+
+@keyframes flyToPlayer {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(250px) scale(0.4);
+        opacity: 0;
+    }
+}
+
+@keyframes flyToOpponent {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-300px) scale(0.3);
+        opacity: 0;
+    }
 }
 
 .card {
@@ -561,11 +589,12 @@ body {
 
 .card-back {
     background-image: var(--card-back-image);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
     position: relative;
     overflow: hidden;
+}
+
+.card-back::before {
+    background-image: var(--card-back-image);
 }
 
 .discard-pile {
@@ -737,7 +766,7 @@ body {
     display: inline-block;
     margin: 0 auto 20px auto;
     overflow: visible;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hand-cards {
@@ -745,7 +774,7 @@ body {
     justify-content: center;
     flex-wrap: nowrap;
     overflow: visible;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hand-cards.dragging {
@@ -942,6 +971,7 @@ body {
         top: 10px;
         right: 10px;
         background-color: #212121 !important;
+        color: #ffffff !important;
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
         /* Visible by default on mobile, on top of rules box */
@@ -1022,6 +1052,31 @@ body {
     body {
         align-items: center;
         padding: 20px;
+    }
+}
+
+/* iPad and tablet specific fixes */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .player-hand-section {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding-bottom: env(safe-area-inset-bottom, 10px);
+        background: linear-gradient(to top, rgba(26, 26, 26, 1) 0%, rgba(26, 26, 26, 0.9) 80%, rgba(26, 26, 26, 0) 100%);
+    }
+
+    .player-hand {
+        margin-bottom: 15px;
+    }
+
+    .game-container {
+        padding-bottom: 130px;
+    }
+
+    .play-area {
+        margin-top: -80px;
     }
 }
 
@@ -1313,7 +1368,7 @@ body {
 
 .discount-text {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.75);
     text-align: left;
     line-height: 1.6;
     margin-bottom: 15px;
@@ -1418,6 +1473,10 @@ body {
 
 .discount-info .milestone-icon.unchecked {
     opacity: 0.5;
+}
+
+.discount-info .milestone-icon.checked {
+    color: rgb(123, 97, 255);
 }
 
 .discount-info .discount-note {
@@ -1676,8 +1735,17 @@ body {
     }
 
     .card {
-        width: 168px;
-        height: 240px;
+        width: 175px;
+        height: 250px;
+        overflow: hidden;
+    }
+
+    .card::before {
+        display: none;
+    }
+
+    .card-info {
+        display: none;
     }
 
     .card .card-rank {
@@ -1876,8 +1944,7 @@ body {
     .play-more-btn {
         padding: 16px 40px;
         font-size: 16px;
-        margin: 15px auto 20px auto;
-        display: inline-block;
+        margin-bottom: 20px;
     }
 
     .email-input {

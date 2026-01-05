@@ -163,6 +163,28 @@ export class GameUI {
     }
 
     /**
+     * Refresh player's hand display without re-rendering other components
+     * Uses the previously stored click handler
+     * @param {Array} hand - Current hand array
+     */
+    refreshPlayerHand(hand) {
+        if (!this.onCardClickHandler) return;
+
+        const onCardClick = this.onCardClickHandler;
+
+        // Setup card handlers callback using stored handler
+        const setupCardHandlers = (cardEl, cardIndex) => {
+            cardEl.addEventListener('click', () => {
+                onCardClick(cardIndex);
+            });
+            this.dragDropHandler.setupCardHandlers(cardEl, cardIndex, onCardClick);
+        };
+
+        // Re-render cards with handlers
+        this.cardRenderer.renderPlayerHand(hand, setupCardHandlers);
+    }
+
+    /**
      * Render computer's hand - delegates to CardRenderer
      */
     renderComputerHand(count) {
@@ -179,10 +201,11 @@ export class GameUI {
     }
 
     /**
-     * Animate deck draw
+     * Animate deck draw with flying card
+     * @param {string} direction - 'bottom' for player, 'top' for opponent
      */
-    animateDeckDraw() {
-        this.animationController.animateDeckDraw();
+    animateDeckDraw(direction = 'bottom') {
+        return this.animationController.animateDeckDraw(direction);
     }
 
     /**

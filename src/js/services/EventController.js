@@ -12,6 +12,13 @@ export class EventController {
         this.game = game;
         this.boundHandleClick = this.handleClick.bind(this);
         this.boundHandleSubmit = this.handleSubmit.bind(this);
+        this.boundHandleTouchStart = this.handleTouchStart.bind(this);
+        this.boundHandleTouchEnd = this.handleTouchEnd.bind(this);
+
+        // Touch state for deck pile swipe tolerance
+        this.deckTouchStartX = 0;
+        this.deckTouchStartY = 0;
+        this.deckTouchStartTime = 0;
     }
 
     /**
@@ -23,6 +30,13 @@ export class EventController {
 
         // Form submission listeners
         document.addEventListener('submit', this.boundHandleSubmit);
+
+        // Touch listeners for deck pile (better mobile support)
+        const deckPile = document.querySelector('.deck-pile');
+        if (deckPile) {
+            deckPile.addEventListener('touchstart', this.boundHandleTouchStart, { passive: true });
+            deckPile.addEventListener('touchend', this.boundHandleTouchEnd);
+        }
     }
 
     /**
@@ -31,6 +45,13 @@ export class EventController {
     removeEventListeners() {
         document.removeEventListener('click', this.boundHandleClick);
         document.removeEventListener('submit', this.boundHandleSubmit);
+
+        // Remove touch listeners from deck pile
+        const deckPile = document.querySelector('.deck-pile');
+        if (deckPile) {
+            deckPile.removeEventListener('touchstart', this.boundHandleTouchStart);
+            deckPile.removeEventListener('touchend', this.boundHandleTouchEnd);
+        }
     }
 
     /**
@@ -105,6 +126,43 @@ export class EventController {
         if (form.dataset.action === 'email-form') {
             event.preventDefault();
             this.handleSendDiscount();
+        }
+    }
+
+    /**
+     * Handle touch start on deck pile
+     * @param {TouchEvent} event - Touch event
+     */
+    handleTouchStart(event) {
+        if (event.touches.length === 1) {
+            const touch = event.touches[0];
+            this.deckTouchStartX = touch.clientX;
+            this.deckTouchStartY = touch.clientY;
+            this.deckTouchStartTime = Date.now();
+        }
+    }
+
+    /**
+     * Handle touch end on deck pile - trigger draw if quick tap or small movement
+     * @param {TouchEvent} event - Touch event
+     */
+    handleTouchEnd(event) {
+        // Only process if we have a valid start position
+        if (this.deckTouchStartTime === 0) return;
+
+        const touch = event.changedTouches[0];
+        const deltaX = Math.abs(touch.clientX - this.deckTouchStartX);
+        const deltaY = Math.abs(touch.clientY - this.deckTouchStartY);
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const duration = Date.now() - this.deckTouchStartTime;
+
+        // Reset touch state
+        this.deckTouchStartTime = 0;
+
+        // Treat as tap if: quick touch (< 300ms) OR small movement (< 100px)
+        if (duration < 300 || distance < 100) {
+            event.preventDefault();
+            this.handleDrawCard();
         }
     }
 

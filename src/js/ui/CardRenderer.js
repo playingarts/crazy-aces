@@ -58,9 +58,20 @@ export class CardRenderer {
 
         const artistUrl = card.artistUrl;
 
-        // Calculate rotation (first card is straight, others have slight rotation)
+        // Calculate rotation only when animating a new card
+        // First card is always straight, subsequent cards have slight rotation
         const isFirstCard = discardPile.length <= 1;
-        const rotation = isFirstCard ? 0 : (Math.random() - 0.5) * 6;
+        let rotation;
+
+        if (animate) {
+            // New card being played - calculate fresh rotation
+            rotation = isFirstCard ? 0 : (Math.random() - 0.5) * 6;
+        } else {
+            // Re-render without animation - preserve existing rotation
+            const currentTransform = this.elements.tableCard.style.transform;
+            const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
+            rotation = match ? parseFloat(match[1]) : 0;
+        }
 
         // Set animation class if needed
         const animationClass = animate ? `card card-animating-from-${animateFrom}` : 'card';

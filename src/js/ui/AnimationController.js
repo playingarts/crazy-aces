@@ -48,15 +48,44 @@ export class AnimationController {
     }
 
     /**
-     * Animate deck draw
+     * Animate deck draw with flying card
+     * @param {string} direction - 'bottom' for player, 'top' for opponent
+     * @returns {Promise<void>}
      */
-    animateDeckDraw() {
-        if (!this.elements.deckPile) return;
+    animateDeckDraw(direction = 'bottom') {
+        return new Promise((resolve) => {
+            if (!this.elements.deckPile) {
+                resolve();
+                return;
+            }
 
-        this.elements.deckPile.classList.add('draw-animation');
-        setTimeout(() => {
-            this.elements.deckPile.classList.remove('draw-animation');
-        }, this.config.ANIMATION.CARD_DROP_DURATION);
+            // Add deck pulse animation
+            this.elements.deckPile.classList.add('draw-animation');
+            setTimeout(() => {
+                this.elements.deckPile.classList.remove('draw-animation');
+            }, this.config.ANIMATION.CARD_DROP_DURATION);
+
+            // Get deck pile position
+            const deckRect = this.elements.deckPile.getBoundingClientRect();
+
+            // Create flying card element (append to body for fixed positioning)
+            const flyingCard = document.createElement('div');
+            flyingCard.className = `deck-flying-card deck-flying-${direction}`;
+
+            // Position at the deck pile location
+            flyingCard.style.top = `${deckRect.top}px`;
+            flyingCard.style.left = `${deckRect.left}px`;
+            flyingCard.style.width = `${deckRect.width}px`;
+            flyingCard.style.height = `${deckRect.height}px`;
+
+            document.body.appendChild(flyingCard);
+
+            // Remove flying card after animation completes
+            setTimeout(() => {
+                flyingCard.remove();
+                resolve();
+            }, 350);
+        });
     }
 
     /**
@@ -76,6 +105,13 @@ export class AnimationController {
             );
             if (cardElement) {
                 cardElement.classList.add('card-flying-out');
+
+                // Instantly collapse the card slot - no transition
+                cardElement.style.transition = 'none';
+                cardElement.style.width = '0';
+                cardElement.style.marginLeft = '0';
+                cardElement.style.marginRight = '0';
+
                 setTimeout(() => {
                     resolve();
                 }, this.config.ANIMATION.CARD_FLY_DURATION);

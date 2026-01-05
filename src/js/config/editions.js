@@ -166,7 +166,7 @@ export const EDITIONS = {
             'K♥': 'king-of-hearts-yoaz.jpg',
             'A♥': 'ace-of-hearts-studio-blup.jpg',
             '2♦': '2-of-diamonds-jon-lau.jpg',
-            '3♦': '3-of-diamonds-zipeng-zhu.gif',
+            '3♦': '3-of-diamonds-zipeng-zhu.jpg',
             '4♦': '4-of-diamonds-foreal.jpg',
             '5♦': '5-of-diamonds-patrick-seymour.jpg',
             '6♦': '6-of-diamonds-ian-jepson.jpg',

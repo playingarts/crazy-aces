@@ -24,16 +24,23 @@ export class SessionService {
     }
 
     /**
-     * Start a new game session
+     * Start a new game session (or reuse existing one to preserve win streak)
      * @returns {Promise<boolean>} Success status
      */
     async startSession() {
         try {
+            // If we have an existing session, reuse it to preserve win streak
+            // Only create a new session if we don't have one
+            const body = this.sessionToken
+                ? { sessionToken: this.sessionToken, newGame: true }
+                : {};
+
             const response = await fetch(`${this.getApiUrl()}/api/start-game`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify(body)
             });
 
             if (!response.ok) {

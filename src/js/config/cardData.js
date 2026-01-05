@@ -150,7 +150,7 @@ export const CARD_IMAGE_FILENAMES = {
     'A♥': 'ace-of-hearts-mr-kone.jpg?2',
 
     '2♦': '2-of-diamonds-yemayema.jpg?2',
-    '3♦': '3-of-diamonds-carne-griffiths.jpg?2',
+    '3♦': '3-of-diamonds-carne-griffiths.jpg',
     '4♦': '4-of-diamonds-peter-olschinsky.jpg?2',
     '5♦': '5-of-diamonds-fab-ciraolo.jpg?2',
     '6♦': '6-of-diamonds-vasava.jpg?2',

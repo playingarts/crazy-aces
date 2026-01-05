@@ -302,6 +302,10 @@ export class Game {
                 this.logger.debug('🃏 Player played Ace - preloading all Ace images');
                 await this.ui.preloadHandImages([playedCard]).catch(() => {});
 
+                // Refresh player hand to remove the played Ace from DOM
+                // (the card was animated out but element still exists with width=0)
+                this.ui.refreshPlayerHand(this.state.playerHand);
+
                 // Start suit selection timing
                 analytics.startSuitSelection();
 
@@ -509,7 +513,7 @@ export class Game {
             // Render immediately so card appears in hand
             this.render(false);
 
-            this.ui.animateDeckDraw();
+            this.ui.animateDeckDraw('bottom');
             this.ui.updateStatus('You drew a card');
 
             // Check if drawn card is playable
@@ -629,6 +633,7 @@ export class Game {
                     this.logger.error('Computer drawn card has no imageUrl:', result.card);
                 }
 
+                this.ui.animateDeckDraw('top');
                 this.ui.updateStatus('Opponent drew a card');
                 this.render(false);
 
@@ -708,7 +713,15 @@ export class Game {
 
         // Note: hands and notification are already hidden when last card was played
 
-        // Show popup immediately
+        // BUG-026 FIX: Update server-side session BEFORE showing popup
+        // This ensures the win streak is recorded in Redis before user can click "Claim Discount"
+        // Previously this was called after showGameOver, causing a race condition where
+        // fast-clicking users would claim with stale win streak data
+        if (this.sessionService) {
+            await this.sessionService.updateSession(playerWon);
+        }
+
+        // Show popup AFTER session is updated (so discount tier is correct if user claims immediately)
         this.ui.showGameOver(
             playerWon,
             winResult.winStreak || 0,
@@ -722,11 +735,6 @@ export class Game {
             );
         } else {
             this.ui.updateStatus('Opponent wins!');
-        }
-
-        // Update server-side session with game result (must await to ensure win streak is recorded)
-        if (this.sessionService) {
-            await this.sessionService.updateSession(playerWon);
         }
     }
 
