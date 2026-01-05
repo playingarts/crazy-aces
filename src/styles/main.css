@@ -1456,7 +1456,7 @@ body {
 }
 
 .discount-info {
-    color: #999;
+    color: rgba(255, 255, 255, 0.75);
     font-size: 15px;
     line-height: 1.6;
     margin: 0;
@@ -1923,7 +1923,7 @@ body {
         font-size: 15px;
         line-height: 1.5;
         margin-bottom: 0;
-        color: #999;
+        color: rgba(255, 255, 255, 0.75);
     }
 
     .discount-info > div {
